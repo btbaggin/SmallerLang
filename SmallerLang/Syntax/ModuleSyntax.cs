@@ -14,7 +14,7 @@ namespace SmallerLang.Syntax
 
         public IList<MethodSyntax> Methods { get; private set; }
 
-        public IList<StructSyntax> Definitions { get; private set; }
+        public IList<StructSyntax> Structs { get; private set; }
 
         public IList<EnumSyntax> Enums { get; private set; }
 
@@ -24,16 +24,16 @@ namespace SmallerLang.Syntax
         {
             Name = pName;
             Methods = pMethods;
-            Definitions = pDefinitions;
+            Structs = pDefinitions;
             Enums = pEnums;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
             //Emit types
-            for(int i = 0; i < Definitions.Count; i++)
+            for(int i = 0; i < Structs.Count; i++)
             {
-                Definitions[i].Emit(pContext);
+                Structs[i].Emit(pContext);
             }
 
             //Emit method Headers

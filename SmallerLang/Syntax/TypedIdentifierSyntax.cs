@@ -11,16 +11,17 @@ namespace SmallerLang.Syntax
     {
         public string Value { get; private set; }
 
-        private readonly TypeSyntax _type;
+        public TypeSyntax TypeNode { get; private set; }
+
         public override SmallType Type
         {
-            get { return _type.Type; }
+            get { return TypeNode.Type; }
         }
 
         internal TypedIdentifierSyntax(TypeSyntax pType, string pValue)
         {
             Value = pValue;
-            _type = pType;
+            TypeNode = pType;
         }
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)

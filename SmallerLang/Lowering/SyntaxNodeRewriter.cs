@@ -329,8 +329,8 @@ namespace SmallerLang.Validation
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            List<StructSyntax> definitions = new List<StructSyntax>(pNode.Definitions.Count);
-            foreach (var d in pNode.Definitions)
+            List<StructSyntax> definitions = new List<StructSyntax>(pNode.Structs.Count);
+            foreach (var d in pNode.Structs)
             {
                 definitions.Add((StructSyntax)Visit(d));
             }

@@ -103,6 +103,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("&&", TokenType.And);
             _keywords.Insert("||", TokenType.Or);
             _keywords.Insert("_", TokenType.Underscore);
+            _keywords.Insert("#", TokenType.Hash);
         }
 
         public ITokenStream StartTokenStream(string pstrSource)

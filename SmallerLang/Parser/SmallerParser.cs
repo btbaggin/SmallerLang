@@ -285,6 +285,8 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
+                bool isGeneric = PeekAndExpect(TokenType.Hash);
+
                 //Check for system types first, then an identifier as a user defined type
                 string type;
                 if (Peek(TokenType.TypeFloat)) Expect(TokenType.TypeFloat, out type);
@@ -296,24 +298,13 @@ namespace SmallerLang.Parser
                 else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out type);
                 else Expect(TokenType.Identifier, out type);
 
-                //Generic args
-                List<TypeSyntax> genericArgs = new List<TypeSyntax>();
-                if(PeekAndExpect(TokenType.LeftParen))
-                {
-                    do
-                    {
-                        genericArgs.Add(ParseType());
-                    } while (PeekAndExpect(TokenType.Comma));
-                    Expect(TokenType.RightParen);
-                }
-
                 //Check for array types
                 if (PeekAndExpect(TokenType.LeftBracket))
                 {
                     Expect(TokenType.RightBracket);
                     type += "[]";
                 }
-                return SyntaxFactory.Type(type, genericArgs).SetSpan<TypeSyntax>(t);
+                return SyntaxFactory.Type(type, isGeneric, new List<TypeSyntax>()).SetSpan<TypeSyntax>(t); //TODO actually do this
             }
         }
 
@@ -464,9 +455,10 @@ namespace SmallerLang.Parser
                         do
                         {
                             genericArgs.Add(ParseType());
-                        } while (!PeekAndExpect(TokenType.RightParen));
+                        } while (PeekAndExpect(TokenType.Comma));
+                        Expect(TokenType.RightParen);
                     }
-                    return SyntaxFactory.StructInitializer(pIdentifier, SyntaxFactory.Type(type, genericArgs)).SetSpan<StructInitializerSyntax>(t);
+                    return SyntaxFactory.StructInitializer(pIdentifier, SyntaxFactory.Type(type, false, genericArgs)).SetSpan<StructInitializerSyntax>(t);
                 }
                 return null;
             }

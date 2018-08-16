@@ -72,6 +72,7 @@ namespace SmallerLang
         TypeLong,
         TypeString,
         TypeBool,
+        Hash,
 
         //Other trivia
         Comma,

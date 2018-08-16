@@ -10,14 +10,14 @@ namespace SmallerLang.Validation
 {
     class TypeInferenceVisitor : SyntaxNodeVisitor
     {
-        readonly Stack<VariableCache<SmallType>> _memberAccess;
+        VariableCache<SmallType> _memberAccess;
+        SmallType _currentType;
         VariableCache<SmallType> _locals;
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
 
         public TypeInferenceVisitor(IErrorReporter pError)
         {
-            _memberAccess = new Stack<VariableCache<SmallType>>();
             _locals = new VariableCache<SmallType>();
             _error = pError;
         }
@@ -38,7 +38,7 @@ namespace SmallerLang.Validation
             }
 
             //Add all types to our SmallTypeCache
-            var definitionsCopy = pNode.Definitions.ToList();
+            var definitionsCopy = pNode.Structs.ToList();
             int i = 0;
             int loop = 0;
             while(definitionsCopy.Count > 0)
@@ -56,9 +56,9 @@ namespace SmallerLang.Validation
                 if (!string.IsNullOrEmpty(definitionsCopy[i].Inherits))
                 {
                     bool found = false;
-                    for (int j = 0; j < pNode.Definitions.Count; j++)
+                    for (int j = 0; j < pNode.Structs.Count; j++)
                     {
-                        if(pNode.Definitions[j].Name == definitionsCopy[i].Inherits)
+                        if(pNode.Structs[j].Name == definitionsCopy[i].Inherits)
                         {
                             found = true;
                         }
@@ -281,12 +281,15 @@ namespace SmallerLang.Validation
             Visit((dynamic)pNode.Identifier);
             
             //Save current local definitions
-            _memberAccess.Push(_locals);
+            //Mark the current type we are on so error messages can be more descriptive
+            var l = _locals;
+            var t = _currentType;
 
             //Create a new one for the struct fields
+            _currentType = pNode.Identifier.Type;
             _locals = new VariableCache<SmallType>();
             _locals.AddScope();
-            foreach (var f in pNode.Identifier.Type.GetFields())
+            foreach (var f in _currentType.GetFields())
             {
                 if (!_locals.IsVariableDefinedInScope(f.Name))
                 {
@@ -297,7 +300,8 @@ namespace SmallerLang.Validation
             Visit((dynamic)pNode.Value);
 
             //Restore local definitions
-            _locals = _memberAccess.Pop();
+            _locals = l;
+            _currentType = t;
         }
 
         protected override void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
@@ -319,7 +323,8 @@ namespace SmallerLang.Validation
                 //Normal identifier, continue as usual
                 if (!_locals.IsVariableDefined(pNode.Value))
                 {
-                    _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
+                    if (_currentType == null) _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
+                    else _error.WriteError("Type " + _currentType.ToString() + " does not contain a definition for '" + pNode.Value + "'", pNode.Span);
                 }
                 else
                 {

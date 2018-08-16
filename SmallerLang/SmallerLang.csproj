@@ -202,8 +202,8 @@
     <Compile Include="Utils\LLVMHelper.cs" />
     <Compile Include="Validation\ForRewriter.cs" />
     <Compile Include="Validation\PreTypeValidation.cs" />
-    <Compile Include="Validation\ReturnBlockRewriter.cs" />
-    <Compile Include="Validation\StructInheritanceRewriter.cs" />
+    <Compile Include="Lowering\ReturnBlockRewriter.cs" />
+    <Compile Include="Lowering\StructInheritanceRewriter.cs" />
     <Compile Include="Validation\SyntaxNodeVisitor.cs" />
     <Compile Include="CompilerOptions.cs" />
     <Compile Include="ConsoleErrorReporter.cs" />
@@ -222,7 +222,7 @@
     <Compile Include="SmallLangExecutionEngine.cs" />
     <Compile Include="SmallType.cs" />
     <Compile Include="SmallTypeCache.cs" />
-    <Compile Include="Validation\SyntaxNodeRewriter.cs" />
+    <Compile Include="Lowering\SyntaxNodeRewriter.cs" />
     <Compile Include="Syntax\ArrayAccessSyntax.cs" />
     <Compile Include="Syntax\ArrayLiteralSyntax.cs" />
     <Compile Include="Syntax\AssignmentSyntax.cs" />
@@ -257,7 +257,7 @@
     <Compile Include="Utils\EnumExtensions.cs" />
     <Compile Include="Utils\SyntaxHelper.cs" />
     <Compile Include="Validation\MethodCacheVisitor.cs" />
-    <Compile Include="Validation\SelectRewriter.cs" />
+    <Compile Include="Lowering\SelectRewriter.cs" />
     <Compile Include="Validation\TypeChecker.cs" />
     <Compile Include="Validation\TypeInferenceVisitor.cs" />
     <Compile Include="Validation\ValidationVisitor.cs" />

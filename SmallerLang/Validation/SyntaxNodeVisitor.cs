@@ -298,7 +298,7 @@ namespace SmallerLang.Validation
             {
                 Visit(m);
             }
-            foreach(var d in pNode.Definitions)
+            foreach(var d in pNode.Structs)
             {
                 Visit(d);
             }

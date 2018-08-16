@@ -9,15 +9,19 @@ namespace SmallerLang.Syntax
 {
     public class TypeSyntax : ExpressionSyntax
     {
-        public override SmallType Type => SmallTypeCache.FromString(_typeString);
+        public override SmallType Type => SmallTypeCache.FromString(Value);
 
-        public IList<TypeSyntax> GenericParameters { get; private set; }
+        public IList<TypeSyntax> GenericArguments { get; private set; }
 
-        private readonly string _typeString;
-        internal TypeSyntax(string pValue, IList<TypeSyntax> pGenericArgs)
+        public bool IsGeneric { get; private set; }
+
+        public string Value { get; private set; }
+
+        internal TypeSyntax(string pValue, bool pIsGeniric, IList<TypeSyntax> pGenericArgs)
         {
-            _typeString = pValue;
-            GenericParameters = pGenericArgs;
+            Value = pValue;
+            IsGeneric = pIsGeniric;
+            GenericArguments = pGenericArgs;
         }
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)

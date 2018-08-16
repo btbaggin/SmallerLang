@@ -153,9 +153,14 @@ namespace SmallerLang.Syntax
             return new TypedIdentifierSyntax(pType, pValue);
         }
 
-        public static TypeSyntax Type(string pValue, IList<TypeSyntax> pGenericArgs)
+        public static TypeSyntax Type(string pValue)
         {
-            return new TypeSyntax(pValue, pGenericArgs);
+            return new TypeSyntax(pValue, false, new List<TypeSyntax>());
+        }
+
+        public static TypeSyntax Type(string pValue, bool pIsGeneric, IList<TypeSyntax> pGenericArgs)
+        {
+            return new TypeSyntax(pValue, pIsGeneric, pGenericArgs);
         }
 
         public static ReturnSyntax Return(IList<ExpressionSyntax> pValue)
