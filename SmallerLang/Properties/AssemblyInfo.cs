@@ -8,9 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SmallerLang")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Fast Enterprises")]
 [assembly: AssemblyProduct("SmallerLang")]
-[assembly: AssemblyCopyright("Copyright © Fast Enterprises 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
