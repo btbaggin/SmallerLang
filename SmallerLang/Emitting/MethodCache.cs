@@ -24,13 +24,8 @@ namespace SmallerLang.Emitting
 
     public static class MethodCache
     {
-        readonly static Dictionary<string, List<MethodDefinition>> _methods;
-        readonly static Dictionary<string, int> _counter;
-        static MethodCache()
-        {
-            _methods = new Dictionary<string, List<MethodDefinition>>();
-            _counter = new Dictionary<string, int>();
-        }
+        readonly static Dictionary<string, List<MethodDefinition>> _methods = new Dictionary<string, List<MethodDefinition>>();
+        readonly static Dictionary<string, int> _counter = new Dictionary<string, int>();
 
         public static void AddMethod(string pName, Syntax.MethodSyntax pNode)
         {
