@@ -29,7 +29,7 @@ namespace SmallerLang.Syntax
             return (T)this;
         }
 
-        public SyntaxNode FromNode(SyntaxNode pNode)
+        public virtual SyntaxNode FromNode(SyntaxNode pNode)
         {
             Span = pNode.Span;
             Annotation = pNode.Annotation;

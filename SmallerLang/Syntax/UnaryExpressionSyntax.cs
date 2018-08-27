@@ -94,5 +94,11 @@ namespace SmallerLang.Syntax
         {
             _type = pType;
         }
+
+        public override SyntaxNode FromNode(SyntaxNode pNode)
+        {
+            _type = pNode.Type;
+            return base.FromNode(pNode);
+        }
     }
 }

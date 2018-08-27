@@ -55,6 +55,12 @@ namespace SmallerLang.Syntax
             _type = pType;
         }
 
+        public override SyntaxNode FromNode(SyntaxNode pNode)
+        {
+            _type = pNode.Type;
+            return base.FromNode(pNode);
+        }
+
         internal static LLVMSharp.LLVMValueRef EmitOperator(LLVMSharp.LLVMValueRef pLeft, 
                                                             BinaryExpressionOperator pOp, 
                                                             LLVMSharp.LLVMValueRef pRight, 

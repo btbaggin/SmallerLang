@@ -44,6 +44,7 @@ namespace SmallerLang.Validation
             var t = pNode.GetType();
             return t == typeof(IdentifierSyntax) ||
                    t == typeof(DiscardSyntax) ||
+                   t == typeof(ItSyntax) ||
                    (pAdvanced && (t == typeof(MemberAccessSyntax) || 
                                   t == typeof(ArrayAccessSyntax)));
         }
