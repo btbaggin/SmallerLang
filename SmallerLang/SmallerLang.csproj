@@ -191,6 +191,7 @@
   <ItemGroup>
     <Compile Include="Emitting\MethodCache.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Syntax\CaseSyntax.cs" />
     <Compile Include="Syntax\CastDefinitionSyntax.cs" />
     <Compile Include="Syntax\CastSyntax.cs" />
@@ -252,7 +253,6 @@
     <Compile Include="TextSpan.cs" />
     <Compile Include="TokenType.cs" />
     <Compile Include="Parser\SmallerParser.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Lexer\Trie.cs" />
     <Compile Include="Utils\EnumExtensions.cs" />
     <Compile Include="Utils\SyntaxHelper.cs" />

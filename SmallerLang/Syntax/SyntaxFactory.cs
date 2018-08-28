@@ -155,12 +155,12 @@ namespace SmallerLang.Syntax
 
         public static TypeSyntax Type(string pValue)
         {
-            return new TypeSyntax(pValue, false, new List<TypeSyntax>());
+            return new TypeSyntax(pValue, new List<TypeSyntax>());
         }
 
-        public static TypeSyntax Type(string pValue, bool pIsGeneric, IList<TypeSyntax> pGenericArgs)
+        public static TypeSyntax Type(string pValue, IList<TypeSyntax> pGenericArgs)
         {
-            return new TypeSyntax(pValue, pIsGeneric, pGenericArgs);
+            return new TypeSyntax(pValue, pGenericArgs);
         }
 
         public static ReturnSyntax Return(IList<ExpressionSyntax> pValue)

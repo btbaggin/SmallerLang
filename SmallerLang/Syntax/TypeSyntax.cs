@@ -13,14 +13,11 @@ namespace SmallerLang.Syntax
 
         public IList<TypeSyntax> GenericArguments { get; private set; }
 
-        public bool IsGeneric { get; private set; }
-
         public string Value { get; private set; }
 
-        internal TypeSyntax(string pValue, bool pIsGeniric, IList<TypeSyntax> pGenericArgs)
+        internal TypeSyntax(string pValue, IList<TypeSyntax> pGenericArgs)
         {
             Value = pValue;
-            IsGeneric = pIsGeniric;
             GenericArguments = pGenericArgs;
         }
 

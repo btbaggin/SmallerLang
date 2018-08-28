@@ -95,12 +95,15 @@ namespace SmallerLang.Validation
                 return false;
             }
 
+            Dictionary<string, int> typeArgMapping = new Dictionary<string, int>();
+
             //Get struct name
             var structName = new StringBuilder(pNode.Name);
             structName.Append("(");
-            foreach (var t in types)
+            for(int i = 0; i < types.Count; i++)
             {
-                structName.Append(t.Value + ",");
+                structName.Append(types[i].Value + ",");
+                typeArgMapping.Add(pNode.TypeParameters[i], i);
             }
             structName = structName.Remove(structName.Length - 1, 1);
             structName.Append(")");
@@ -111,22 +114,15 @@ namespace SmallerLang.Validation
                 List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
                 foreach (var f in pNode.Fields)
                 {
-                    if (!f.TypeNode.IsGeneric) fields.Add(SyntaxFactory.TypedIdentifier(f.TypeNode, f.Value));
+                    if (!typeArgMapping.ContainsKey(f.TypeNode.Value)) fields.Add(SyntaxFactory.TypedIdentifier(f.TypeNode, f.Value));
                     else
                     {
-                        for (int i = 0; i < pNode.TypeParameters.Count; i++)
-                        {
-                            if (f.TypeNode.IsGeneric && f.TypeNode.Value == pNode.TypeParameters[i])
-                            {
-                                fields.Add(SyntaxFactory.TypedIdentifier(types[i], f.Value));
-                                break;
-                            }
-                        }
+                        var i = typeArgMapping[f.TypeNode.Value];
+                        fields.Add(SyntaxFactory.TypedIdentifier(types[i], f.Value));
                     }
                 }
 
                 _polydStructs.Add(structName.ToString(), SyntaxFactory.Struct(structName.ToString(), pNode.Inherits, fields, pNode.Defaults.ToList(), new List<string>()));
-
             }
 
             pInitializer = SyntaxFactory.StructInitializer(pInitializer.Value, SyntaxFactory.Type(structName.ToString()));

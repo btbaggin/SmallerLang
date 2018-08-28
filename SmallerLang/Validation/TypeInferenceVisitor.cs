@@ -10,7 +10,6 @@ namespace SmallerLang.Validation
 {
     class TypeInferenceVisitor : SyntaxNodeVisitor
     {
-        VariableCache<SmallType> _memberAccess;
         SmallType _currentType;
         VariableCache<SmallType> _locals;
         readonly IErrorReporter _error;

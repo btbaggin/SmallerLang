@@ -134,14 +134,14 @@ namespace SmallerLang.Parser
 
                 //Struct generic type args
                 List<string> genericTypeParms = new List<string>();
-                if(PeekAndExpect(TokenType.LeftParen))
+                if(PeekAndExpect(TokenType.LessThan))
                 {
                     do
                     {
                         Expect(TokenType.Identifier, out string parmType);
                         genericTypeParms.Add(parmType);
                     } while (PeekAndExpect(TokenType.Comma));
-                    Expect(TokenType.RightParen);
+                    Expect(TokenType.GreaterThan);
                 }
 
                 string inherit = null;
@@ -285,8 +285,6 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
-                bool isGeneric = PeekAndExpect(TokenType.Hash);
-
                 //Check for system types first, then an identifier as a user defined type
                 string type;
                 if (Peek(TokenType.TypeFloat)) Expect(TokenType.TypeFloat, out type);
@@ -304,7 +302,7 @@ namespace SmallerLang.Parser
                     Expect(TokenType.RightBracket);
                     type += "[]";
                 }
-                return SyntaxFactory.Type(type, isGeneric, new List<TypeSyntax>()).SetSpan<TypeSyntax>(t); //TODO actually do this
+                return SyntaxFactory.Type(type, new List<TypeSyntax>()).SetSpan<TypeSyntax>(t); //TODO actually do this
             }
         }
 
@@ -458,7 +456,7 @@ namespace SmallerLang.Parser
                         } while (PeekAndExpect(TokenType.Comma));
                         Expect(TokenType.RightParen);
                     }
-                    return SyntaxFactory.StructInitializer(pIdentifier, SyntaxFactory.Type(type, false, genericArgs)).SetSpan<StructInitializerSyntax>(t);
+                    return SyntaxFactory.StructInitializer(pIdentifier, SyntaxFactory.Type(type, genericArgs)).SetSpan<StructInitializerSyntax>(t);
                 }
                 return null;
             }
