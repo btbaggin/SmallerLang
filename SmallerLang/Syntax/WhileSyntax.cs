@@ -45,7 +45,7 @@ namespace SmallerLang.Syntax
             //End
             LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, end);
 
-            return default(LLVMSharp.LLVMValueRef);
+            return default;
         }
     }
 }

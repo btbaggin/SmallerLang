@@ -25,7 +25,7 @@ namespace SmallerLang.Syntax
         {
             If?.Emit(pContext);
             Body?.Emit(pContext);
-            return default(LLVMSharp.LLVMValueRef);
+            return default;
         }
     }
 }

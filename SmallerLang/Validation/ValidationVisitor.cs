@@ -76,11 +76,11 @@ namespace SmallerLang.Validation
             //Report any unused variables
             _locals.AddScope();
             base.VisitBlockSyntax(pNode);
-            foreach (var v in _locals.GetVariablesInScope())
+            foreach (var (Variable, Value) in _locals.GetVariablesInScope())
             {
-                if (!v.Value.Used)
+                if (!Value.Used)
                 {
-                    _error.WriteWarning($"Variable {v.Variable} is defined but never used", v.Value.Span);
+                    _error.WriteWarning($"Variable {Variable} is defined but never used", Value.Span);
                 }
             }
             _locals.RemoveScope();
@@ -122,16 +122,14 @@ namespace SmallerLang.Validation
                             {
                                 //We can only check numeric literals and enum access
                                 //We cannot validate returning from a method
-                                var n = cd as NumericLiteralSyntax;
-                                var m = cd as MemberAccessSyntax;
-                                if (n != null)
+                                if (cd is NumericLiteralSyntax n)
                                 {
                                     for (int i = 0; i < fields.Count; i++)
                                     {
                                         if (t.GetEnumValue(fields[i]) == int.Parse(n.Value)) fields[i] = null;
                                     }
                                 }
-                                else if (m != null)
+                                else if (cd is MemberAccessSyntax m)
                                 {
                                     for (int i = 0; i < fields.Count; i++)
                                     {

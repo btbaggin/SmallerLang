@@ -80,7 +80,7 @@ namespace SmallerLang.Utils
                     return AssignmentOperator.ConcatEquals;
 
                 default:
-                    throw new Exception("Not a supported assignment operator token " + pToken.ToString());
+                    throw new NotSupportedException("Not a supported assignment operator token " + pToken.ToString());
             }
         }
 
