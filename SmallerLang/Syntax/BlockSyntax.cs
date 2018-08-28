@@ -9,8 +9,6 @@ namespace SmallerLang.Syntax
 {
     public class BlockSyntax : SyntaxNode
     {
-        internal bool RetainScope { get; set; }
-
         public IList<SyntaxNode> Statements { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
@@ -22,7 +20,7 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
-            if(!RetainScope) pContext.Locals.AddScope();
+            pContext.Locals.AddScope();
 
             foreach(var s in Statements)
             {
@@ -30,7 +28,7 @@ namespace SmallerLang.Syntax
                 else pContext.AddDeferredStatement(s);
             }
 
-            if(!RetainScope) pContext.Locals.RemoveScope();
+            pContext.Locals.RemoveScope();
             return default;
         }
     }

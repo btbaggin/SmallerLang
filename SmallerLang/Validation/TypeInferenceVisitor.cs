@@ -245,11 +245,11 @@ namespace SmallerLang.Validation
 
         protected override void VisitBlockSyntax(BlockSyntax pNode)
         {
-            if(!pNode.RetainScope) _locals.AddScope();
+            _locals.AddScope();
 
             base.VisitBlockSyntax(pNode);
 
-            if(!pNode.RetainScope) _locals.RemoveScope();
+            _locals.RemoveScope();
         }
 
         protected override void VisitMethodSyntax(MethodSyntax pNode)

@@ -74,7 +74,7 @@ namespace SmallerLang.Validation
             }
 
             //Report any unused variables
-            if(!pNode.RetainScope) _locals.AddScope();
+            _locals.AddScope();
             base.VisitBlockSyntax(pNode);
             foreach (var v in _locals.GetVariablesInScope())
             {
@@ -83,7 +83,7 @@ namespace SmallerLang.Validation
                     _error.WriteWarning($"Variable {v.Variable} is defined but never used", v.Value.Span);
                 }
             }
-            if (!pNode.RetainScope) _locals.RemoveScope();
+            _locals.RemoveScope();
         }
 
         protected override void VisitSelectSyntax(SelectSyntax pNode)
