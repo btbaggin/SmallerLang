@@ -27,8 +27,21 @@ namespace SmallerLang.Syntax
             if(!SmallTypeCache.IsTypeDefined(Identifier.Value))
             {
                 var i = Identifier.Emit(pContext);
-                int f = Identifier.Type.GetFieldIndex(Value.Value);
-                return LLVM.BuildInBoundsGEP(pContext.Builder, i, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Value.Value);
+                pContext.MemberAccessStack.Push(i);
+
+                LLVMValueRef v;
+                if(Value.GetType() == typeof(MethodCallSyntax))
+                {
+                    v = Value.Emit(pContext);
+                }
+                else
+                {
+                    int f = Identifier.Type.GetFieldIndex(Value.Value);
+                    v = LLVM.BuildInBoundsGEP(pContext.Builder, i, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Value.Value);
+                }
+
+                pContext.MemberAccessStack.Pop();
+                return v;
             }
             else
             {

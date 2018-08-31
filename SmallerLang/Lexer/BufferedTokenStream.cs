@@ -16,7 +16,7 @@ namespace SmallerLang.Lexer
 
         public int Index { get; private set; }
 
-        public int SourceIndex { get => mSource.Index; }
+        public int SourceIndex { get; private set; }
 
         public int SourceLine { get; private set; }
 
@@ -42,7 +42,21 @@ namespace SmallerLang.Lexer
             SourceColumn = mSource.Column;
             Index++;
             Sync(Index);
+            SourceIndex = mSource.Index - Current.Length;
             return _tokenCount > Index;
+        }
+
+        public bool Peek(int pCount, out Token pToken)
+        {
+            if (Index + pCount >= _tokens.Length)
+            {
+                pToken = default;
+                return false;
+            }
+
+            Sync(Index + pCount);
+            pToken = _tokens[Index + pCount];
+            return true;
         }
 
         public void Reset()

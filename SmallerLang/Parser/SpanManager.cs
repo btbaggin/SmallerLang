@@ -25,7 +25,7 @@ namespace SmallerLang.Parser
 
         public SpanTracker Create()
         {
-            int start = _stream.SourceIndex - _stream.Current.Length;
+            int start = _stream.SourceIndex;
             int line = _stream.SourceLine;
             int column = _stream.SourceColumn;
             SpanTracker s = new SpanTracker(start, line, column, this);

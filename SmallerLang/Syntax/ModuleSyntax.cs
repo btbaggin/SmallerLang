@@ -31,9 +31,15 @@ namespace SmallerLang.Syntax
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
             //Emit types
-            for(int i = 0; i < Structs.Count; i++)
+            for (int i = 0; i < Structs.Count; i++)
             {
                 Structs[i].Emit(pContext);
+            }
+
+            //Emit type methods
+            for (int i = 0; i < Structs.Count; i++)
+            {
+                Structs[i].EmitMethods(pContext);
             }
 
             //Emit method Headers
@@ -61,7 +67,7 @@ namespace SmallerLang.Syntax
             LLVM.PositionBuilderAtEnd(pContext.Builder, mainB);
             LLVM.BuildCall(pContext.Builder, _main, new LLVMValueRef[] { }, "");
             LLVM.BuildRet(pContext.Builder, pContext.GetInt(0));
-            pContext.FinishMethod(main, false);
+            pContext.ValidateMethod(main);
 
             return main;
         }

@@ -41,7 +41,7 @@ namespace SmallerLang.Syntax
             Body = pBody;
             External = pExternal;
         }
-
+        
         public LLVMSharp.LLVMValueRef EmitHeader(EmittingContext pContext)
         {
             //Emit header

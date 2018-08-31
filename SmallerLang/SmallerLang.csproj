@@ -199,6 +199,7 @@
     <Compile Include="Syntax\EnumSyntax.cs" />
     <Compile Include="Syntax\ItSyntax.cs" />
     <Compile Include="Syntax\SelectSyntax.cs" />
+    <Compile Include="Syntax\SelfSyntax.cs" />
     <Compile Include="Syntax\StructInitializerSyntax.cs" />
     <Compile Include="Utils\LLVMHelper.cs" />
     <Compile Include="Validation\ForRewriter.cs" />

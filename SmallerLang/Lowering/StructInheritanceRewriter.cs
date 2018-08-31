@@ -10,12 +10,12 @@ namespace SmallerLang.Validation
     partial class TreeRewriter : SyntaxNodeRewriter
     {
         ModuleSyntax _module;
-        List<StructSyntax> _structsToPoly;
+        Dictionary<string, StructSyntax> _structsToPoly;
         Dictionary<string, StructSyntax> _polydStructs;
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             _module = pNode;
-            _structsToPoly = new List<StructSyntax>();
+            _structsToPoly = new Dictionary<string, StructSyntax>();
             _polydStructs = new Dictionary<string, StructSyntax>();
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
@@ -32,7 +32,7 @@ namespace SmallerLang.Validation
             {
                 var n = (StructSyntax)Visit(s);
                 
-                if (s.TypeParameters.Count > 0) _structsToPoly.Add(n);
+                if (s.TypeParameters.Count > 0) _structsToPoly.Add(n.Name, n);
                 else structs.Add(n);
             }
 
@@ -66,21 +66,21 @@ namespace SmallerLang.Validation
                 }
                 fields.AddRange(pNode.Fields);
                 defaults.AddRange(pNode.Defaults);
-                return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, fields, defaults, pNode.TypeParameters);
+
+                return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, pNode.Methods, fields, defaults, pNode.TypeParameters);
             }
+
             return base.VisitStructSyntax(pNode);
         }
 
         protected override SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
-            if(pNode.Struct.GenericArguments.Count > 0)
+            if(pNode.Struct.GenericArguments.Count > 0 && _structsToPoly.ContainsKey(pNode.Struct.Value))
             {
-                foreach(var s in _structsToPoly)
+                var s = _structsToPoly[pNode.Struct.Value];
+                if (TryPolyStruct(s, ref pNode))
                 {
-                    if(s.Name == pNode.Struct.Value && TryPolyStruct(s, ref pNode))
-                    {
-                        return pNode;
-                    }
+                    return pNode;
                 }
             }
             return base.VisitStructInitializerSyntax(pNode);
@@ -99,22 +99,23 @@ namespace SmallerLang.Validation
 
             //Get struct name
             var structName = new StringBuilder(pNode.Name);
-            structName.Append("(");
+            structName.Append("<");
             for(int i = 0; i < types.Count; i++)
             {
                 structName.Append(types[i].Value + ",");
                 typeArgMapping.Add(pNode.TypeParameters[i], i);
             }
             structName = structName.Remove(structName.Length - 1, 1);
-            structName.Append(")");
+            structName.Append(">");
 
             if (!_polydStructs.ContainsKey(structName.ToString()))
             {
                 //Rebuild a new struct with the generic types replaced
-                List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
+                List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count);
+                List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
                 foreach (var f in pNode.Fields)
                 {
-                    if (!typeArgMapping.ContainsKey(f.TypeNode.Value)) fields.Add(SyntaxFactory.TypedIdentifier(f.TypeNode, f.Value));
+                    if (!typeArgMapping.ContainsKey(f.TypeNode.Value)) fields.Add(f);
                     else
                     {
                         var i = typeArgMapping[f.TypeNode.Value];
@@ -122,10 +123,46 @@ namespace SmallerLang.Validation
                     }
                 }
 
-                _polydStructs.Add(structName.ToString(), SyntaxFactory.Struct(structName.ToString(), pNode.Inherits, fields, pNode.Defaults.ToList(), new List<string>()));
+                foreach(var m in pNode.Methods)
+                {
+                    List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>();
+                    List<TypeSyntax> returnValues = new List<TypeSyntax>();
+                    //Poly method parameters
+                    foreach(var p in m.Parameters)
+                    {
+                        if (!typeArgMapping.ContainsKey(p.TypeNode.Value)) parameters.Add(p);
+                        else
+                        {
+                            var i = typeArgMapping[p.TypeNode.Value];
+                            parameters.Add(SyntaxFactory.TypedIdentifier(types[i], p.Value));
+                        }
+                    }
+
+                    //Poly method return values
+                    foreach(var r in m.ReturnValues)
+                    {
+                        if (!typeArgMapping.ContainsKey(r.Value)) returnValues.Add(r);
+                        else
+                        {
+                            var i = typeArgMapping[r.Value];
+                            returnValues.Add(types[i]);
+                        }
+                    }
+
+                    var mNew = (MethodSyntax)SyntaxFactory.Method(m.Name, returnValues, parameters, (BlockSyntax)Visit(m.Body)).FromNode(m);
+                    methods.Add(mNew);
+                }
+
+                _polydStructs.Add(structName.ToString(), SyntaxFactory.Struct(structName.ToString(), pNode.Inherits, methods, fields, pNode.Defaults.ToList(), new List<string>()));
             }
 
-            pInitializer = SyntaxFactory.StructInitializer(pInitializer.Value, SyntaxFactory.Type(structName.ToString()));
+            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pInitializer.Arguments.Count);
+            foreach(var a in pInitializer.Arguments)
+            {
+                arguments.Add(Visit((dynamic)a));
+            }
+
+            pInitializer = SyntaxFactory.StructInitializer(pInitializer.Value, SyntaxFactory.Type(structName.ToString()), arguments);
 
             return true;
         }

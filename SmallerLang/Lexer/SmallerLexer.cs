@@ -55,6 +55,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("defer", TokenType.Defer);
             _keywords.Insert("cast", TokenType.Cast);
             _keywords.Insert("enum", TokenType.Enum);
+            _keywords.Insert("self", TokenType.Self);
             _keywords.Insert("lengthof", TokenType.LengthOf);
 
             //Types

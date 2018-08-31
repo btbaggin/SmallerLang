@@ -128,9 +128,22 @@ namespace SmallerLang
             return _fields.Length;
         }
 
-        public string GetConstructor()
+        Emitting.MethodDefinition _constructor;
+        bool _constructorSet;
+        public Emitting.MethodDefinition GetConstructor()
         {
-            return IsStruct ? Name + "___new" : null;
+            return _constructor;
+        }
+
+        internal void SetConstructor(Emitting.MethodDefinition pConstructor)
+        {
+            _constructor = pConstructor;
+            _constructorSet = true;
+        }
+
+        internal bool HasDefinedConstructor()
+        {
+            return _constructorSet;
         }
 
         public bool IsAssignableFrom(SmallType pType)

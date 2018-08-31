@@ -103,10 +103,55 @@ namespace SmallerLang.Validation
                 }
             }
 
+            foreach (var s in pNode.Structs)
+            {
+                var type = SmallTypeCache.FromString(s.Name);
+                //Add all methods to the MethodCache
+                for (int j = 0; j < s.Methods.Count; j++)
+                {
+                    var method = s.Methods[j];
+                    bool found = false;
+                    if (!Utils.SyntaxHelper.IsCastDefinition(method))
+                    {
+                        found = MethodCache.MethodExists(type, method.Name, method);
+                        if (found)
+                        {
+                            _error.WriteError($"Redeclaration of method signature {method.Name}", method.Span);
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        var m = MethodCache.AddMethod(type, method.Name, method);
+                        if (method.Annotation == "new")
+                        {
+                            type.SetConstructor(m);
+                        }
+                    }
+
+                    //Create the tuple type if we are returning more than one value from a method
+                    if (method.ReturnValues.Count > 1)
+                    {
+                        SmallTypeCache.GetTempTuple(Utils.SyntaxHelper.SelectNodeTypes(method.ReturnValues));
+                    }
+                }
+
+                if (!type.HasDefinedConstructor()) type.SetConstructor(new MethodDefinition(s.Name + ".ctor"));
+            }
+
             //Infer methods
             foreach (var m in pNode.Methods)
             {
                 Visit(m);
+            }
+
+            foreach(var s in pNode.Structs)
+            {
+                _currentType = SmallTypeCache.FromString(s.Name);
+                foreach(var m in s.Methods)
+                {
+                    Visit(m);
+                }
             }
         }
 
@@ -286,7 +331,7 @@ namespace SmallerLang.Validation
 
             //Create a new one for the struct fields
             _currentType = pNode.Identifier.Type;
-            _locals = new VariableCache<SmallType>();
+            _locals = _locals.Copy();
             _locals.AddScope();
             foreach (var f in _currentType.GetFields())
             {
@@ -294,6 +339,7 @@ namespace SmallerLang.Validation
                 {
                     _locals.DefineVariableInScope(f.Name, f.Type);
                 }
+                //TODO overwrite?
             }
 
             Visit((dynamic)pNode.Value);
@@ -301,6 +347,12 @@ namespace SmallerLang.Validation
             //Restore local definitions
             _locals = l;
             _currentType = t;
+        }
+
+        protected override void VisitSelfSyntax(SelfSyntax pNode)
+        {
+            pNode.SetType(_currentType);
+            base.VisitSelfSyntax(pNode);
         }
 
         protected override void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
@@ -391,18 +443,18 @@ namespace SmallerLang.Validation
             }
 
             //Check to ensure this method exists
-            if (!MethodCache.FindMethod(out MethodDefinition? m, pNode.Value, types) && m == null)
+            if (!MethodCache.FindMethod(out MethodDefinition m, _currentType, pNode.Value, types) && m.Name == null)
             {
                 _error.WriteError("Method definition for " + pNode.Value + " not found", pNode.Span);
                 return;
             }
 
-            if (pNode.Arguments.Count != m.Value.ArgumentTypes.Count)
+            if (pNode.Arguments.Count != m.ArgumentTypes.Count)
             {
-                _error.WriteError($"Method {pNode.Value} is expecting {m.Value.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
+                _error.WriteError($"Method {pNode.Value} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
                 return;
             }
-            pNode.SetType(m.Value.ReturnType);
+            pNode.SetType(m.ReturnType);
         }
 
         //Fast select statements can only be generated if there are no It identifiers

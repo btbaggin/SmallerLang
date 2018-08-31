@@ -68,6 +68,10 @@ namespace SmallerLang.Validation
                     node = VisitStringLiteralSyntax(s);
                     break;
 
+                case SelfSyntax s:
+                    node = VisitSelfSyntax(s);
+                    break;
+
                 case DeclarationSyntax d:
                     node = VisitDeclarationSyntax(d);
                     break;
@@ -206,7 +210,7 @@ namespace SmallerLang.Validation
 
         protected virtual SyntaxNode VisitDiscardSyntax(DiscardSyntax pNode)
         {
-            return pNode;
+            return SyntaxFactory.Discard();
         }
 
         protected virtual SyntaxNode VisitDeclarationSyntax(DeclarationSyntax pNode)
@@ -223,13 +227,19 @@ namespace SmallerLang.Validation
         {
             List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count);
             List<ExpressionSyntax> defaults = new List<ExpressionSyntax>(pNode.Defaults.Count);
+            List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
             for (int i = 0; i < pNode.Fields.Count; i++)
             {
                 fields.Add((TypedIdentifierSyntax)Visit(pNode.Fields[i]));
                 defaults.Add(Visit((dynamic)pNode.Defaults[i]));
             }
 
-            return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, fields, defaults, pNode.TypeParameters);
+            foreach(var m in pNode.Methods)
+            {
+                methods.Add((MethodSyntax)Visit(m));
+            }
+
+            return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, methods, fields, defaults, pNode.TypeParameters);
         }
 
         protected virtual SyntaxNode VisitElseSyntax(ElseSyntax pNode)
@@ -273,7 +283,7 @@ namespace SmallerLang.Validation
 
         protected virtual SyntaxNode VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            return pNode;
+            return SyntaxFactory.Identifier(pNode.Value);
         }
 
         protected virtual SyntaxNode VisitIfSyntax(IfSyntax pNode)
@@ -350,7 +360,7 @@ namespace SmallerLang.Validation
 
         protected virtual SyntaxNode VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
         {
-            return pNode;
+            return SyntaxFactory.TypedIdentifier((TypeSyntax)Visit(pNode.TypeNode), pNode.Value);
         }
 
         protected virtual SyntaxNode VisitReturnSyntax(ReturnSyntax pNode)
@@ -375,9 +385,20 @@ namespace SmallerLang.Validation
             return SyntaxFactory.Select(cond, cases);
         }
 
+        protected virtual SyntaxNode VisitSelfSyntax(SelfSyntax pNode)
+        {
+            return SyntaxFactory.Self();
+        }
+
         protected virtual SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
-            return SyntaxFactory.StructInitializer(pNode.Value, (TypeSyntax)Visit(pNode.Struct));
+            var t = (TypeSyntax)Visit(pNode.Struct);
+            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pNode.Arguments.Count);
+            foreach(var a in pNode.Arguments)
+            {
+                arguments.Add(Visit((dynamic)a));
+            }
+            return SyntaxFactory.StructInitializer(pNode.Value, t, arguments);
         }
 
         protected virtual SyntaxNode VisitStringLiteralSyntax(StringLiteralSyntax pNode)

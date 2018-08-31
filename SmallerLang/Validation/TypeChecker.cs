@@ -13,6 +13,7 @@ namespace SmallerLang.Validation
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
         SmallType _casetype;
+        SmallType _currentType;
 
         public TypeChecker(IErrorReporter pError)
         {
@@ -106,22 +107,47 @@ namespace SmallerLang.Validation
             base.VisitUnaryExpressionSyntax(pNode);
         }
 
+        protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
+        {
+            var t = _currentType;
+            _currentType = pNode.Identifier.Type;
+            base.VisitMemberAccessSyntax(pNode);
+            _currentType = t;
+        }
+
         protected override void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
-            MethodCache.FindMethod(out MethodDefinition? m, pNode.Value, types);
-            for(int i = 0; i < m.Value.ArgumentTypes.Count; i++)
+            MethodCache.FindMethod(out MethodDefinition m, _currentType, pNode.Value, types);
+            for(int i = 0; i < m.ArgumentTypes.Count; i++)
             {
-                if(!pNode.Arguments[i].Type.IsAssignableFrom(m.Value.ArgumentTypes[i]))
+                if(!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
                 {
-                    _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.Value.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
                 }
             }
 
             //Method calls are finally validated, set the mangled method name which we will actually call
-            pNode.SetDefinition(m.Value);
+            pNode.SetDefinition(m);
             base.VisitMethodCallSyntax(pNode);
+        }
+
+        protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
+        {
+            SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
+
+            var ctor = pNode.Struct.Type.GetConstructor().Name;
+            MethodCache.FindMethod(out MethodDefinition m, pNode.Struct.Type, ctor, types);
+            for(int i = 0; i < m.ArgumentTypes.Count; i++)
+            {
+                if (!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
+                {
+                    _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                }
+            }
+
+            base.VisitStructInitializerSyntax(pNode);
         }
 
         protected override void VisitCastDefinitionSyntax(CastDefinitionSyntax pNode)

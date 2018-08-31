@@ -67,6 +67,10 @@ namespace SmallerLang.Validation
                     VisitStringLiteralSyntax(s);
                     break;
 
+                case SelfSyntax s:
+                    VisitSelfSyntax(s);
+                    break;
+
                 case DeclarationSyntax d:
                     VisitDeclarationSyntax(d);
                     break;
@@ -215,6 +219,11 @@ namespace SmallerLang.Validation
                 Visit(pNode.Fields[i]);
                 if (pNode.Defaults[i] != null) Visit((dynamic)pNode.Defaults[i]);
             }
+
+            foreach(var m in pNode.Methods)
+            {
+                Visit(m);
+            }
         }
 
         protected virtual void VisitElseSyntax(ElseSyntax pNode)
@@ -329,9 +338,15 @@ namespace SmallerLang.Validation
             }
         }
 
+        protected virtual void VisitSelfSyntax(SelfSyntax pNode) { }
+
         protected virtual void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
             Visit(pNode.Struct);
+            foreach(var a in pNode.Arguments)
+            {
+                Visit((dynamic)a);
+            }
         }
 
         protected virtual void VisitStringLiteralSyntax(StringLiteralSyntax pNode) { }

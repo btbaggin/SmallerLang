@@ -17,6 +17,7 @@ namespace SmallerLang.Lexer
         ref Token Current { get; }
         bool EOF { get; }
 
+        bool Peek(int pCount, out Token pToken);
         bool MoveNext();
         void Seek(int pIndex);
         void Reset();

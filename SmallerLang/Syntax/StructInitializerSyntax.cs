@@ -14,20 +14,30 @@ namespace SmallerLang.Syntax
 
         public TypeSyntax Struct { get; private set; }
 
+        public IList<ExpressionSyntax> Arguments { get; private set; }
+
         public override SmallType Type => Struct.Type;
 
-        internal StructInitializerSyntax(string pValue, TypeSyntax pStruct)
+        internal StructInitializerSyntax(string pValue, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)
         {
             Value = pValue;
             Struct = pStruct;
+            Arguments = pArguments;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            var v = pContext.Locals.GetVariable(Value, out bool p);
+            LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
+            arguments[0] = pContext.Locals.GetVariable(Value, out bool p);
+
+            for(int i= 0; i < Arguments.Count; i++)
+            {
+                arguments[i + 1] = Arguments[i].Emit(pContext);
+            }
 
             //Call constructor for all structs
-            LLVM.BuildCall(pContext.Builder, pContext.GetMethod(Type.GetConstructor()), new LLVMValueRef[] { v }, "");
+            var m = Type.GetConstructor();
+            LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "");
             return default;
         }
     }

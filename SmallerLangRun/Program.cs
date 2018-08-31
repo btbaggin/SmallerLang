@@ -10,6 +10,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Do struct poly after type inference?
          * Set multiple variables from single assignment?
          * imports
          * yield statement?

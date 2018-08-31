@@ -23,24 +23,36 @@ namespace SmallerLang.Syntax
         {
             System.Diagnostics.Debug.Assert(_definition.MangledName != null);
 
-            LLVMValueRef[] values = new LLVMValueRef[Arguments.Count];
+            LLVMValueRef[] values = null;
+            int start = 0;
+            if (pContext.MemberAccessStack.Count > 0)
+            {
+                values = new LLVMValueRef[Arguments.Count + 1];
+                values[0] = pContext.MemberAccessStack.Peek();
+                start = 1;
+            }
+            else
+            {
+                values = new LLVMValueRef[Arguments.Count];
+            }
+            
             for (int i = 0; i < Arguments.Count; i++)
             {
-                values[i] = Arguments[i].Emit(pContext);
-                var op = values[i].GetInstructionOpcode();
+                values[start + i] = Arguments[i].Emit(pContext);
+                var op = values[start + i].GetInstructionOpcode();
 
                 //For arrays we have the load the pointer reference
                 if (!Arguments[i].Type.IsArray && op == LLVMOpcode.LLVMGetElementPtr)
                 {
-                    values[i] = LLVM.BuildLoad(pContext.Builder, values[i], "argument_" + i.ToString());
+                    values[start + i] = LLVM.BuildLoad(pContext.Builder, values[start + i], "argument_" + i.ToString());
                 }
 
-                //Implicit any derived types
+                //Implicitly cast any derived types
                 if(_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {
                     var t = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i]);
-                    Utils.LlvmHelper.MakePointer(values[i], ref t);
-                    values[i] = LLVM.BuildBitCast(pContext.Builder, values[i], t, "");
+                    Utils.LlvmHelper.MakePointer(values[start + i], ref t);
+                    values[start + i] = LLVM.BuildBitCast(pContext.Builder, values[start + i], t, "");
                 }
             }
 

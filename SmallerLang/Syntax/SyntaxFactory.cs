@@ -93,14 +93,14 @@ namespace SmallerLang.Syntax
             return new MethodSyntax(pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static StructSyntax Struct(string pName, string pInherits, IList<TypedIdentifierSyntax> pFields, IList<ExpressionSyntax> pDefaults, IList<string> pTypeParameters)
+        public static StructSyntax Struct(string pName, string pInherits, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<ExpressionSyntax> pDefaults, IList<string> pTypeParameters)
         {
-            return new StructSyntax(pName, pInherits, pFields, pDefaults, pTypeParameters);
+            return new StructSyntax(pName, pInherits, pMethods, pFields, pDefaults, pTypeParameters);
         }
 
-        public static StructInitializerSyntax StructInitializer(string pValue, TypeSyntax pStruct)
+        public static StructInitializerSyntax StructInitializer(string pValue, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)
         {
-            return new StructInitializerSyntax(pValue, pStruct);
+            return new StructInitializerSyntax(pValue, pStruct, pArguments);
         }
 
         public static MethodCallSyntax MethodCall(string pName, IList<ExpressionSyntax> pArguments)
@@ -186,6 +186,11 @@ namespace SmallerLang.Syntax
         public static ItSyntax It()
         {
             return new ItSyntax();
+        }
+
+        public static SelfSyntax Self()
+        {
+            return new SelfSyntax();
         }
 
         public static DiscardSyntax Discard()

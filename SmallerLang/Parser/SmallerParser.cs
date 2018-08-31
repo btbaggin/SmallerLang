@@ -19,6 +19,8 @@ namespace SmallerLang.Parser
         readonly ITokenStream _stream;
         ReadOnlyMemory<char> _source;
         readonly SpanManager _spans;
+        private bool _allowIt;
+        private bool _allowSelf;
 
         public SmallerParser(ITokenStream pStream, IErrorReporter pError)
         {
@@ -153,26 +155,41 @@ namespace SmallerLang.Parser
 
                 List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
                 List<ExpressionSyntax> defaults = new List<ExpressionSyntax>();
+                List<MethodSyntax> methods = new List<MethodSyntax>();
 
                 Expect(TokenType.LeftBrace);
                 IgnoreNewlines();
                 //Struct fields
                 while(!PeekAndExpect(TokenType.RightBrace))
                 {
-                    var i = ParseTypedIdentifier();
-
-                    ExpressionSyntax def = null;
-                    if(PeekAndExpect(TokenType.Equals))
+                    if(_stream.Peek(1, out Token tok))
                     {
-                        //Default (if applicable)
-                        def = ParseExpression();
+                        switch(tok.Type)
+                        {
+                            case TokenType.ColonColon:
+                                _allowSelf = true;
+                                methods.Add(ParseMethod());
+                                _allowSelf = false;
+                                break;
+
+                            default:
+                                var i = ParseTypedIdentifier();
+
+                                ExpressionSyntax def = null;
+                                if (PeekAndExpect(TokenType.Equals))
+                                {
+                                    //Default (if applicable)
+                                    def = ParseExpression();
+                                }
+                                fields.Add(i);
+                                defaults.Add(def);
+                                break;
+                        }
                     }
                     IgnoreNewlines();
-                    fields.Add(i);
-                    defaults.Add(def);
                 }
 
-                return SyntaxFactory.Struct(name, inherit, fields, defaults, genericTypeParms).SetSpan<StructSyntax>(t);
+                return SyntaxFactory.Struct(name, inherit, methods, fields, defaults, genericTypeParms).SetSpan<StructSyntax>(t);
             }
         }
 
@@ -296,13 +313,23 @@ namespace SmallerLang.Parser
                 else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out type);
                 else Expect(TokenType.Identifier, out type);
 
+                List<TypeSyntax> genericArgs = new List<TypeSyntax>();
+                if(PeekAndExpect(TokenType.LessThan))
+                {
+                    do
+                    {
+                        genericArgs.Add(ParseType());
+                    } while (PeekAndExpect(TokenType.Comma));
+                    Expect(TokenType.GreaterThan);
+                }
+
                 //Check for array types
                 if (PeekAndExpect(TokenType.LeftBracket))
                 {
                     Expect(TokenType.RightBracket);
                     type += "[]";
                 }
-                return SyntaxFactory.Type(type, new List<TypeSyntax>()).SetSpan<TypeSyntax>(t); //TODO actually do this
+                return SyntaxFactory.Type(type, genericArgs).SetSpan<TypeSyntax>(t);
             }
         }
 
@@ -365,6 +392,7 @@ namespace SmallerLang.Parser
 
                     case TokenType.Identifier:
                     case TokenType.It:
+                    case TokenType.Self:
                         //Assignment with multiple identifiers is only allowed as a separate statement
                         node = ParseExpressionWithFullAssignment();
                         break;
@@ -446,17 +474,16 @@ namespace SmallerLang.Parser
             {
                 if (PeekAndExpect(TokenType.New))
                 {
-                    Expect(TokenType.Identifier, out string type);
-                    List<TypeSyntax> genericArgs = new List<TypeSyntax>();
-                    if(PeekAndExpect(TokenType.LeftParen))
+                    var type = ParseType();
+                    Expect(TokenType.LeftParen);
+                    List<ExpressionSyntax> arguments = new List<ExpressionSyntax>();
+                    do
                     {
-                        do
-                        {
-                            genericArgs.Add(ParseType());
-                        } while (PeekAndExpect(TokenType.Comma));
-                        Expect(TokenType.RightParen);
-                    }
-                    return SyntaxFactory.StructInitializer(pIdentifier, SyntaxFactory.Type(type, genericArgs)).SetSpan<StructInitializerSyntax>(t);
+                        arguments.Add(ParseExpression());
+                    } while (PeekAndExpect(TokenType.Comma));
+                    Expect(TokenType.RightParen);
+
+                    return SyntaxFactory.StructInitializer(pIdentifier, type, arguments).SetSpan<StructInitializerSyntax>(t);
                 }
                 return null;
             }
@@ -628,7 +655,6 @@ namespace SmallerLang.Parser
             }
         }
 
-        private bool _allowIt;
         private CaseSyntax ParseCase()
         {
             using (SpanTracker t = _spans.Create())
@@ -981,11 +1007,10 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
-                if (Peek(TokenType.Identifier))
+                IdentifierSyntax e = null;
+                if (_allowSelf && PeekAndExpect(TokenType.Self)) e = SyntaxFactory.Self();
+                else if (PeekAndExpect(TokenType.Identifier, out string i))
                 {
-                    Expect(TokenType.Identifier, out string i);
-
-                    IdentifierSyntax e = null;
                     switch (Current.Type)
                     {
                         case TokenType.LeftParen:
@@ -999,15 +1024,15 @@ namespace SmallerLang.Parser
                             e = SyntaxFactory.Identifier(i);
                             break;
                     }
-
-                    if(PeekAndExpect(TokenType.Period))
-                    {
-                        e = SyntaxFactory.MemberAccess(e, ParseFullIdentifier());
-                    }
-
-                    return e.SetSpan<IdentifierSyntax>(t);
                 }
-                return null;
+                else return null;
+
+                if(PeekAndExpect(TokenType.Period))
+                {
+                    e = SyntaxFactory.MemberAccess(e, ParseFullIdentifier());
+                }
+
+                return e.SetSpan<IdentifierSyntax>(t);
             }
         }
 
@@ -1067,7 +1092,7 @@ namespace SmallerLang.Parser
             if (!_stream.EOF && Current.Type == pSymbol)
             {
                 string value;
-                if (Current.Value.Length == 0) value = _source.Slice(_stream.SourceIndex - Current.Length, Current.Length).ToString();
+                if (Current.Value.Length == 0) value = _source.Slice(_stream.SourceIndex, Current.Length).ToString();
                 else value = Current.Value.ToString();
 
                 _stream.MoveNext();

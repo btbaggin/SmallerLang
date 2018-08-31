@@ -24,6 +24,7 @@ namespace SmallerLang
         Defer,
         Cast,
         Enum,
+        Self,
 
         //Struct queries
         LengthOf,

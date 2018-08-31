@@ -19,6 +19,10 @@ namespace SmallerLang.Emitting
 
         public VariableCache<LLVMValueRef> Locals { get; private set; }
 
+        internal SmallType CurrentStruct { get; set; }
+
+        internal Stack<LLVMValueRef> MemberAccessStack { get; }
+
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
 
@@ -32,6 +36,7 @@ namespace SmallerLang.Emitting
             _deferredStatements = new Stack<List<Syntax.SyntaxNode>>();
             Builder = LLVM.CreateBuilder();
             Locals = new VariableCache<LLVMValueRef>();
+            MemberAccessStack = new Stack<LLVMValueRef>();
         }
 
         #region Method functionality
@@ -44,7 +49,7 @@ namespace SmallerLang.Emitting
             else
             {
                 LLVMTypeRef[] types = new LLVMTypeRef[pMethod.ReturnValues.Count];
-                for(int i = 0; i < types.Length; i++)
+                for (int i = 0; i < types.Length; i++)
                 {
                     types[i] = SmallTypeCache.GetLLVMType(pMethod.ReturnValues[i].Type);
                 }
@@ -52,12 +57,26 @@ namespace SmallerLang.Emitting
                 SmallTypeCache.SetLLVMType(pMethod.Type.Name, ret);
             }
 
-            //Get parameter types
-            LLVMTypeRef[] parmTypes = new LLVMTypeRef[pMethod.Parameters.Count];
+            //If we are emitting a struct method we need to add "self" as a parameter
             SmallType[] originalTypes = new SmallType[pMethod.Parameters.Count];
+            LLVMTypeRef[] parmTypes = null;
+            int start = 0;
+            if (CurrentStruct != null)
+            {
+                parmTypes = new LLVMTypeRef[pMethod.Parameters.Count + 1];
+                parmTypes[0] = LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(CurrentStruct), 0);
+                pName = CurrentStruct.Name + "___" + pName;
+                start = 1;
+            }
+            else
+            {
+                parmTypes = new LLVMTypeRef[pMethod.Parameters.Count];
+            }
+
+            //Get parameter types
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
-                parmTypes[i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type);
+                parmTypes[start + i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type);
                 if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[i] = LLVMTypeRef.PointerType(parmTypes[i], 0);
                 originalTypes[i] = pMethod.Parameters[i].Type;
             }
@@ -91,11 +110,20 @@ namespace SmallerLang.Emitting
             var b = LLVM.AppendBasicBlock(f, pName + "body");
             LLVM.PositionBuilderAtEnd(Builder, b);
 
+            int start = 0;
+            if(CurrentStruct != null)
+            {
+                start = 1;
+                LLVMValueRef p = LLVM.GetParam(f, 0);
+                LLVM.SetValueName(p, "self");
+                Locals.DefineParameter("self", p);
+            }
+
             //Set parameter names and define in scope
             for (int i = 0; i < pNode.Parameters.Count; i++)
             {
                 string name = pNode.Parameters[i].Value;
-                LLVMValueRef p = LLVM.GetParam(f, (uint)i);
+                LLVMValueRef p = LLVM.GetParam(f, (uint)(i + start));
                 LLVM.SetValueName(p, name);
 
                 Debug.Assert(!Locals.IsVariableDefinedInScope(name), $"Parameter {name} already defined");
@@ -106,19 +134,26 @@ namespace SmallerLang.Emitting
             return f;
         }
 
-        public void FinishMethod(LLVMValueRef f, bool pScope = true)
+        public void FinishMethod(LLVMValueRef f)
         {
-            if(pScope) Locals.RemoveScope();
+            Locals.RemoveScope();
+            ValidateMethod(f);
+        }
+
+        internal LLVMValueRef GetMethod(string pName)
+        {
+            var f = LLVM.GetNamedFunction(CurrentModule, pName);
+            Debug.Assert(f.Pointer != IntPtr.Zero);
+            return f;
+        }
+
+        internal void ValidateMethod(LLVMValueRef f)
+        {
             if (LLVM.VerifyFunction(f, LLVMVerifierFailureAction.LLVMPrintMessageAction).Value != 0)
             {
                 LLVM.DumpValue(f);
             }
             LLVM.RunFunctionPassManager(_passManager, f);
-        }
-
-        internal LLVMValueRef GetMethod(string pName)
-        {
-            return LLVM.GetNamedFunction(CurrentModule, pName);
         }
         #endregion
 
