@@ -37,7 +37,8 @@ namespace SmallerLang.Syntax
 
             //Call constructor for all structs
             var m = Type.GetConstructor();
-            LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "");
+            LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "ctor");
+
             return default;
         }
     }

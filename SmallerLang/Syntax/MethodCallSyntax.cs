@@ -25,6 +25,7 @@ namespace SmallerLang.Syntax
 
             LLVMValueRef[] values = null;
             int start = 0;
+            //If we are calling an instance method, we need to add the "self" parameter
             if (pContext.MemberAccessStack.Count > 0)
             {
                 values = new LLVMValueRef[Arguments.Count + 1];

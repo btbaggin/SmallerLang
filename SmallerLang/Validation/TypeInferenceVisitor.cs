@@ -136,7 +136,7 @@ namespace SmallerLang.Validation
                     }
                 }
 
-                if (!type.HasDefinedConstructor()) type.SetConstructor(new MethodDefinition(s.Name + ".ctor"));
+                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
             }
 
             //Infer methods

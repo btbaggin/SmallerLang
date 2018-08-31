@@ -141,6 +141,11 @@ namespace SmallerLang
             _constructorSet = true;
         }
 
+        internal void SetDefaultConstructor()
+        {
+            _constructor = new Emitting.MethodDefinition(Name + ".ctor");
+        }
+
         internal bool HasDefinedConstructor()
         {
             return _constructorSet;

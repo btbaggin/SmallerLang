@@ -15,7 +15,6 @@ namespace SmallerLangRun
          * imports
          * yield statement?
          * strings
-         * byref / byval
          * Generics
         */
         static void Main(string[] args)
@@ -42,7 +41,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\Poly.sml";
+            var prog = @"C:\Test\SML\test.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

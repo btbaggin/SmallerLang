@@ -137,13 +137,16 @@ namespace SmallerLang.Validation
         {
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
-            var ctor = pNode.Struct.Type.GetConstructor().Name;
-            MethodCache.FindMethod(out MethodDefinition m, pNode.Struct.Type, ctor, types);
-            for(int i = 0; i < m.ArgumentTypes.Count; i++)
+            if(pNode.Struct.Type.HasDefinedConstructor())
             {
-                if (!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
+                var ctor = pNode.Struct.Type.GetConstructor().Name;
+                MethodCache.FindMethod(out MethodDefinition m, pNode.Struct.Type, ctor, types);
+                for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
-                    _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    if (!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
+                    {
+                        _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    }
                 }
             }
 

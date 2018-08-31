@@ -477,10 +477,13 @@ namespace SmallerLang.Parser
                     var type = ParseType();
                     Expect(TokenType.LeftParen);
                     List<ExpressionSyntax> arguments = new List<ExpressionSyntax>();
-                    do
+                    if(!Peek(TokenType.RightParen))
                     {
-                        arguments.Add(ParseExpression());
-                    } while (PeekAndExpect(TokenType.Comma));
+                        do
+                        {
+                            arguments.Add(ParseExpression());
+                        } while (PeekAndExpect(TokenType.Comma));
+                    }
                     Expect(TokenType.RightParen);
 
                     return SyntaxFactory.StructInitializer(pIdentifier, type, arguments).SetSpan<StructInitializerSyntax>(t);
@@ -772,8 +775,11 @@ namespace SmallerLang.Parser
 
                     //new only allowed in assignment and declaration statements
                     ExpressionSyntax right = ParseExpression();
-                    var newStruct = ParseStructInitializer(((IdentifierSyntax)e).Value); //TODO hacky. make work with multiple?
-                    if (newStruct != null) right = newStruct;
+                   if(typeof(IdentifierSyntax).IsInstanceOfType(e))
+                    {
+                        var newStruct = ParseStructInitializer(((IdentifierSyntax)e).Value);
+                        if (newStruct != null) right = newStruct;
+                    }
 
                     if (right == null)
                     {
