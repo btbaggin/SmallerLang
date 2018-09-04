@@ -35,7 +35,7 @@ namespace SmallerLang.Parser
 
         internal int GetEndIndex()
         {
-            return _stream.SourceIndex - _stream.Current.Length;
+            return _stream.SourceIndex;
         }
 
         internal string MapCurrentToSource()

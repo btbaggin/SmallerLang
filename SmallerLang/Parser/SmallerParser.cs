@@ -1014,7 +1014,12 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 IdentifierSyntax e = null;
-                if (_allowSelf && PeekAndExpect(TokenType.Self)) e = SyntaxFactory.Self();
+                if (PeekAndExpect(TokenType.Self))
+                {
+                    if (!_allowSelf)
+                        throw ReportError("Self only allowed within structs", t);
+                    e = SyntaxFactory.Self();
+                }
                 else if (_stream.Peek(1, out Token tok))
                 {
                     switch (tok.Type)
