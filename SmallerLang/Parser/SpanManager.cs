@@ -9,18 +9,21 @@ namespace SmallerLang.Parser
 {
     internal class SpanManager
     {
-        readonly Stack<SpanTracker> _positions;
+        readonly Stack<(int Count, SpanTracker Span)> _positions;
         readonly ITokenStream _stream;
 
         public TextSpan Current
         {
-            get { return _positions.Peek(); }
+            get { return _positions.Peek().Span; }
         }
 
         public SpanManager(ITokenStream pStream)
         {
-            _positions = new Stack<SpanTracker>();
+            _positions = new Stack<(int, SpanTracker)>();
             _stream = pStream;
+
+            //Push a dummy tracker into the stack in case we access Current before creating trackers
+            _positions.Push((0, new SpanTracker(-1, 0, 0, this)));
         }
 
         public SpanTracker Create()
@@ -28,8 +31,22 @@ namespace SmallerLang.Parser
             int start = _stream.SourceIndex;
             int line = _stream.SourceLine;
             int column = _stream.SourceColumn;
-            SpanTracker s = new SpanTracker(start, line, column, this);
-            _positions.Push(s);
+
+            SpanTracker s;
+            //If we are starting at the same point, just increment the reference counter instead of allocating a new tracker
+            if (start == Current.Start)
+            {
+                var entry = _positions.Pop();
+                entry.Count++;
+                _positions.Push(entry);
+                s = entry.Span;
+            }
+            else
+            {
+                s = new SpanTracker(start, line, column, this);
+                _positions.Push((1, s));
+            }
+            
             return s;
         }
 
@@ -40,13 +57,21 @@ namespace SmallerLang.Parser
 
         internal string MapCurrentToSource()
         {
-            TextSpan t = _positions.Peek();
-            return _stream.Source.Substring(t.Start, t.Length);
+            return _stream.Source.Substring(Current.Start, Current.Length);
         }
 
         internal void Pop()
         {
-            if (_positions.Count > 0) _positions.Pop();
+            if (_positions.Count > 0)
+            {
+                var entry = _positions.Pop();
+                if (entry.Count > 1)
+                {
+                    //If there is still more than one reference to this object, just decrement the counter
+                    entry.Count--;
+                    _positions.Push(entry);
+                }
+            }
         }
     }
 
