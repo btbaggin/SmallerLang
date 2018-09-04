@@ -123,7 +123,7 @@ namespace SmallerLang.Validation
                     if (!found)
                     {
                         var m = MethodCache.AddMethod(type, method.Name, method);
-                        if (method.Annotation == "new")
+                        if (method.Annotation == Utils.KeyAnnotations.Constructor)
                         {
                             type.SetConstructor(m);
                         }
@@ -331,7 +331,11 @@ namespace SmallerLang.Validation
 
             //Create a new one for the struct fields
             _currentType = pNode.Identifier.Type;
-            _locals = _locals.Copy();
+
+            //For method calls we need to allow existing variables, but member access should only allow the struct's fields
+            if (pNode.Value.GetType() == typeof(MethodCallSyntax)) _locals = _locals.Copy();
+            else _locals = new VariableCache<SmallType>();
+
             _locals.AddScope();
             foreach (var f in _currentType.GetFields())
             {
@@ -339,7 +343,6 @@ namespace SmallerLang.Validation
                 {
                     _locals.DefineVariableInScope(f.Name, f.Type);
                 }
-                //TODO overwrite?
             }
 
             Visit((dynamic)pNode.Value);

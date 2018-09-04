@@ -43,7 +43,7 @@ namespace SmallerLang.Validation
         {
             //Validate that one and only 1 method is annotated with "run"
             //This method must contain no parameters and return no values
-            if (pNode.Annotation == "run")
+            if (pNode.Annotation == Utils.KeyAnnotations.RunMethod)
             {
                 if (_runMethod != null)
                 {

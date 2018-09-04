@@ -1015,23 +1015,26 @@ namespace SmallerLang.Parser
             {
                 IdentifierSyntax e = null;
                 if (_allowSelf && PeekAndExpect(TokenType.Self)) e = SyntaxFactory.Self();
-                else if (PeekAndExpect(TokenType.Identifier, out string i))
+                else if (_stream.Peek(1, out Token tok))
                 {
-                    switch (Current.Type)
+                    switch (tok.Type)
                     {
                         case TokenType.LeftParen:
-                            e = ParseMethodCall(i);
+                            e = ParseMethodCall();
                             break;
 
                         case TokenType.LeftBracket:
-                            e = ParseArrayAccess(i);
+                            e = ParseArrayAccess();
                             break;
+
                         default:
-                            e = SyntaxFactory.Identifier(i);
+                            e = ParseIdentifier();
                             break;
                     }
                 }
-                else return null;
+
+                //Can be null for cases like struct initializers
+                if (e == null) return null;
 
                 if(PeekAndExpect(TokenType.Period))
                 {
@@ -1042,10 +1045,11 @@ namespace SmallerLang.Parser
             }
         }
 
-        private IdentifierSyntax ParseMethodCall(string pMethodName)
+        private IdentifierSyntax ParseMethodCall()
         {
             using (SpanTracker t = _spans.Create())
             {
+                Expect(TokenType.Identifier, out string pName);
                 Expect(TokenType.LeftParen);
                 List<ExpressionSyntax> arguments = new List<ExpressionSyntax>();
                 if (!Peek(TokenType.RightParen))
@@ -1060,14 +1064,15 @@ namespace SmallerLang.Parser
                 }
                 Expect(TokenType.RightParen);
 
-                return SyntaxFactory.MethodCall(pMethodName, arguments).SetSpan<MethodCallSyntax>(t);
+                return SyntaxFactory.MethodCall(pName, arguments).SetSpan<MethodCallSyntax>(t);
             }
         }
 
-        private IdentifierSyntax ParseArrayAccess(string pIdentifier)
+        private IdentifierSyntax ParseArrayAccess()
         {
             using (SpanTracker t = _spans.Create())
             {
+                Expect(TokenType.Identifier, out string pIdentifier);
                 Expect(TokenType.LeftBracket);
                 var e = ParseExpression();
                 if (e == null) ReportError("Expecting expression", t);
