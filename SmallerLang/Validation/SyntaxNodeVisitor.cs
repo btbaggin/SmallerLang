@@ -217,7 +217,6 @@ namespace SmallerLang.Validation
             for(int i = 0; i < pNode.Fields.Count; i++)
             {
                 Visit(pNode.Fields[i]);
-                if (pNode.Defaults[i] != null) Visit((dynamic)pNode.Defaults[i]);
             }
 
             foreach(var m in pNode.Methods)

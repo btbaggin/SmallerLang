@@ -132,14 +132,28 @@ namespace SmallerLang
 
         public static LLVMValueRef GetLLVMDefault(SmallType pType, EmittingContext pContext)
         {
-            if(pType == Boolean) return pContext.GetInt1(0);
+            if (pType == Boolean) return pContext.GetInt1(0);
             else if (pType == Int) return pContext.GetInt(0);
             else if (pType == Short) return pContext.GetShort(0);
             else if (pType == Long) return pContext.GetLong(0);
-            else if(pType == Float) return pContext.GetFloat(0);
+            else if (pType == Float) return pContext.GetFloat(0);
             else if (pType == Double) return pContext.GetDouble(0);
             else if (pType == String) return pContext.GetString(null);
-            else if(pType.IsArray) return pContext.GetArray(pType.GetElementType(), 0);
+            else if (pType.IsArray) return pContext.GetArray(pType.GetElementType(), 0);
+            else if (pType.IsStruct)
+            {
+                var var = LLVM.BuildAlloca(pContext.Builder, GetLLVMType(pType), "struct_temp");
+
+                var m = pType.GetConstructor();
+                LLVMValueRef[] arguments = new LLVMValueRef[m.ArgumentTypes.Count + 1];
+                arguments[0] = var;
+                for (int i = 0; i < m.ArgumentTypes.Count; i++)
+                {
+                    arguments[i + 1] = GetLLVMDefault(m.ArgumentTypes[i], pContext);
+                }
+                LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "");
+                return LLVM.BuildLoad(pContext.Builder, var, "");
+            }
 
             throw new ArgumentException("Unknown type " + pType.ToString());
         }

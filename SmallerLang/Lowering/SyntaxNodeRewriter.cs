@@ -226,12 +226,10 @@ namespace SmallerLang.Validation
         protected virtual SyntaxNode VisitStructSyntax(StructSyntax pNode)
         {
             List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count);
-            List<ExpressionSyntax> defaults = new List<ExpressionSyntax>(pNode.Defaults.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
             for (int i = 0; i < pNode.Fields.Count; i++)
             {
                 fields.Add((TypedIdentifierSyntax)Visit(pNode.Fields[i]));
-                defaults.Add(Visit((dynamic)pNode.Defaults[i]));
             }
 
             foreach(var m in pNode.Methods)
@@ -239,7 +237,7 @@ namespace SmallerLang.Validation
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, methods, fields, defaults, pNode.TypeParameters);
+            return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, methods, fields, pNode.TypeParameters);
         }
 
         protected virtual SyntaxNode VisitElseSyntax(ElseSyntax pNode)

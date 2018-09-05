@@ -154,7 +154,6 @@ namespace SmallerLang.Parser
                 Ignore(TokenType.Newline);
 
                 List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
-                List<ExpressionSyntax> defaults = new List<ExpressionSyntax>();
                 List<MethodSyntax> methods = new List<MethodSyntax>();
 
                 Expect(TokenType.LeftBrace);
@@ -173,23 +172,14 @@ namespace SmallerLang.Parser
                                 break;
 
                             default:
-                                var i = ParseTypedIdentifier();
-
-                                ExpressionSyntax def = null;
-                                if (PeekAndExpect(TokenType.Equals))
-                                {
-                                    //Default (if applicable)
-                                    def = ParseExpression();
-                                }
-                                fields.Add(i);
-                                defaults.Add(def);
+                                fields.Add(ParseTypedIdentifier());
                                 break;
                         }
                     }
                     IgnoreNewlines();
                 }
 
-                return SyntaxFactory.Struct(name, inherit, methods, fields, defaults, genericTypeParms).SetSpan<StructSyntax>(t);
+                return SyntaxFactory.Struct(name, inherit, methods, fields, genericTypeParms).SetSpan<StructSyntax>(t);
             }
         }
 

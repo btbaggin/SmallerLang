@@ -93,9 +93,9 @@ namespace SmallerLang.Syntax
             return new MethodSyntax(pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static StructSyntax Struct(string pName, string pInherits, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<ExpressionSyntax> pDefaults, IList<string> pTypeParameters)
+        public static StructSyntax Struct(string pName, string pInherits, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
         {
-            return new StructSyntax(pName, pInherits, pMethods, pFields, pDefaults, pTypeParameters);
+            return new StructSyntax(pName, pInherits, pMethods, pFields, pTypeParameters);
         }
 
         public static StructInitializerSyntax StructInitializer(string pValue, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)

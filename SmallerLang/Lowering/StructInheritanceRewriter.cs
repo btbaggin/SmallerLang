@@ -60,14 +60,12 @@ namespace SmallerLang.Validation
                     if (_module.Structs[i].Name == pNode.Inherits)
                     {
                         fields.AddRange(_module.Structs[i].Fields);
-                        defaults.AddRange(_module.Structs[i].Defaults);
                         break;
                     }
                 }
                 fields.AddRange(pNode.Fields);
-                defaults.AddRange(pNode.Defaults);
 
-                return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, pNode.Methods, fields, defaults, pNode.TypeParameters);
+                return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, pNode.Methods, fields, pNode.TypeParameters);
             }
 
             return base.VisitStructSyntax(pNode);
@@ -153,7 +151,7 @@ namespace SmallerLang.Validation
                     methods.Add(mNew);
                 }
 
-                _polydStructs.Add(structName.ToString(), SyntaxFactory.Struct(structName.ToString(), pNode.Inherits, methods, fields, pNode.Defaults.ToList(), new List<string>()));
+                _polydStructs.Add(structName.ToString(), SyntaxFactory.Struct(structName.ToString(), pNode.Inherits, methods, fields, new List<string>()));
             }
 
             List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pInitializer.Arguments.Count);

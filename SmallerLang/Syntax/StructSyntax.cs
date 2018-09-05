@@ -18,22 +18,18 @@ namespace SmallerLang.Syntax
 
         public IList<TypedIdentifierSyntax> Fields { get; private set; }
 
-        public IList<ExpressionSyntax> Defaults { get; private set; }
-
         public IList<string> TypeParameters { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal StructSyntax(string pName, string pInherits, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<ExpressionSyntax> pDefaults, IList<string> pTypeParms)
+        internal StructSyntax(string pName, string pInherits, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParms)
         {
-            System.Diagnostics.Debug.Assert(pFields.Count == pDefaults.Count, "Field and default count do not match");
             System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(pName), "Define name cannot be empty");
 
             Name = pName;
             Inherits = pInherits;
             Methods = pMethods;
             Fields = pFields;
-            Defaults = pDefaults;
             TypeParameters = pTypeParms;
         }
 
@@ -75,9 +71,9 @@ namespace SmallerLang.Syntax
             LLVMValueRef p = LLVM.GetParam(func, 0);
 
             //Emit field assignments
-            for (int i = 0; i < Defaults.Count; i++)
+            for (int i = 0; i < Fields.Count; i++)
             {
-                LLVMValueRef value = Defaults[i] != null ? Defaults[i].Emit(pContext) : SmallTypeCache.GetLLVMDefault(pType.GetFieldType(Fields[i].Value), pContext);
+                LLVMValueRef value = SmallTypeCache.GetLLVMDefault(pType.GetFieldType(Fields[i].Value), pContext);
 
                 int f = pType.GetFieldIndex(Fields[i].Value);
                 var a = LLVM.BuildInBoundsGEP(pContext.Builder, p, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Fields[i].Value);

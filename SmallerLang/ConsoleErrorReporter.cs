@@ -41,13 +41,13 @@ namespace SmallerLang
 
         private void DisplayError(string pError, TextSpan? pSpan, bool pErrorType)
         {
+            Console.ForegroundColor = pErrorType ? ConsoleColor.Red : ConsoleColor.Yellow;
+            if (pErrorType) Console.Write("Error occurred ");
+            else Console.Write("Warning occurred ");
+
             if (pSpan.HasValue)
             {
                 TextSpan s = pSpan.Value;
-                Console.ForegroundColor = pErrorType ? ConsoleColor.Red : ConsoleColor.Yellow;
-
-                if(pErrorType) Console.Write("Error occurred ");
-                else Console.Write("Warning occurred ");
                 Console.WriteLine($"at line: {s.Line.ToString()} column: {s.Column.ToString()}");
 
                 Console.ForegroundColor = ConsoleColor.White;
@@ -56,10 +56,6 @@ namespace SmallerLang
             }
             else
             {
-                Console.ForegroundColor = pErrorType ? ConsoleColor.Red : ConsoleColor.Yellow;
-                if (pErrorType) Console.WriteLine("Error occurred ");
-                else Console.WriteLine("Warning occurred ");
-
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine(pError);
             }

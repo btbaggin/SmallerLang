@@ -24,6 +24,7 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            //Check if this is a "static" method
             if(!SmallTypeCache.IsTypeDefined(Identifier.Value))
             {
                 var i = Identifier.Emit(pContext);
