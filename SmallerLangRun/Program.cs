@@ -10,6 +10,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Assign nested structs t.Start = new Point(1, 1)
          * Do struct poly after type inference?
          * Set multiple variables from single assignment?
          * imports

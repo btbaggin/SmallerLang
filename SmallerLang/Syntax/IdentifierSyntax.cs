@@ -24,6 +24,13 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            //We are in a member access, just push the index of this field onto the stack
+            if(pContext.AccessStack.Count > 0)
+            {
+                var i = pContext.AccessStack.Peek().Type.GetFieldIndex(Value);
+                return pContext.GetInt(i);
+            }
+
             System.Diagnostics.Debug.Assert(pContext.Locals.IsVariableDefined(Value), "Variable " + Value + " not defined in scope");
 
             var v = pContext.Locals.GetVariable(Value, out bool parameter);

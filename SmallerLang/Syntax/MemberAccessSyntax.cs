@@ -27,21 +27,27 @@ namespace SmallerLang.Syntax
             //Check if this is a "static" method
             if(!SmallTypeCache.IsTypeDefined(Identifier.Value))
             {
-                var i = Identifier.Emit(pContext);
-                pContext.MemberAccessStack.Push(i);
-
-                LLVMValueRef v;
-                if(Value.GetType() == typeof(MethodCallSyntax))
+                LLVMValueRef i = Identifier.Emit(pContext);
+                pContext.AccessStack.Push(new MemberAccessItem(i, Identifier.Type));
+                    
+                LLVMValueRef v = Value.Emit(pContext);
+                //Method calls and nested member access will be taken care of by their child most node
+                if(Value.GetType() != typeof(MethodCallSyntax) &&
+                    Value.GetType() != typeof(MemberAccessSyntax))
                 {
-                    v = Value.Emit(pContext);
-                }
-                else
-                {
-                    int f = Identifier.Type.GetFieldIndex(Value.Value);
-                    v = LLVM.BuildInBoundsGEP(pContext.Builder, i, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Value.Value);
+                    List<LLVMValueRef> indexes = new List<LLVMValueRef>(pContext.AccessStack.Count);
+                    indexes.Add(pContext.GetInt(0));
+
+                    for (int j = pContext.AccessStack.Count - 1; j > 0; j--)
+                    {
+                        indexes.Add(pContext.AccessStack.PeekAt(j).Value);
+                    }
+                    indexes.Add(v);
+                    i = pContext.AccessStack.PeekAt(0).Value;
+                    v = LLVM.BuildInBoundsGEP(pContext.Builder, i, indexes.ToArray(), "field_" + Value.Value);
                 }
 
-                pContext.MemberAccessStack.Pop();
+                pContext.AccessStack.Pop();
                 return v;
             }
             else

@@ -24,12 +24,17 @@ namespace SmallerLang.Syntax
             System.Diagnostics.Debug.Assert(_definition.MangledName != null);
 
             LLVMValueRef[] arguments = null;
+            MemberAccessItem? member = null;
             int start = 0;
             //If we are calling an instance method, we need to add the "self" parameter
-            if (pContext.MemberAccessStack.Count > 0)
+            if (pContext.AccessStack.Count > 0)
             {
                 arguments = new LLVMValueRef[Arguments.Count + 1];
-                arguments[0] = pContext.MemberAccessStack.Peek();
+
+                //Save the current member so we can push it back when we are done with the method call.
+                //We pop this because we are no longer in a member access when emitting the arguments
+                member = pContext.AccessStack.Pop();
+                arguments[0] = member.Value.Value;
                 start = 1;
             }
             else
@@ -53,6 +58,8 @@ namespace SmallerLang.Syntax
                     arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], t, "");
                 }
             }
+
+            if(member.HasValue) pContext.AccessStack.Push(member.Value);
 
             return LLVM.BuildCall(pContext.Builder, pContext.GetMethod(_definition.MangledName), arguments, "");
         }
