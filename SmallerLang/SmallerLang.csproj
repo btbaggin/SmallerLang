@@ -202,6 +202,7 @@
     <Compile Include="Syntax\SelectSyntax.cs" />
     <Compile Include="Syntax\SelfSyntax.cs" />
     <Compile Include="Syntax\StructInitializerSyntax.cs" />
+    <Compile Include="Syntax\TypeDefinition.cs" />
     <Compile Include="Utils\KeyAnnotations.cs" />
     <Compile Include="Utils\LLVMHelper.cs" />
     <Compile Include="Validation\ForRewriter.cs" />

@@ -14,13 +14,13 @@ namespace SmallerLang.Syntax
 
         public IList<MethodSyntax> Methods { get; private set; }
 
-        public IList<StructSyntax> Structs { get; private set; }
+        public IList<TypeDefinitionSyntax> Structs { get; private set; }
 
         public IList<EnumSyntax> Enums { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal ModuleSyntax(string pName, IList<MethodSyntax> pMethods, IList<StructSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        internal ModuleSyntax(string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
             Name = pName;
             Methods = pMethods;

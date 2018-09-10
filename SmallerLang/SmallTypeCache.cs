@@ -55,12 +55,12 @@ namespace SmallerLang
             return st;
         }
 
-        internal static SmallType AddStruct(string pType, string pInherits, string[] pFields, SmallType[] pTypes)
+        internal static SmallType AddStruct(string pType, string[] pFields, SmallType[] pTypes)
         {
             System.Diagnostics.Debug.Assert(pFields.Length == pTypes.Length, "Incorrect field definitions");
 
-            var baseType = FromString(pInherits);
-            var st = new SmallType(pType, baseType, pFields, pTypes);
+            //var baseType = FromString(pInherits);
+            var st = new SmallType(pType, null, pFields, pTypes);
             _cache[pType] = (st, default);
             return st;
         }

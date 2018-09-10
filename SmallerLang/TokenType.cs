@@ -25,6 +25,8 @@ namespace SmallerLang
         Cast,
         Enum,
         Self,
+        Trait,
+        Implement,
 
         //Struct queries
         LengthOf,

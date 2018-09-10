@@ -158,7 +158,7 @@ namespace SmallerLang.Emitting
         #endregion
 
         #region Definition functionality
-        public void EmitDefinition(string pName, Syntax.StructSyntax pNode)
+        public void EmitDefinition(string pName, Syntax.TypeDefinitionSyntax pNode)
         {
             //Get field types
             LLVMTypeRef[] types = new LLVMTypeRef[pNode.Fields.Count];

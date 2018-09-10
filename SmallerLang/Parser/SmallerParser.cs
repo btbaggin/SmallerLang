@@ -44,7 +44,7 @@ namespace SmallerLang.Parser
 
             //Module content
             List<MethodSyntax> methods = new List<MethodSyntax>();
-            List<StructSyntax> definitions = new List<StructSyntax>();
+            List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
             List<EnumSyntax> enums = new List<EnumSyntax>();
             try
             {
@@ -53,10 +53,6 @@ namespace SmallerLang.Parser
                     IgnoreNewlines();
                     switch (Current.Type)
                     {
-                        case TokenType.Struct:
-                            definitions.Add(ParseStruct());
-                            break;
-
                         case TokenType.Enum:
                             enums.Add(ParseEnum());
                             break;
@@ -71,6 +67,12 @@ namespace SmallerLang.Parser
 
                         case TokenType.Cast:
                             methods.Add(ParseCastDefinition());
+                            break;
+
+                        case TokenType.Struct:
+                        case TokenType.Trait:
+                        case TokenType.Implement:
+                            definitions.Add(ParseTypeDefinition());
                             break;
 
                         case TokenType.EndOfFile:
@@ -126,12 +128,30 @@ namespace SmallerLang.Parser
             }
         }
 
-        private StructSyntax ParseStruct()
+        private TypeDefinitionSyntax ParseTypeDefinition()
         {
             using (SpanTracker t = _spans.Create())
             {
                 //Struct name
-                Expect(TokenType.Struct);
+                DefinitionTypes type = DefinitionTypes.Unknown;
+                switch (Current.Type)
+                {
+                    case TokenType.Struct:
+                        Expect(TokenType.Struct);
+                        type = DefinitionTypes.Struct;
+                        break;
+
+                    case TokenType.Implement:
+                        Expect(TokenType.Implement);
+                        type = DefinitionTypes.Implement;
+                        break;
+
+                    case TokenType.Trait:
+                        Expect(TokenType.Trait);
+                        type = DefinitionTypes.Trait;
+                        break;
+                }
+
                 Expect(TokenType.Identifier, out string name);
 
                 //Struct generic type args
@@ -146,11 +166,13 @@ namespace SmallerLang.Parser
                     Expect(TokenType.GreaterThan);
                 }
 
-                string inherit = null;
-                if(PeekAndExpect(TokenType.Colon))
+                string implementOn = null;
+                if (type == DefinitionTypes.Implement)
                 {
-                    Expect(TokenType.Identifier, out inherit);
+                    Expect(TokenType.Colon);
+                    Expect(TokenType.Identifier, out implementOn);
                 }
+
                 Ignore(TokenType.Newline);
 
                 List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
@@ -167,7 +189,7 @@ namespace SmallerLang.Parser
                         {
                             case TokenType.ColonColon:
                                 _allowSelf = true;
-                                methods.Add(ParseMethod());
+                                methods.Add(ParseMethod(type != DefinitionTypes.Trait));
                                 _allowSelf = false;
                                 break;
 
@@ -179,7 +201,7 @@ namespace SmallerLang.Parser
                     IgnoreNewlines();
                 }
 
-                return SyntaxFactory.Struct(name, inherit, methods, fields, genericTypeParms).SetSpan<StructSyntax>(t);
+                return SyntaxFactory.TypeDefinition(name, implementOn, type, methods, fields, genericTypeParms).SetSpan<TypeDefinitionSyntax>(t);
             }
         }
 
@@ -245,7 +267,7 @@ namespace SmallerLang.Parser
             }
         }
 
-        private MethodSyntax ParseMethod()
+        private MethodSyntax ParseMethod(bool pExpectBody = true)
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -276,16 +298,54 @@ namespace SmallerLang.Parser
                         returns.Add(ParseType());
                     } while (PeekAndExpect(TokenType.Comma));
                 }
-                Ignore(TokenType.Newline);
 
-                //Method body
-                var body = ParseBlock();
+                BlockSyntax body = null;
+                if(pExpectBody)
+                {
+                    //Method body
+                    Ignore(TokenType.Newline);
+                    body = ParseBlock();
+                }
+                
                 var m = SyntaxFactory.Method(name, returns, parameters, body).SetSpan<MethodSyntax>(t);
 
                 //Annotations!
                 if (PeekAndExpect(TokenType.Annotation, out string annotation)) m.Annotation = annotation;
                 return m;
             }
+        }
+
+        private MethodSyntax ParseMethodHeader()
+        {
+            //Method name
+            Expect(TokenType.Identifier, out string name);
+
+            Expect(TokenType.ColonColon);
+            Expect(TokenType.LeftParen);
+
+            //Method parameters
+            List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>();
+            if (!Peek(TokenType.RightParen))
+            {
+                do
+                {
+                    var i = ParseTypedIdentifier();
+                    parameters.Add(i);
+                } while (PeekAndExpect(TokenType.Comma));
+            }
+            Expect(TokenType.RightParen);
+
+            //Return types
+            List<TypeSyntax> returns = new List<TypeSyntax>();
+            if (PeekAndExpect(TokenType.DashGreater))
+            {
+                do
+                {
+                    returns.Add(ParseType());
+                } while (PeekAndExpect(TokenType.Comma));
+            }
+
+            return SyntaxFactory.Method(name, returns, parameters, null);
         }
 
         private TypeSyntax ParseType()

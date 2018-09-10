@@ -76,8 +76,8 @@ namespace SmallerLang.Validation
                     node = VisitDeclarationSyntax(d);
                     break;
 
-                case StructSyntax d:
-                    node = VisitStructSyntax(d);
+                case TypeDefinitionSyntax d:
+                    node = VisitTypeDefinitionSyntax(d);
                     break;
 
                 case ElseSyntax e:
@@ -223,7 +223,7 @@ namespace SmallerLang.Validation
             return SyntaxFactory.Declaration(variables, Visit((dynamic)pNode.Value));
         }
 
-        protected virtual SyntaxNode VisitStructSyntax(StructSyntax pNode)
+        protected virtual SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
             List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
@@ -237,7 +237,7 @@ namespace SmallerLang.Validation
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, methods, fields, pNode.TypeParameters);
+            return SyntaxFactory.TypeDefinition(pNode.Name, pNode.Implements, pNode.DefinitionType, methods, fields, pNode.TypeParameters);
         }
 
         protected virtual SyntaxNode VisitElseSyntax(ElseSyntax pNode)
@@ -337,10 +337,10 @@ namespace SmallerLang.Validation
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            List<StructSyntax> definitions = new List<StructSyntax>(pNode.Structs.Count);
+            List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>(pNode.Structs.Count);
             foreach (var d in pNode.Structs)
             {
-                definitions.Add((StructSyntax)Visit(d));
+                definitions.Add(Visit((dynamic)d));
             }
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);

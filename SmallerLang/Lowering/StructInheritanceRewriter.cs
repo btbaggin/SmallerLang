@@ -10,17 +10,17 @@ namespace SmallerLang.Validation
     partial class TreeRewriter : SyntaxNodeRewriter
     {
         ModuleSyntax _module;
-        Dictionary<string, StructSyntax> _structsToPoly;
-        Dictionary<string, StructSyntax> _polydStructs;
+        Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
+        Dictionary<string, TypeDefinitionSyntax> _polydStructs;
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             _module = pNode;
-            _structsToPoly = new Dictionary<string, StructSyntax>();
-            _polydStructs = new Dictionary<string, StructSyntax>();
+            _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
+            _polydStructs = new Dictionary<string, TypeDefinitionSyntax>();
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
-            List<StructSyntax> structs = new List<StructSyntax>(pNode.Structs.Count);
+            List<TypeDefinitionSyntax> structs = new List<TypeDefinitionSyntax>(pNode.Structs.Count);
             //Add all enumerations
             foreach (var e in pNode.Enums)
             {
@@ -30,7 +30,7 @@ namespace SmallerLang.Validation
             //Add and mark structs for poly
             foreach (var s in pNode.Structs)
             {
-                var n = (StructSyntax)Visit(s);
+                var n = Visit((dynamic)s);
                 
                 if (s.TypeParameters.Count > 0) _structsToPoly.Add(n.Name, n);
                 else structs.Add(n);
@@ -48,27 +48,27 @@ namespace SmallerLang.Validation
             return SyntaxFactory.Module(pNode.Name, methods, structs, enums);
         }
 
-        protected override SyntaxNode VisitStructSyntax(StructSyntax pNode)
+        protected override SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            //Add any base fields to the inherited stuct
-            if (!string.IsNullOrEmpty(pNode.Inherits))
-            {
-                List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
-                List<ExpressionSyntax> defaults = new List<ExpressionSyntax>();
-                for (int i = 0; i < _module.Structs.Count; i++)
-                {
-                    if (_module.Structs[i].Name == pNode.Inherits)
-                    {
-                        fields.AddRange(_module.Structs[i].Fields);
-                        break;
-                    }
-                }
-                fields.AddRange(pNode.Fields);
+            //TODO Add any base fields to the inherited stuct
+            //if (!string.IsNullOrEmpty(pNode.Inherits))
+            //{
+            //    List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
+            //    List<ExpressionSyntax> defaults = new List<ExpressionSyntax>();
+            //    for (int i = 0; i < _module.Structs.Count; i++)
+            //    {
+            //        if (_module.Structs[i].Name == pNode.Inherits)
+            //        {
+            //            fields.AddRange(_module.Structs[i].Fields);
+            //            break;
+            //        }
+            //    }
+            //    fields.AddRange(pNode.Fields);
 
-                return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, pNode.Methods, fields, pNode.TypeParameters);
-            }
+            //    return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, pNode.Methods, fields, pNode.TypeParameters);
+            //}
 
-            return base.VisitStructSyntax(pNode);
+            return base.VisitTypeDefinitionSyntax(pNode);
         }
 
         protected override SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)
@@ -84,7 +84,7 @@ namespace SmallerLang.Validation
             return base.VisitStructInitializerSyntax(pNode);
         }
 
-        private bool TryPolyStruct(StructSyntax pNode, ref StructInitializerSyntax pInitializer)
+        private bool TryPolyStruct(TypeDefinitionSyntax pNode, ref StructInitializerSyntax pInitializer)
         {
             var types = pInitializer.Struct.GenericArguments;
             if(types.Count != pNode.TypeParameters.Count)
@@ -151,7 +151,7 @@ namespace SmallerLang.Validation
                     methods.Add(mNew);
                 }
 
-                _polydStructs.Add(structName.ToString(), SyntaxFactory.Struct(structName.ToString(), pNode.Inherits, methods, fields, new List<string>()));
+                _polydStructs.Add(structName.ToString(), SyntaxFactory.TypeDefinition(structName.ToString(), pNode.Implements, pNode.DefinitionType, methods, fields, new List<string>()));
             }
 
             List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pInitializer.Arguments.Count);

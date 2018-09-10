@@ -8,7 +8,7 @@ namespace SmallerLang.Syntax
 {
     public static class SyntaxFactory
     {
-        public static ModuleSyntax Module(string pName, IList<MethodSyntax> pMethods, IList<StructSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        public static ModuleSyntax Module(string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
             return new ModuleSyntax(pName, pMethods, pDefinitions, pEnums);
         }
@@ -93,9 +93,19 @@ namespace SmallerLang.Syntax
             return new MethodSyntax(pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static StructSyntax Struct(string pName, string pInherits, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
+        //public static StructSyntax TypeDefinition(string pName, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
+        //{
+        //    return new StructSyntax(pName, pMethods, pFields, pTypeParameters);
+        //}
+
+        //public static TraitSyntax Trait(string pName, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
+        //{
+        //    return new TraitSyntax(pName, pFields, pMethods, pTypeParameters);
+        //}
+
+        public static TypeDefinitionSyntax TypeDefinition(string pName, string pImplements, DefinitionTypes pType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
         {
-            return new StructSyntax(pName, pInherits, pMethods, pFields, pTypeParameters);
+            return new TypeDefinitionSyntax(pName, pImplements, pType, pFields, pMethods, pTypeParameters);
         }
 
         public static StructInitializerSyntax StructInitializer(string pValue, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)

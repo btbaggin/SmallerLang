@@ -51,6 +51,8 @@ namespace SmallerLang.Lexer
             _keywords.Insert("case", TokenType.Case);
             _keywords.Insert("it", TokenType.It);
             _keywords.Insert("struct", TokenType.Struct);
+            _keywords.Insert("trait", TokenType.Trait);
+            _keywords.Insert("impl", TokenType.Implement);
             _keywords.Insert("new", TokenType.New);
             _keywords.Insert("defer", TokenType.Defer);
             _keywords.Insert("cast", TokenType.Cast);

@@ -52,19 +52,6 @@ namespace SmallerLang.Validation
                     }
                 }
 
-                if (!string.IsNullOrEmpty(definitionsCopy[i].Inherits))
-                {
-                    bool found = false;
-                    for (int j = 0; j < pNode.Structs.Count; j++)
-                    {
-                        if(pNode.Structs[j].Name == definitionsCopy[i].Inherits)
-                        {
-                            found = true;
-                        }
-                    }
-                    if (!found) _error.WriteError($"Struct '{definitionsCopy[i].Name}' inherits from non-existent type '{definitionsCopy[i].Inherits}'");
-                }
-
                 //check if type is already defined before we add a duplicate
                 if (SmallTypeCache.IsTypeDefined(definitionsCopy[i].Name))
                 {
@@ -155,8 +142,10 @@ namespace SmallerLang.Validation
             }
         }
 
-        private bool AddType(StructSyntax pDefinition)
+        private bool AddType(TypeDefinitionSyntax pDefinition)
         {
+            if (pDefinition.DefinitionType != DefinitionTypes.Struct) return true; //TODO
+
             string[] fieldNames = new string[pDefinition.Fields.Count];
             SmallType[] fieldTypes = new SmallType[pDefinition.Fields.Count];
             for(int i = 0; i < pDefinition.Fields.Count; i++)
@@ -169,7 +158,7 @@ namespace SmallerLang.Validation
                 fieldNames[i] = pDefinition.Fields[i].Value;
                 fieldTypes[i] = pDefinition.Fields[i].Type;
             }
-            SmallTypeCache.AddStruct(pDefinition.Name, pDefinition.Inherits, fieldNames, fieldTypes);
+            SmallTypeCache.AddStruct(pDefinition.Name, fieldNames, fieldTypes);
 
             return true;
         }

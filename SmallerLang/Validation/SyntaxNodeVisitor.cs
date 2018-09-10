@@ -75,8 +75,8 @@ namespace SmallerLang.Validation
                     VisitDeclarationSyntax(d);
                     break;
 
-                case StructSyntax d:
-                    VisitStructSyntax(d);
+                case TypeDefinitionSyntax d:
+                    VisitTypeDefinitionSyntax(d);
                     break;
 
                 case ElseSyntax e:
@@ -212,7 +212,7 @@ namespace SmallerLang.Validation
             Visit((dynamic)pNode.Value);
         }
 
-        protected virtual void VisitStructSyntax(StructSyntax pNode)
+        protected virtual void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
             for(int i = 0; i < pNode.Fields.Count; i++)
             {
