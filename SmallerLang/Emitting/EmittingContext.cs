@@ -21,7 +21,7 @@ namespace SmallerLang.Emitting
 
         internal SmallType CurrentStruct { get; set; }
 
-        internal MemberAccessStack<MemberAccessItem> AccessStack { get; }
+        internal MemberAccessStack AccessStack { get; set; }
 
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
@@ -36,7 +36,7 @@ namespace SmallerLang.Emitting
             _deferredStatements = new Stack<List<Syntax.SyntaxNode>>();
             Builder = LLVM.CreateBuilder();
             Locals = new VariableCache<LLVMValueRef>();
-            AccessStack = new MemberAccessStack<MemberAccessItem>();
+            AccessStack = new MemberAccessStack();
         }
 
         #region Method functionality

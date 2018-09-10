@@ -20,40 +20,67 @@ namespace SmallerLang.Emitting
     }
 
     //Special stack that allows arbitrary index access
-    class MemberAccessStack<T>
+    class MemberAccessStack
     {
         public int Count { get; private set; }
 
-        T[] _items;
+        MemberAccessItem[] _items;
         public MemberAccessStack()
         {
-            _items = new T[8];
+            _items = new MemberAccessItem[8];
         }
 
-        public void Push(T pItem)
+        public void Push(LLVMValueRef pValue, SmallType pType)
         {
             if(Count >= _items.Length)
             {
                 Array.Resize(ref _items, _items.Length + 4);
             }
-            _items[Count] = pItem;
+            _items[Count] = new MemberAccessItem(pValue, pType);
             Count++;
         }
 
-        public T Pop()
+        public MemberAccessItem Pop()
         {
             return _items[--Count];
         }
 
-        public T Peek()
+        public MemberAccessItem Peek()
         {
             return _items[Count - 1];
         }
 
-        public T PeekAt(int pIndex)
+        public MemberAccessItem PeekAt(int pIndex)
         {
             if (pIndex >= Count) throw new ArgumentException("pIndex must be greater than 0 and less than Count");
             return _items[pIndex];
+        }
+
+        public MemberAccessStack Copy()
+        {
+            var m = new MemberAccessStack();
+            m._items = _items;
+            m.Count = Count;
+            return m;
+        }
+
+        public void Clear()
+        {
+            Count = 0;
+        }
+
+        public static LLVMValueRef BuildGetElementPtr(EmittingContext pContext, LLVMValueRef? pValue)
+        {
+            List<LLVMValueRef> indexes = new List<LLVMValueRef>(pContext.AccessStack.Count);
+            indexes.Add(pContext.GetInt(0));
+
+            for (int j = pContext.AccessStack.Count - 1; j > 0; j--)
+            {
+                indexes.Add(pContext.AccessStack.PeekAt(j).Value);
+            }
+            if(pValue.HasValue) indexes.Add(pValue.Value);
+            var i = pContext.AccessStack.PeekAt(0).Value;
+            return LLVM.BuildInBoundsGEP(pContext.Builder, i, indexes.ToArray(), "memberaccess");
         }
     }
 }

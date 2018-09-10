@@ -28,23 +28,13 @@ namespace SmallerLang.Syntax
             if(!SmallTypeCache.IsTypeDefined(Identifier.Value))
             {
                 LLVMValueRef i = Identifier.Emit(pContext);
-                pContext.AccessStack.Push(new MemberAccessItem(i, Identifier.Type));
+                pContext.AccessStack.Push(i, Identifier.Type);
                     
                 LLVMValueRef v = Value.Emit(pContext);
-                //Method calls and nested member access will be taken care of by their child most node
-                if(Value.GetType() != typeof(MethodCallSyntax) &&
-                    Value.GetType() != typeof(MemberAccessSyntax))
+                //Terminal nodes are fully emitted in their child most node
+                if(IsTerminalNode(Value))
                 {
-                    List<LLVMValueRef> indexes = new List<LLVMValueRef>(pContext.AccessStack.Count);
-                    indexes.Add(pContext.GetInt(0));
-
-                    for (int j = pContext.AccessStack.Count - 1; j > 0; j--)
-                    {
-                        indexes.Add(pContext.AccessStack.PeekAt(j).Value);
-                    }
-                    indexes.Add(v);
-                    i = pContext.AccessStack.PeekAt(0).Value;
-                    v = LLVM.BuildInBoundsGEP(pContext.Builder, i, indexes.ToArray(), "field_" + Value.Value);
+                    v = MemberAccessStack.BuildGetElementPtr(pContext, v);
                 }
 
                 pContext.AccessStack.Pop();
@@ -61,6 +51,11 @@ namespace SmallerLang.Syntax
 
                 throw new NotSupportedException();
             }
+        }
+
+        private bool IsTerminalNode(SyntaxNode pNode)
+        {
+            return pNode.GetType() != typeof(MethodCallSyntax) && pNode.GetType() != typeof(MemberAccessSyntax);
         }
     }
 }
