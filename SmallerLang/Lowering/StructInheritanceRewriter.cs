@@ -151,7 +151,7 @@ namespace SmallerLang.Validation
                     methods.Add(mNew);
                 }
 
-                _polydStructs.Add(structName.ToString(), SyntaxFactory.TypeDefinition(structName.ToString(), pNode.Implements, pNode.DefinitionType, methods, fields, new List<string>()));
+                _polydStructs.Add(structName.ToString(), SyntaxFactory.TypeDefinition(structName.ToString(), pNode.AppliesTo, pNode.DefinitionType, methods, fields, new List<string>()));
             }
 
             List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pInitializer.Arguments.Count);

@@ -237,7 +237,7 @@ namespace SmallerLang.Validation
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            return SyntaxFactory.TypeDefinition(pNode.Name, pNode.Implements, pNode.DefinitionType, methods, fields, pNode.TypeParameters);
+            return SyntaxFactory.TypeDefinition(pNode.Name, pNode.AppliesTo, pNode.DefinitionType, methods, fields, pNode.TypeParameters);
         }
 
         protected virtual SyntaxNode VisitElseSyntax(ElseSyntax pNode)

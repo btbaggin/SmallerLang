@@ -315,39 +315,6 @@ namespace SmallerLang.Parser
             }
         }
 
-        private MethodSyntax ParseMethodHeader()
-        {
-            //Method name
-            Expect(TokenType.Identifier, out string name);
-
-            Expect(TokenType.ColonColon);
-            Expect(TokenType.LeftParen);
-
-            //Method parameters
-            List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>();
-            if (!Peek(TokenType.RightParen))
-            {
-                do
-                {
-                    var i = ParseTypedIdentifier();
-                    parameters.Add(i);
-                } while (PeekAndExpect(TokenType.Comma));
-            }
-            Expect(TokenType.RightParen);
-
-            //Return types
-            List<TypeSyntax> returns = new List<TypeSyntax>();
-            if (PeekAndExpect(TokenType.DashGreater))
-            {
-                do
-                {
-                    returns.Add(ParseType());
-                } while (PeekAndExpect(TokenType.Comma));
-            }
-
-            return SyntaxFactory.Method(name, returns, parameters, null);
-        }
-
         private TypeSyntax ParseType()
         {
             using (SpanTracker t = _spans.Create())

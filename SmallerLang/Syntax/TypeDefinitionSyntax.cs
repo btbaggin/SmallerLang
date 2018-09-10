@@ -24,13 +24,15 @@ namespace SmallerLang.Syntax
 
         public string Name { get; private set; }
 
-        public string Implements { get; private set; }
+        public string AppliesTo { get; private set; }
 
         public IList<TypedIdentifierSyntax> Fields { get; private set; }
 
         public IList<MethodSyntax> Methods { get; private set; }
 
         public IList<string> TypeParameters { get; private set; }
+
+        public IList<string> Traits { get; private set; }
 
         internal TypeDefinitionSyntax(string pName, 
                                       string pImplements,
@@ -44,10 +46,16 @@ namespace SmallerLang.Syntax
 
             Name = pName;
             DefinitionType = pType;
-            Implements = pImplements;
+            AppliesTo = pImplements;
             Fields = pFields;
             Methods = pMethods;
             TypeParameters = pTypeParameters;
+            Traits = new List<string>();
+        }
+
+        public void AddTraitImplementation(string pTrait)
+        {
+            Traits.Add(pTrait);
         }
 
         public void EmitMethods(EmittingContext pContext)
@@ -70,7 +78,10 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            pContext.EmitDefinition(Name, this);
+            if(DefinitionType == DefinitionTypes.Struct)
+            {
+                pContext.EmitDefinition(Name, this);
+            }
 
             return default;
         }

@@ -48,13 +48,13 @@ namespace SmallerLang.Lexer
 
         public bool Peek(int pCount, out Token pToken)
         {
-            if (Index + pCount >= _tokens.Length)
+            Sync(Index + pCount);
+            if (Index + pCount >= _tokenCount)
             {
                 pToken = default;
                 return false;
             }
 
-            Sync(Index + pCount);
             pToken = _tokens[Index + pCount];
             return true;
         }

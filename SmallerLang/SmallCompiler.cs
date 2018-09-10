@@ -43,6 +43,7 @@ namespace SmallerLang
             new PreTypeValidation(reporter).Visit(t);
             if(reporter.ErrorOccurred) return false;
 
+            new TypeDiscoveryVisitor(reporter).Visit(t);
             //Info gathering passes
             new TypeInferenceVisitor(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;

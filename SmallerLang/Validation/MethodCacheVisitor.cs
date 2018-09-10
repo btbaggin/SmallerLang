@@ -31,13 +31,16 @@ namespace SmallerLang.Validation
             _returnValueCount = pNode.ReturnValues.Count;
             base.VisitMethodSyntax(pNode);
 
-            if (pNode.ReturnValues.Count != 0 && !_returnFound)
+            if(pNode.Body != null)
             {
-                _error.WriteError("Not all code paths return a value", pNode.Span);
-            }
-            else if (pNode.ReturnValues.Count == 0 && _returnFound)
-            {
-                _error.WriteError("Method has no return value, so no return statement must be present", pNode.Span);
+                if (pNode.ReturnValues.Count != 0 && !_returnFound)
+                {
+                    _error.WriteError("Not all code paths return a value", pNode.Span);
+                }
+                else if (pNode.ReturnValues.Count == 0 && _returnFound)
+                {
+                    _error.WriteError("Method has no return value, so no return statement must be present", pNode.Span);
+                }
             }
         }
 
