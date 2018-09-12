@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Emitting;
+using LLVMSharp;
 
 namespace SmallerLang.Syntax
 {
@@ -45,7 +46,7 @@ namespace SmallerLang.Syntax
             Right = pRight;
         }
 
-        public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
+        public override LLVMValueRef Emit(EmittingContext pContext)
         {
             return EmitOperator(Left.Emit(pContext), Operator, Right.Emit(pContext), pContext);
         }
@@ -61,97 +62,77 @@ namespace SmallerLang.Syntax
             return base.FromNode(pNode);
         }
 
-        internal static LLVMSharp.LLVMValueRef EmitOperator(LLVMSharp.LLVMValueRef pLeft, 
-                                                            BinaryExpressionOperator pOp, 
-                                                            LLVMSharp.LLVMValueRef pRight, 
-                                                            EmittingContext pContext)
+        internal static LLVMValueRef EmitOperator(LLVMValueRef pLeft, 
+                                                  BinaryExpressionOperator pOp, 
+                                                  LLVMValueRef pRight, 
+                                                  EmittingContext pContext)
         {
             //We since arrays are pointers, we need to load the value at the pointer
             Utils.LlvmHelper.LoadIfPointer(ref pLeft, pContext);
             Utils.LlvmHelper.LoadIfPointer(ref pRight, pContext);
 
+            bool useFloat = false;
+            if(Utils.LlvmHelper.IsFloat(pLeft))
+            {
+                if (!Utils.LlvmHelper.IsFloat(pRight)) pRight = LLVM.BuildSIToFP(pContext.Builder, pRight, pLeft.TypeOf(), "");
+                useFloat = true;
+            }
+            if(Utils.LlvmHelper.IsFloat(pRight))
+            {
+                if (!Utils.LlvmHelper.IsFloat(pLeft)) pLeft = LLVM.BuildSIToFP(pContext.Builder, pLeft, pRight.TypeOf(), "");
+                useFloat = true;
+            }
+
             switch (pOp)
             {
                 case BinaryExpressionOperator.Addition:
-                    return LLVMSharp.LLVM.BuildAdd(pContext.Builder, pLeft, pRight, "");
+                    if (useFloat) return LLVM.BuildFAdd(pContext.Builder, pLeft, pRight, "");
+                    else return LLVM.BuildAdd(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Multiplication:
-                    return LLVMSharp.LLVM.BuildMul(pContext.Builder, pLeft, pRight, "");
+                    if (useFloat) return LLVM.BuildFMul(pContext.Builder, pLeft, pRight, "");
+                    else return LLVM.BuildMul(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Subtraction:
-                    return LLVMSharp.LLVM.BuildSub(pContext.Builder, pLeft, pRight, "");
+                    if (useFloat) return LLVM.BuildFSub(pContext.Builder, pLeft, pRight, "");
+                    else return LLVM.BuildSub(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Division:
-                    return LLVMSharp.LLVM.BuildSDiv(pContext.Builder, pLeft, pRight, "");
+                    if (useFloat) return LLVM.BuildFDiv(pContext.Builder, pLeft, pRight, "");
+                    else return LLVM.BuildSDiv(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Mod:
-                    return LLVMSharp.LLVM.BuildSRem(pContext.Builder, pLeft, pRight, "");
+                    return LLVM.BuildSRem(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.And:
-                    return LLVMSharp.LLVM.BuildAnd(pContext.Builder, pLeft, pRight, "");
+                    return LLVM.BuildAnd(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Or:
-                    return LLVMSharp.LLVM.BuildOr(pContext.Builder, pLeft, pRight, "");
+                    return LLVM.BuildOr(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Equals:
-                    if (pLeft.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMFloatTypeKind)
-                    {
-                        return LLVMSharp.LLVM.BuildFCmp(pContext.Builder, LLVMSharp.LLVMRealPredicate.LLVMRealOEQ, pLeft, pRight, "");
-                    }
-                    else
-                    {
-                        return LLVMSharp.LLVM.BuildICmp(pContext.Builder, LLVMSharp.LLVMIntPredicate.LLVMIntEQ, pLeft, pRight, "");
-                    }
+                    if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOEQ, pLeft, pRight, "");
+                    else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntEQ, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.NotEquals:
-                    if (pLeft.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMFloatTypeKind)
-                    {
-                        return LLVMSharp.LLVM.BuildFCmp(pContext.Builder, LLVMSharp.LLVMRealPredicate.LLVMRealONE, pLeft, pRight, "");
-                    }
-                    else
-                    {
-                        return LLVMSharp.LLVM.BuildICmp(pContext.Builder, LLVMSharp.LLVMIntPredicate.LLVMIntNE, pLeft, pRight, "");
-                    }
+                    if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealONE, pLeft, pRight, "");
+                    else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.GreaterThan:
-                    if (pLeft.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMFloatTypeKind)
-                    {
-                        return LLVMSharp.LLVM.BuildFCmp(pContext.Builder, LLVMSharp.LLVMRealPredicate.LLVMRealOGT, pLeft, pRight, "");
-                    }
-                    else
-                    {
-                        return LLVMSharp.LLVM.BuildICmp(pContext.Builder, LLVMSharp.LLVMIntPredicate.LLVMIntSGT, pLeft, pRight, "");
-                    }
+                    if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOGT, pLeft, pRight, "");
+                    else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntSGT, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.GreaterThanOrEqual:
-                    if (pLeft.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMFloatTypeKind)
-                    {
-                        return LLVMSharp.LLVM.BuildFCmp(pContext.Builder, LLVMSharp.LLVMRealPredicate.LLVMRealOGE, pLeft, pRight, "");
-                    }
-                    else
-                    {
-                        return LLVMSharp.LLVM.BuildICmp(pContext.Builder, LLVMSharp.LLVMIntPredicate.LLVMIntSGE, pLeft, pRight, "");
-                    }
+                    if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOGE, pLeft, pRight, "");
+                    else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntSGE, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.LessThan:
-                    if (pLeft.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMFloatTypeKind)
-                    {
-                        return LLVMSharp.LLVM.BuildFCmp(pContext.Builder, LLVMSharp.LLVMRealPredicate.LLVMRealOLT, pLeft, pRight, "");
-                    }
-                    else
-                    {
-                        return LLVMSharp.LLVM.BuildICmp(pContext.Builder, LLVMSharp.LLVMIntPredicate.LLVMIntSLT, pLeft, pRight, "");
-                    }
+                    if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOLT, pLeft, pRight, "");
+                    else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntSLT, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.LessThanOrEqual:
-                    if (pLeft.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMFloatTypeKind)
-                    {
-                        return LLVMSharp.LLVM.BuildFCmp(pContext.Builder, LLVMSharp.LLVMRealPredicate.LLVMRealOLE, pLeft, pRight, "");
-                    }
-                    else
-                    {
-                        return LLVMSharp.LLVM.BuildICmp(pContext.Builder, LLVMSharp.LLVMIntPredicate.LLVMIntSLE, pLeft, pRight, "");
-                    }
+                    if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOLE, pLeft, pRight, "");
+                    else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntSLE, pLeft, pRight, "");
 
                 default:
                     throw new NotImplementedException();

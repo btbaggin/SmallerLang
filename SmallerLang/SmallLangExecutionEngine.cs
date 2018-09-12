@@ -16,6 +16,9 @@ namespace SmallerLang
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void print(int d);
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void print_double(double d);
+
         LLVMExecutionEngineRef _engine;
 
         public void Run(string pPath)
@@ -49,8 +52,11 @@ namespace SmallerLang
                 }
 
                 var p = LLVM.GetNamedFunction(m, "print");//TODO actually call printf???
+                var pd = LLVM.GetNamedFunction(m, "print_double");
                 print d = (pD) => Console.WriteLine(pD);
+                print_double dd = (pD) => Console.WriteLine(pD);
                 LLVM.AddGlobalMapping(_engine, p, Marshal.GetFunctionPointerForDelegate(d));
+                LLVM.AddGlobalMapping(_engine, pd, Marshal.GetFunctionPointerForDelegate(dd));
 
                 IntPtr i = (IntPtr)LLVM.GetGlobalValueAddress(_engine, "_main");
                 var main = (MainMethod)Marshal.GetDelegateForFunctionPointer(i, typeof(MainMethod));

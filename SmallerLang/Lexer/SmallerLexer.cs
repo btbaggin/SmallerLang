@@ -53,6 +53,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("struct", TokenType.Struct);
             _keywords.Insert("trait", TokenType.Trait);
             _keywords.Insert("impl", TokenType.Implement);
+            _keywords.Insert("on", TokenType.On);
             _keywords.Insert("new", TokenType.New);
             _keywords.Insert("defer", TokenType.Defer);
             _keywords.Insert("cast", TokenType.Cast);
@@ -84,11 +85,11 @@ namespace SmallerLang.Lexer
 
             //Operators
             _keywords.Insert("*", TokenType.Star);
-            _keywords.Insert(@"\", TokenType.Division);
+            _keywords.Insert(@"/", TokenType.Division);
             _keywords.Insert("+", TokenType.Plus);
             _keywords.Insert("-", TokenType.Minus);
             _keywords.Insert("*=", TokenType.StarEquals);
-            _keywords.Insert(@"\=", TokenType.DivisionEquals);
+            _keywords.Insert(@"/=", TokenType.DivisionEquals);
             _keywords.Insert("+=", TokenType.PlusEquals);
             _keywords.Insert("-=", TokenType.MinusEquals);
             _keywords.Insert("->", TokenType.DashGreater);
@@ -264,7 +265,7 @@ namespace SmallerLang.Lexer
             {
                 Eat();
             }
-            while (char.IsLetterOrDigit(_tokenizer.Current));
+            while (char.IsLetterOrDigit(_tokenizer.Current) || _tokenizer.Current == '_');
 
             var i = _tokenizer.GetSpan(_length);
             TrieNode t = _keywords.Prefix(i);

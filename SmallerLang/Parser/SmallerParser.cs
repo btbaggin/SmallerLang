@@ -169,7 +169,7 @@ namespace SmallerLang.Parser
                 string implementOn = null;
                 if (type == DefinitionTypes.Implement)
                 {
-                    Expect(TokenType.Colon);
+                    Expect(TokenType.On);
                     Expect(TokenType.Identifier, out implementOn);
                 }
 

@@ -37,20 +37,12 @@ namespace SmallerLang.Emitting
 
         public static MethodDefinition AddMethod(string pName, Syntax.MethodSyntax pNode)
         {
-            if (!_methods.ContainsKey(pName))
-            {
-                _methods.Add(pName, new List<MethodDefinition>());
-                _counter.Add(pName, 0);
-            }
-            _counter[pName]++;
-            var md = GetDefinition(pNode, _counter[pName], null);
-            _methods[pName].Add(md);
-            return md;
+            return AddMethod(null, pName, pNode);
         }
 
         public static MethodDefinition AddMethod(SmallType pType, string pName, Syntax.MethodSyntax pNode)
         {
-            var name = GetMethodName(pType, pName);
+            var name = pType == null ? pName : GetMethodName(pType, pName);
             if (!_methods.ContainsKey(name))
             {
                 _methods.Add(name, new List<MethodDefinition>());
@@ -64,18 +56,20 @@ namespace SmallerLang.Emitting
 
         public static bool MethodExists(string pName, Syntax.MethodSyntax pNode)
         {
-            if(_methods.ContainsKey(pNode.Name))
-            {
-                SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Parameters);
-                return FindMethod(out MethodDefinition m, pName, types);
-            }
-
-            return false;
+            return MethodExists(null, pName, pNode);
         }
 
         public static bool MethodExists(SmallType pType, string pName, Syntax.MethodSyntax pNode)
         {
-            return MethodExists(GetMethodName(pType, pName), pNode);
+            var name = pType == null ? pName : GetMethodName(pType, pName);
+
+            if (_methods.ContainsKey(name))
+            {
+                SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Parameters);
+                return FindMethod(out MethodDefinition m, name, types);
+            }
+
+            return false;
         }
         
         public static bool CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)

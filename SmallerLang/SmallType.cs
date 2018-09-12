@@ -15,6 +15,8 @@ namespace SmallerLang
 
         public bool IsStruct { get; private set; }
 
+        public bool IsTrait { get; internal set; }
+
         public bool IsEnum { get; private set; }
 
         public bool IsTuple { get; internal set; }
@@ -22,10 +24,11 @@ namespace SmallerLang
         public string Name { get; private set; }
 
         private readonly SmallType _elementType;
-        private readonly SmallType _baseType;
         private readonly string[] _fields;
         private readonly int[] _enumValues;
         private readonly SmallType[] _fieldTypes;
+
+        private List<SmallType> _implements;
 
         //Value constructor
         internal SmallType(string pName)
@@ -34,15 +37,15 @@ namespace SmallerLang
         }
 
         //Struct constructor
-        internal SmallType(string pName, SmallType pInherits, string[] pFields, SmallType[] pFieldTypes)
+        internal SmallType(string pName, string[] pFields, SmallType[] pFieldTypes)
         {
             System.Diagnostics.Debug.Assert(pFields.Length == pFieldTypes.Length);
 
             Name = pName;
             IsStruct = true;
-            _baseType = pInherits;
             _fields = pFields;
             _fieldTypes = pFieldTypes;
+            _implements = new List<SmallType>();
         }
 
         //Array constructor
@@ -65,7 +68,7 @@ namespace SmallerLang
             _fields = pFields;
             _enumValues = pValues;
             _fieldTypes = fieldTypes;
-            _baseType = SmallTypeCache.Int;
+            _implements = new List<SmallType>() { SmallTypeCache.Int };
         }
 
         public SmallType MakeArrayType()
@@ -151,10 +154,22 @@ namespace SmallerLang
             return _constructorSet;
         }
 
+        public void AddTrait(SmallType pTrait)
+        {
+            System.Diagnostics.Debug.Assert(pTrait.IsTrait);
+            _implements.Add(pTrait);
+        }
+
         public bool IsAssignableFrom(SmallType pType)
         {
-            if (_baseType == null) return this == pType;
-            return this == pType || _baseType.IsAssignableFrom(pType);
+            if (_implements == null) return this == pType;
+            if (this == pType) return true;
+
+            for(int i = 0; i < _implements.Count; i++)
+            {
+                if (_implements[i].IsAssignableFrom(pType)) return true;
+            }
+            return false;
         }
 
         internal bool IsFloat()

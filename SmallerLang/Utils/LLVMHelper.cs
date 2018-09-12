@@ -3,29 +3,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LLVMSharp;
 
 namespace SmallerLang.Utils
 {
     static class LlvmHelper
     {
-        public static bool IsPointer(LLVMSharp.LLVMValueRef pValue)
+        public static bool IsFloat(LLVMValueRef pValue)
         {
-            return pValue.TypeOf().TypeKind == LLVMSharp.LLVMTypeKind.LLVMPointerTypeKind;
+            var tk = pValue.TypeOf().TypeKind;
+            return tk == LLVMTypeKind.LLVMFloatTypeKind || tk == LLVMTypeKind.LLVMDoubleTypeKind;
         }
 
-        public static void MakePointer(LLVMSharp.LLVMValueRef pValue, ref LLVMSharp.LLVMTypeRef pType)
+        public static bool IsPointer(LLVMValueRef pValue)
+        {
+            return pValue.TypeOf().TypeKind == LLVMTypeKind.LLVMPointerTypeKind;
+        }
+
+        public static void MakePointer(LLVMValueRef pValue, ref LLVMTypeRef pType)
         {
             if (IsPointer(pValue))
             {
-                pType = LLVMSharp.LLVMTypeRef.PointerType(pType, 0);
+                pType = LLVMTypeRef.PointerType(pType, 0);
             }
         }
 
-        public static void LoadIfPointer(ref LLVMSharp.LLVMValueRef pValue, Emitting.EmittingContext pContext)
+        public static void LoadIfPointer(ref LLVMValueRef pValue, Emitting.EmittingContext pContext)
         {
             if (IsPointer(pValue))
             {
-                pValue = LLVMSharp.LLVM.BuildLoad(pContext.Builder, pValue, "");
+                pValue = LLVM.BuildLoad(pContext.Builder, pValue, "");
             }
         }
     }

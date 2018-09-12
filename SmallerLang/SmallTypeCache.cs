@@ -60,7 +60,16 @@ namespace SmallerLang
             System.Diagnostics.Debug.Assert(pFields.Length == pTypes.Length, "Incorrect field definitions");
 
             //var baseType = FromString(pInherits);
-            var st = new SmallType(pType, null, pFields, pTypes);
+            var st = new SmallType(pType, pFields, pTypes);
+            _cache[pType] = (st, default);
+            return st;
+        }
+
+        internal static SmallType AddTrait(string pType, string[] pFields, SmallType[] pTypes)
+        {
+            System.Diagnostics.Debug.Assert(pFields.Length == pTypes.Length, "Incorrect field definitions");
+
+            var st = new SmallType(pType, pFields, pTypes) { IsTrait = true };
             _cache[pType] = (st, default);
             return st;
         }
@@ -79,7 +88,7 @@ namespace SmallerLang
                 //We don't need to populate field names because we only ever access tuple fields by index
                 string[] fieldNames = new string[pTypes.Length];
                 
-                var st = new SmallType(name, null, fieldNames, pTypes) { IsTuple = true };
+                var st = new SmallType(name, fieldNames, pTypes) { IsTuple = true };
                 _cache[name] = (st, default);
             }
             

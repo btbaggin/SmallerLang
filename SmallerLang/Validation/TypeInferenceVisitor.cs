@@ -11,6 +11,7 @@ namespace SmallerLang.Validation
     class TypeInferenceVisitor : SyntaxNodeVisitor
     {
         SmallType _currentType;
+        SmallType _currentStruct;
         VariableCache<SmallType> _locals;
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
@@ -23,109 +24,6 @@ namespace SmallerLang.Validation
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            //    //Add enums first since they can't reference anything, but things can reference enums
-            //    foreach(var e in pNode.Enums)
-            //    {
-            //        string[] names = new string[e.Names.Count];
-            //        int[] values = new int[e.Names.Count];
-            //        for(int j = 0; j < e.Names.Count; j++)
-            //        {
-            //            names[j] = e.Names[j].Value;
-            //            values[j] = e.Values[j];
-            //        }
-            //        SmallTypeCache.AddEnum(e.Name, names, values);
-            //    }
-
-            //    //Add all types to our SmallTypeCache
-            //    var definitionsCopy = pNode.Structs.ToList();
-            //    int i = 0;
-            //    int loop = 0;
-            //    while(definitionsCopy.Count > 0)
-            //    {
-            //        if (i >= definitionsCopy.Count)
-            //        {
-            //            i = 0;
-            //            if (++loop > 100)
-            //            {
-            //                _error.WriteError($"Found circular reference in struct {definitionsCopy[i].Name}", definitionsCopy[i].Span);
-            //                return;
-            //            }
-            //        }
-
-            //        //check if type is already defined before we add a duplicate
-            //        if (SmallTypeCache.IsTypeDefined(definitionsCopy[i].Name))
-            //        {
-            //            _error.WriteError($"Type {definitionsCopy[i].Name} has already been defined", definitionsCopy[i].Span);
-            //            definitionsCopy.RemoveAt(i);
-            //            loop = 0;
-            //        }
-            //        else if(AddType(definitionsCopy[i]))
-            //        {
-            //            definitionsCopy.RemoveAt(i);
-            //            loop = 0;
-            //        }
-
-            //        i++;
-            //    }
-
-            //    //Add all methods to the MethodCache
-            //    for (int j = 0; j < pNode.Methods.Count; j++)
-            //    {
-            //        var method = pNode.Methods[j];
-            //        bool found = false;
-            //        if(!Utils.SyntaxHelper.IsCastDefinition(method))
-            //        {
-            //            found = MethodCache.MethodExists(method.Name, method);
-            //            if (found)
-            //            {
-            //                _error.WriteError($"Redeclaration of method signature {method.Name}", method.Span);
-            //            }
-            //        }
-            //        if(!found) MethodCache.AddMethod(method.Name, method);
-
-            //        //Create the tuple type if we are returning more than one value from a method
-            //        if(method.ReturnValues.Count > 1)
-            //        {
-            //            SmallTypeCache.GetTempTuple(Utils.SyntaxHelper.SelectNodeTypes(method.ReturnValues));
-            //        }
-            //    }
-
-            //    foreach (var s in pNode.Structs)
-            //    {
-            //        var type = SmallTypeCache.FromString(s.Name);
-            //        //Add all methods to the MethodCache
-            //        for (int j = 0; j < s.Methods.Count; j++)
-            //        {
-            //            var method = s.Methods[j];
-            //            bool found = false;
-            //            if (!Utils.SyntaxHelper.IsCastDefinition(method))
-            //            {
-            //                found = MethodCache.MethodExists(type, method.Name, method);
-            //                if (found)
-            //                {
-            //                    _error.WriteError($"Redeclaration of method signature {method.Name}", method.Span);
-            //                }
-            //            }
-
-            //            if (!found)
-            //            {
-            //                var m = MethodCache.AddMethod(type, method.Name, method);
-            //                if (method.Annotation == Utils.KeyAnnotations.Constructor)
-            //                {
-            //                    type.SetConstructor(m);
-            //                }
-            //            }
-
-            //            //Create the tuple type if we are returning more than one value from a method
-            //            if (method.ReturnValues.Count > 1)
-            //            {
-            //                SmallTypeCache.GetTempTuple(Utils.SyntaxHelper.SelectNodeTypes(method.ReturnValues));
-            //            }
-            //        }
-
-            //        if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
-            //    }
-
             //Infer methods
             foreach (var m in pNode.Methods)
             {
@@ -134,7 +32,7 @@ namespace SmallerLang.Validation
 
             foreach (var s in pNode.Structs)
             {
-                _currentType = SmallTypeCache.FromString(s.Name);
+                _currentStruct = SmallTypeCache.FromString(s.Name);
                 foreach (var m in s.Methods)
                 {
                     Visit(m);
@@ -296,33 +194,40 @@ namespace SmallerLang.Validation
             //Mark the current type we are on so error messages can be more descriptive
             var l = _locals;
             var t = _currentType;
+            var s = _currentStruct;
 
             //Create a new one for the struct fields
             _currentType = pNode.Identifier.Type;
+            _currentStruct = _currentType;
 
-            //For method calls we need to allow existing variables, but member access should only allow the struct's fields
-            if (pNode.Value.GetType() == typeof(MethodCallSyntax)) _locals = _locals.Copy();
-            else _locals = new VariableCache<SmallType>();
-
-            _locals.AddScope();
-            foreach (var f in _currentType.GetFields())
+            //If field doesn't exist or something went wrong, stop checking things to reduce redundant errors
+            if(_currentType != SmallTypeCache.Undefined)
             {
-                if (!_locals.IsVariableDefinedInScope(f.Name))
-                {
-                    _locals.DefineVariableInScope(f.Name, f.Type);
-                }
-            }
+                //For method calls we need to allow existing variables, but member access should only allow the struct's fields
+                if (pNode.Value.GetType() == typeof(MethodCallSyntax)) _locals = _locals.Copy();
+                else _locals = new VariableCache<SmallType>();
 
-            Visit((dynamic)pNode.Value);
+                _locals.AddScope();
+                foreach (var f in _currentType.GetFields())
+                {
+                    if (!_locals.IsVariableDefinedInScope(f.Name))
+                    {
+                        _locals.DefineVariableInScope(f.Name, f.Type);
+                    }
+                }
+
+                Visit((dynamic)pNode.Value);
+            }
 
             //Restore local definitions
             _locals = l;
             _currentType = t;
+            _currentStruct = s;
         }
 
         protected override void VisitSelfSyntax(SelfSyntax pNode)
         {
-            pNode.SetType(_currentType);
+            pNode.SetType(_currentStruct);
             base.VisitSelfSyntax(pNode);
         }
 
@@ -345,8 +250,8 @@ namespace SmallerLang.Validation
                 //Normal identifier, continue as usual
                 if (!_locals.IsVariableDefined(pNode.Value))
                 {
-                    if (_currentType == null) _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
-                    else _error.WriteError("Type " + _currentType.ToString() + " does not contain a definition for '" + pNode.Value + "'", pNode.Span);
+                    if (_currentStruct == null) _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
+                    else _error.WriteError("Type " + _currentStruct.ToString() + " does not contain a definition for '" + pNode.Value + "'", pNode.Span);
                 }
                 else
                 {
@@ -416,8 +321,8 @@ namespace SmallerLang.Validation
             //Check to ensure this method exists
             if (!MethodCache.FindMethod(out MethodDefinition m, _currentType, pNode.Value, types) && m.Name == null)
             {
-                if (_currentType == null) _error.WriteError("Method definition for " + pNode.Value + " not found", pNode.Span);
-                else _error.WriteError("Type " + _currentType.ToString() + " does not contain method '" + pNode.Value + "'", pNode.Span);
+                if (_currentStruct == null) _error.WriteError("Method definition for " + pNode.Value + " not found", pNode.Span);
+                else _error.WriteError("Type " + _currentStruct.ToString() + " does not contain method '" + pNode.Value + "'", pNode.Span);
                 return;
             }
 

@@ -72,7 +72,12 @@ namespace SmallerLang.Validation
                         _error.WriteError($"Use of undeclared type {structApplies}", s.Span);
                     }
 
-                    _structs[_structIndex[structApplies]].Node.AddTraitImplementation(s.Name);
+                    var t = SmallTypeCache.FromString(s.Name);
+                    SmallTypeCache.FromString(structApplies).AddTrait(t);
+
+                    //Validate implementation
+                    var trait = _structs[_structIndex[s.Name]].Node;
+                    ValidateImplementation(trait, s);
                 }
             }
 
@@ -86,19 +91,22 @@ namespace SmallerLang.Validation
             //Add struct methods to MethodCache
             foreach (var s in pNode.Structs)
             {
-                var type = SmallTypeCache.FromString(s.Name);
-                for (int j = 0; j < s.Methods.Count; j++)
+                if(s.DefinitionType != DefinitionTypes.Implement)
                 {
-                    if(AddMethodToCache(type, s.Methods[j], out MethodDefinition m))
+                    var type = SmallTypeCache.FromString(s.Name);
+                    for (int j = 0; j < s.Methods.Count; j++)
                     {
-                        if (s.Methods[j].Annotation == Utils.KeyAnnotations.Constructor)
+                        if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m))
                         {
-                            type.SetConstructor(m);
+                            if (s.Methods[j].Annotation == Utils.KeyAnnotations.Constructor)
+                            {
+                                type.SetConstructor(m);
+                            }
                         }
                     }
-                }
 
-                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
+                    if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
+                }
             }
         }
 
@@ -151,14 +159,17 @@ namespace SmallerLang.Validation
                 fieldNames[i] = pDefinition.Fields[i].Value;
                 fieldTypes[i] = pDefinition.Fields[i].Type;
             }
-            SmallTypeCache.AddStruct(pDefinition.Name, fieldNames, fieldTypes);
+
+            if (pDefinition.DefinitionType == DefinitionTypes.Struct) SmallTypeCache.AddStruct(pDefinition.Name, fieldNames, fieldTypes);
+            else if (pDefinition.DefinitionType == DefinitionTypes.Trait)
+            {
+                SmallTypeCache.AddTrait(pDefinition.Name, fieldNames, fieldTypes);//TODO add methods
+            }
         }
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
         {
-            bool found = false;
-            if (pType == null) found = MethodCache.MethodExists(pMethod.Name, pMethod);
-            else found = MethodCache.MethodExists(pType, pMethod.Name, pMethod);
+            bool found = MethodCache.MethodExists(pType, pMethod.Name, pMethod);
 
             if (found)
             {
@@ -173,9 +184,45 @@ namespace SmallerLang.Validation
                 {
                     SmallTypeCache.GetTempTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
-                if (pType == null) pDefinition = MethodCache.AddMethod(pMethod.Name, pMethod);
-                else pDefinition = MethodCache.AddMethod(pType, pMethod.Name, pMethod);
+                pDefinition = MethodCache.AddMethod(pType, pMethod.Name, pMethod);
                 return true;
+            }
+        }
+
+        private void ValidateImplementation(TypeDefinitionSyntax pTrait, TypeDefinitionSyntax pImplement)
+        {
+            foreach (var tf in pTrait.Fields)
+            {
+                bool found = false;
+                foreach (var f in pImplement.Fields)
+                {
+                    if (tf.Value == f.Value)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    _error.WriteError($"Implementation of trait {pTrait.Name} is missing field {tf.Value}", pImplement.Span);
+                }
+            }
+
+            foreach (var tm in pTrait.Methods)
+            {
+                bool found = false;
+                foreach (var im in pImplement.Methods)
+                {
+                    if (im.Name == tm.Name)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    _error.WriteError($"Implementation of trait {pTrait.Name} is missing method {tm.Name}", pImplement.Span);
+                }
             }
         }
     }

@@ -32,8 +32,6 @@ namespace SmallerLang.Syntax
 
         public IList<string> TypeParameters { get; private set; }
 
-        public IList<string> Traits { get; private set; }
-
         internal TypeDefinitionSyntax(string pName, 
                                       string pImplements,
                                       DefinitionTypes pType,
@@ -50,30 +48,39 @@ namespace SmallerLang.Syntax
             Fields = pFields;
             Methods = pMethods;
             TypeParameters = pTypeParameters;
-            Traits = new List<string>();
         }
 
-        public void AddTraitImplementation(string pTrait)
+        public void EmitMethodHeaders(EmittingContext pContext)
         {
-            Traits.Add(pTrait);
+            if (DefinitionType == DefinitionTypes.Struct)
+            {
+                var type = SmallTypeCache.FromString(Name);
+                pContext.CurrentStruct = type;
+                foreach (var m in Methods)
+                {
+                    m.EmitHeader(pContext);
+                }
+
+                if (!type.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext);
+                pContext.CurrentStruct = null;
+            }
         }
 
         public void EmitMethods(EmittingContext pContext)
         {
-            var type = SmallTypeCache.FromString(Name);
-            pContext.CurrentStruct = type;
-            foreach (var m in Methods)
+            //Only structs should be emitted. The other types get merged with structs
+            if(DefinitionType == DefinitionTypes.Struct)
             {
-                m.EmitHeader(pContext);
-            }
+                var type = SmallTypeCache.FromString(Name);
+                pContext.CurrentStruct = type;
+                foreach (var m in Methods)
+                {
+                    m.Emit(pContext);
+                }
 
-            foreach (var m in Methods)
-            {
-                m.Emit(pContext);
+                if (!type.HasDefinedConstructor()) EmitGenericConstructor(pContext, type);
+                pContext.CurrentStruct = null;
             }
-
-            if (!type.HasDefinedConstructor()) EmitGenericConstructor(pContext, type);
-            pContext.CurrentStruct = null;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
@@ -86,12 +93,17 @@ namespace SmallerLang.Syntax
             return default;
         }
 
-        private void EmitGenericConstructor(EmittingContext pContext, SmallType pType)
+        private void EmitGenericConstructorHeader(EmittingContext pContext)
         {
             //Emit method header
             var ret = LLVMTypeRef.VoidType();
-            var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(pType), 0) };
-            var func = pContext.EmitMethodHeader(Name + ".ctor", ret, parm);
+            var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(SmallTypeCache.FromString(Name)), 0) };
+            pContext.EmitMethodHeader(Name + ".ctor", ret, parm);
+        }
+
+        private void EmitGenericConstructor(EmittingContext pContext, SmallType pType)
+        {
+            var func = pContext.GetMethod(Name + ".ctor");
 
             var b = LLVM.AppendBasicBlock(func, Name + "body");
             LLVM.PositionBuilderAtEnd(pContext.Builder, b);

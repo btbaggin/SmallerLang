@@ -27,6 +27,7 @@ namespace SmallerLang
         Self,
         Trait,
         Implement,
+        On,
 
         //Struct queries
         LengthOf,

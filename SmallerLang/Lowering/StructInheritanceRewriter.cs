@@ -12,11 +12,13 @@ namespace SmallerLang.Validation
         ModuleSyntax _module;
         Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
         Dictionary<string, TypeDefinitionSyntax> _polydStructs;
+        Dictionary<string, TypeDefinitionSyntax> _index;
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             _module = pNode;
             _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
             _polydStructs = new Dictionary<string, TypeDefinitionSyntax>();
+            _index = new Dictionary<string, TypeDefinitionSyntax>();
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
@@ -27,10 +29,18 @@ namespace SmallerLang.Validation
                 enums.Add((EnumSyntax)Visit(e));
             }
 
+            foreach(var s in pNode.Structs)
+            {
+                if(s.DefinitionType == DefinitionTypes.Implement)
+                {
+                    _index.Add(s.AppliesTo, s);
+                }
+            }
+
             //Add and mark structs for poly
             foreach (var s in pNode.Structs)
             {
-                var n = Visit((dynamic)s);
+                var n = (TypeDefinitionSyntax)Visit(s);
                 
                 if (s.TypeParameters.Count > 0) _structsToPoly.Add(n.Name, n);
                 else structs.Add(n);
@@ -51,22 +61,23 @@ namespace SmallerLang.Validation
         protected override SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
             //TODO Add any base fields to the inherited stuct
-            //if (!string.IsNullOrEmpty(pNode.Inherits))
-            //{
-            //    List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
-            //    List<ExpressionSyntax> defaults = new List<ExpressionSyntax>();
-            //    for (int i = 0; i < _module.Structs.Count; i++)
-            //    {
-            //        if (_module.Structs[i].Name == pNode.Inherits)
-            //        {
-            //            fields.AddRange(_module.Structs[i].Fields);
-            //            break;
-            //        }
-            //    }
-            //    fields.AddRange(pNode.Fields);
+            if (pNode.DefinitionType == DefinitionTypes.Struct)
+            {
+                if(_index.ContainsKey(pNode.Name))
+                {
+                    var s = _index[pNode.Name];
 
-            //    return SyntaxFactory.Struct(pNode.Name, pNode.Inherits, pNode.Methods, fields, pNode.TypeParameters);
-            //}
+                    //Combine our implementation with the struct
+                    List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
+                    List<MethodSyntax> methods = new List<MethodSyntax>();
+                    fields.AddRange(s.Fields);
+                    fields.AddRange(pNode.Fields);
+                    methods.AddRange(s.Methods);
+                    methods.AddRange(pNode.Methods); //TODO I need to visit these
+
+                    return SyntaxFactory.TypeDefinition(pNode.Name, "", pNode.DefinitionType, methods, fields, pNode.TypeParameters);
+                }
+            }
 
             return base.VisitTypeDefinitionSyntax(pNode);
         }

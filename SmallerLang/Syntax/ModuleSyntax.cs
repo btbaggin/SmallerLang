@@ -36,10 +36,10 @@ namespace SmallerLang.Syntax
                 Structs[i].Emit(pContext);
             }
 
-            //Emit type methods
+            //Emit type methods headers
             for (int i = 0; i < Structs.Count; i++)
             {
-                Structs[i].EmitMethods(pContext);
+                Structs[i].EmitMethodHeaders(pContext);
             }
 
             //Emit method Headers
@@ -53,8 +53,15 @@ namespace SmallerLang.Syntax
                 }
             }
 
+            //Emit type methods
+            for (int i = 0; i < Structs.Count; i++)
+            {
+                Structs[i].EmitMethods(pContext);
+            }
+
+
             //Emit method bodies
-            for(int i = 0; i < Methods.Count; i++)
+            for (int i = 0; i < Methods.Count; i++)
             {
                 Methods[i].Emit(pContext);
             }
