@@ -7,6 +7,7 @@ using SmallerLang.Emitting;
 using SmallerLang.Lexer;
 using SmallerLang.Parser;
 using SmallerLang.Validation;
+using SmallerLang.Lowering;
 using SmallerLang.Syntax;
 using LLVMSharp;
 

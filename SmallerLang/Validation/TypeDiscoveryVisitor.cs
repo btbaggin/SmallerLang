@@ -11,7 +11,7 @@ namespace SmallerLang.Validation
     class TypeDiscoveryVisitor : SyntaxNodeVisitor 
     {
         readonly IErrorReporter _error;
-        Dictionary<string, int> _structIndex;
+        readonly Dictionary<string, int> _structIndex;
         List<(TypeDefinitionSyntax Node, bool Permanent, bool Temporary)> _structs;
         public TypeDiscoveryVisitor(IErrorReporter pError)
         {
@@ -22,20 +22,20 @@ namespace SmallerLang.Validation
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            //Add enums first since they can't reference anything, but things can reference enums
             //////
             ////// Discover enums
             //////
+            //Add enums first since they can't reference anything, but things can reference enums
             foreach (var e in pNode.Enums)
             {
-                string[] names = new string[e.Names.Count];
+                string[] fields = new string[e.Names.Count];
                 int[] values = new int[e.Names.Count];
-                for (int j = 0; j < e.Names.Count; j++)
+                for (int j = 0; j < fields.Length; j++)
                 {
-                    names[j] = e.Names[j].Value;
+                    fields[j] = e.Names[j].Value;
                     values[j] = e.Values[j];
-                }
-                SmallTypeCache.AddEnum(e.Name, names, values);
+            }
+                SmallTypeCache.AddEnum(e.Name, fields, values);
             }
 
             //Build our list for discovering types
@@ -148,22 +148,28 @@ namespace SmallerLang.Validation
 
         private void AddType(TypeDefinitionSyntax pDefinition)
         {
-            string[] fieldNames = new string[pDefinition.Fields.Count];
-            SmallType[] fieldTypes = new SmallType[pDefinition.Fields.Count];
+            HashSet<string> fieldNames = new HashSet<string>();
+            FieldDefinition[] fields = new FieldDefinition[pDefinition.Fields.Count];
             for (int i = 0; i < pDefinition.Fields.Count; i++)
             {
                 if (fieldNames.Contains(pDefinition.Fields[i].Value))
                 {
                     _error.WriteError($"Duplicate field definition: {pDefinition.Fields[i].Value} within struct {pDefinition.Name}", pDefinition.Fields[i].Span);
                 }
-                fieldNames[i] = pDefinition.Fields[i].Value;
-                fieldTypes[i] = pDefinition.Fields[i].Type;
+                else
+                {
+                    fieldNames.Add(pDefinition.Fields[i].Value);
+                    fields[i] = new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value);
+                }
             }
 
-            if (pDefinition.DefinitionType == DefinitionTypes.Struct) SmallTypeCache.AddStruct(pDefinition.Name, fieldNames, fieldTypes);
+            if (pDefinition.DefinitionType == DefinitionTypes.Struct)
+            {
+                SmallTypeCache.AddStruct(pDefinition.Name, fields);
+            }
             else if (pDefinition.DefinitionType == DefinitionTypes.Trait)
             {
-                SmallTypeCache.AddTrait(pDefinition.Name, fieldNames, fieldTypes);//TODO add methods
+                SmallTypeCache.AddTrait(pDefinition.Name, fields);
             }
         }
 
@@ -182,7 +188,7 @@ namespace SmallerLang.Validation
                 //Create the tuple type if we are returning more than one value from a method
                 if (pMethod.ReturnValues.Count > 1)
                 {
-                    SmallTypeCache.GetTempTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
+                    SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
                 pDefinition = MethodCache.AddMethod(pType, pMethod.Name, pMethod);
                 return true;
@@ -191,6 +197,7 @@ namespace SmallerLang.Validation
 
         private void ValidateImplementation(TypeDefinitionSyntax pTrait, TypeDefinitionSyntax pImplement)
         {
+            //Ensure that all fields are in the implementation
             foreach (var tf in pTrait.Fields)
             {
                 bool found = false;
@@ -208,6 +215,7 @@ namespace SmallerLang.Validation
                 }
             }
 
+            //Ensure that all methods are in the implementation
             foreach (var tm in pTrait.Methods)
             {
                 bool found = false;

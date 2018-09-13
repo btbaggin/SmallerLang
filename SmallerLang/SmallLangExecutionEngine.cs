@@ -55,8 +55,10 @@ namespace SmallerLang
                 var pd = LLVM.GetNamedFunction(m, "print_double");
                 print d = (pD) => Console.WriteLine(pD);
                 print_double dd = (pD) => Console.WriteLine(pD);
-                LLVM.AddGlobalMapping(_engine, p, Marshal.GetFunctionPointerForDelegate(d));
-                LLVM.AddGlobalMapping(_engine, pd, Marshal.GetFunctionPointerForDelegate(dd));
+                if(p.Pointer != IntPtr.Zero)
+                    LLVM.AddGlobalMapping(_engine, p, Marshal.GetFunctionPointerForDelegate(d));
+                if(pd.Pointer != IntPtr.Zero)
+                    LLVM.AddGlobalMapping(_engine, pd, Marshal.GetFunctionPointerForDelegate(dd));
 
                 IntPtr i = (IntPtr)LLVM.GetGlobalValueAddress(_engine, "_main");
                 var main = (MainMethod)Marshal.GetDelegateForFunctionPointer(i, typeof(MainMethod));

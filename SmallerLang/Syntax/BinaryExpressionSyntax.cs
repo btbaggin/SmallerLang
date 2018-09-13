@@ -102,13 +102,8 @@ namespace SmallerLang.Syntax
                     else return LLVM.BuildSDiv(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Mod:
-                    return LLVM.BuildSRem(pContext.Builder, pLeft, pRight, "");
-
-                case BinaryExpressionOperator.And:
-                    return LLVM.BuildAnd(pContext.Builder, pLeft, pRight, "");
-
-                case BinaryExpressionOperator.Or:
-                    return LLVM.BuildOr(pContext.Builder, pLeft, pRight, "");
+                    if (useFloat) return LLVM.BuildFRem(pContext.Builder, pLeft, pRight, "");
+                    else return LLVM.BuildSRem(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Equals:
                     if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOEQ, pLeft, pRight, "");
@@ -133,6 +128,12 @@ namespace SmallerLang.Syntax
                 case BinaryExpressionOperator.LessThanOrEqual:
                     if (useFloat) return LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealOLE, pLeft, pRight, "");
                     else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntSLE, pLeft, pRight, "");
+
+                case BinaryExpressionOperator.And:
+                    return LLVM.BuildAnd(pContext.Builder, pLeft, pRight, "");
+
+                case BinaryExpressionOperator.Or:
+                    return LLVM.BuildOr(pContext.Builder, pLeft, pRight, "");
 
                 default:
                     throw new NotImplementedException();

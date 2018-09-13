@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
@@ -14,7 +14,7 @@ namespace SmallerLang.Validation
             //Rewrite for statements with iterator arrays to normal for statements
             if(pNode.Iterator != null)
             {
-                var i = SyntaxFactory.Identifier("__i");
+                var i = SyntaxFactory.Identifier("!i");
                 var d = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral("0", NumberTypes.Integer));
                 var c = SyntaxFactory.BinaryExpression(i, BinaryExpressionOperator.LessThan, SyntaxFactory.UnaryExpression(pNode.Iterator, UnaryExpressionOperator.Length));
                 var f = SyntaxFactory.UnaryExpression(i, UnaryExpressionOperator.PostIncrement);

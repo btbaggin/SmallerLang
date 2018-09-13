@@ -6,6 +6,27 @@ using System.Threading.Tasks;
 
 namespace SmallerLang
 {
+    public struct FieldDefinition
+    {
+        public SmallType Type { get; private set; }
+        public string Name { get; private set; }
+        public object Value { get; private set; }
+
+        public FieldDefinition(SmallType pType, string pName)
+        {
+            Type = pType;
+            Name = pName;
+            Value = null;
+        }
+
+        public FieldDefinition(SmallType pType, string pName, object pValue)
+        {
+            Type = pType;
+            Name = pName;
+            Value = pValue;
+        }
+    }
+
     public class SmallType
     {
         public bool IsArray
@@ -13,22 +34,22 @@ namespace SmallerLang
             get { return _elementType != null; }
         }
 
-        public bool IsStruct { get; private set; }
+        public bool IsStruct { get; internal set; }
 
         public bool IsTrait { get; internal set; }
 
-        public bool IsEnum { get; private set; }
+        public bool IsEnum { get; internal set; }
 
         public bool IsTuple { get; internal set; }
 
         public string Name { get; private set; }
 
         private readonly SmallType _elementType;
-        private readonly string[] _fields;
-        private readonly int[] _enumValues;
-        private readonly SmallType[] _fieldTypes;
+        private readonly FieldDefinition[] _fields;
+        //private readonly int[] _enumValues;
+        //private readonly SmallType[] _fieldTypes;
 
-        private List<SmallType> _implements;
+        private readonly List<SmallType> _implements;
 
         //Value constructor
         internal SmallType(string pName)
@@ -37,14 +58,10 @@ namespace SmallerLang
         }
 
         //Struct constructor
-        internal SmallType(string pName, string[] pFields, SmallType[] pFieldTypes)
+        internal SmallType(string pName, FieldDefinition[] pFields)
         {
-            System.Diagnostics.Debug.Assert(pFields.Length == pFieldTypes.Length);
-
             Name = pName;
-            IsStruct = true;
             _fields = pFields;
-            _fieldTypes = pFieldTypes;
             _implements = new List<SmallType>();
         }
 
@@ -58,16 +75,15 @@ namespace SmallerLang
         //Enum constructor
         internal SmallType(string pName, string[] pFields, int[] pValues)
         {
-            SmallType[] fieldTypes = new SmallType[pFields.Length];
-            for(int i = 0; i < fieldTypes.Length; i++)
+            System.Diagnostics.Debug.Assert(pFields.Length == pValues.Length);
+
+            FieldDefinition[] fields = new FieldDefinition[pFields.Length];
+            for (int i = 0; i < fields.Length; i++)
             {
-                fieldTypes[i] = this;
+                fields[i] = new FieldDefinition(this, pFields[i], pValues[i]);
             }
             Name = pName;
-            IsEnum = true;
-            _fields = pFields;
-            _enumValues = pValues;
-            _fieldTypes = fieldTypes;
+            _fields = fields;
             _implements = new List<SmallType>() { SmallTypeCache.Int };
         }
 
@@ -87,15 +103,15 @@ namespace SmallerLang
             if (_fields == null) return SmallTypeCache.Undefined;
             for(int i = 0; i < _fields.Length; i++)
             {
-                if (_fields[i] == pField) return _fieldTypes[i];
+                if (_fields[i].Name == pField) return _fields[i].Type;
             }
             return SmallTypeCache.Undefined;
         }
 
         public SmallType GetFieldType(int pIndex)
         {
-            if (pIndex >= _fieldTypes.Length) return SmallTypeCache.Undefined;
-            return _fieldTypes[pIndex];
+            if (pIndex >= _fields.Length) return SmallTypeCache.Undefined;
+            return _fields[pIndex].Type;
         }
 
         public int GetFieldIndex(string pField)
@@ -103,7 +119,7 @@ namespace SmallerLang
             if (_fields == null) return -1;
             for (int i = 0; i < _fields.Length; i++)
             {
-                if (_fields[i] == pField) return i;
+                if (_fields[i].Name == pField) return i;
             }
             return -1;
         }
@@ -111,17 +127,17 @@ namespace SmallerLang
         public int GetEnumValue(string pEnum)
         {
             var i = GetFieldIndex(pEnum);
-            if(i > -1) return _enumValues[i];
+            if(i > -1) return (int)_fields[i].Value;
             return -1;
         }
 
-        public IEnumerable<(string Name, SmallType Type)> GetFields()
+        public IEnumerable<FieldDefinition> GetFields()
         {
             if(_fields != null)
             {
                 for (int i = 0; i < _fields.Length; i++)
                 {
-                    yield return (_fields[i], _fieldTypes[i]);
+                    yield return _fields[i];
                 }
             }
         }

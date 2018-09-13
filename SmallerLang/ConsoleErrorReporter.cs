@@ -56,6 +56,7 @@ namespace SmallerLang
             }
             else
             {
+                Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine(pError);
             }

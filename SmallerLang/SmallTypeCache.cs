@@ -39,7 +39,7 @@ namespace SmallerLang
 
             if (!_cache.ContainsKey(pType))
             {
-                //Should only hit this for arrays... cache the array type
+                //Could be an array or generic type, parse it out to get the full type
                 var t = ParseTypeString(pType);
                 if (t == Undefined) return t;
 
@@ -50,31 +50,26 @@ namespace SmallerLang
 
         internal static SmallType AddEnum(string pType, string[] pFields, int[] pValues)
         {
-            var st = new SmallType(pType, pFields, pValues);
+            var st = new SmallType(pType, pFields, pValues) { IsEnum = true };
             _cache[pType] = (st, LLVMTypeRef.Int32Type());
             return st;
         }
 
-        internal static SmallType AddStruct(string pType, string[] pFields, SmallType[] pTypes)
+        internal static SmallType AddStruct(string pType, FieldDefinition[] pFields)
         {
-            System.Diagnostics.Debug.Assert(pFields.Length == pTypes.Length, "Incorrect field definitions");
-
-            //var baseType = FromString(pInherits);
-            var st = new SmallType(pType, pFields, pTypes);
+            var st = new SmallType(pType, pFields) { IsStruct = true };
             _cache[pType] = (st, default);
             return st;
         }
 
-        internal static SmallType AddTrait(string pType, string[] pFields, SmallType[] pTypes)
+        internal static SmallType AddTrait(string pType, FieldDefinition[] pFields)
         {
-            System.Diagnostics.Debug.Assert(pFields.Length == pTypes.Length, "Incorrect field definitions");
-
-            var st = new SmallType(pType, pFields, pTypes) { IsTrait = true };
+            var st = new SmallType(pType, pFields) { IsTrait = true };
             _cache[pType] = (st, default);
             return st;
         }
 
-        internal static SmallType GetTempTuple(SmallType[] pTypes)
+        internal static SmallType GetOrCreateTuple(SmallType[] pTypes)
         {
             StringBuilder sb = new StringBuilder("!!");
             foreach(var t in pTypes)
@@ -86,9 +81,13 @@ namespace SmallerLang
             if(!_cache.ContainsKey(name))
             {
                 //We don't need to populate field names because we only ever access tuple fields by index
-                string[] fieldNames = new string[pTypes.Length];
+                FieldDefinition[] fields = new FieldDefinition[pTypes.Length];
+                for(int i = 0; i < fields.Length; i++)
+                {
+                    fields[i] = new FieldDefinition(pTypes[i], "");
+                }
                 
-                var st = new SmallType(name, fieldNames, pTypes) { IsTuple = true };
+                var st = new SmallType(name, fields) { IsTuple = true };
                 _cache[name] = (st, default);
             }
             

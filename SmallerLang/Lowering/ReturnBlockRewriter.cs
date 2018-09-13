@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {

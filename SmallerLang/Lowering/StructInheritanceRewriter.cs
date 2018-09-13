@@ -5,20 +5,20 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
         ModuleSyntax _module;
         Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
         Dictionary<string, TypeDefinitionSyntax> _polydStructs;
-        Dictionary<string, TypeDefinitionSyntax> _index;
+        Dictionary<string, List<TypeDefinitionSyntax>> _index;
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             _module = pNode;
             _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
             _polydStructs = new Dictionary<string, TypeDefinitionSyntax>();
-            _index = new Dictionary<string, TypeDefinitionSyntax>();
+            _index = new Dictionary<string, List<TypeDefinitionSyntax>>();
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
@@ -33,7 +33,8 @@ namespace SmallerLang.Validation
             {
                 if(s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    _index.Add(s.AppliesTo, s);
+                    if (!_index.ContainsKey(s.AppliesTo)) _index.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
+                    _index[s.AppliesTo].Add(s);
                 }
             }
 
@@ -60,22 +61,38 @@ namespace SmallerLang.Validation
 
         protected override SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            //TODO Add any base fields to the inherited stuct
             if (pNode.DefinitionType == DefinitionTypes.Struct)
             {
                 if(_index.ContainsKey(pNode.Name))
                 {
-                    var s = _index[pNode.Name];
-
-                    //Combine our implementation with the struct
-                    List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>();
+                    Dictionary<string, TypedIdentifierSyntax> fields = new Dictionary<string, TypedIdentifierSyntax>();
                     List<MethodSyntax> methods = new List<MethodSyntax>();
-                    fields.AddRange(s.Fields);
-                    fields.AddRange(pNode.Fields);
-                    methods.AddRange(s.Methods);
-                    methods.AddRange(pNode.Methods); //TODO I need to visit these
 
-                    return SyntaxFactory.TypeDefinition(pNode.Name, "", pNode.DefinitionType, methods, fields, pNode.TypeParameters);
+                    //Add base fields and methods
+                    foreach(var f in pNode.Fields)
+                    {
+                        var nf = (TypedIdentifierSyntax)Visit(f);
+                        fields.Add(nf.Value, nf);
+                    }
+
+                    foreach(var m in pNode.Methods)
+                    {
+                        methods.Add((MethodSyntax)Visit(m));
+                    }
+
+                    foreach (var s in _index[pNode.Name])
+                    {
+                        //Combine our implementation with the struct
+                        foreach(var f in s.Fields)
+                        {
+                            //Avoid duplicate fields from traits defining the same fields
+                            if(!fields.ContainsKey(f.Value)) fields.Add(f.Value, f);
+                        }
+
+                        methods.AddRange(s.Methods);
+                    }
+
+                    return SyntaxFactory.TypeDefinition(pNode.Name, "", pNode.DefinitionType, methods, fields.Values.ToList(), pNode.TypeParameters);
                 }
             }
 
@@ -124,10 +141,14 @@ namespace SmallerLang.Validation
                 List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
                 foreach (var f in pNode.Fields)
                 {
-                    if (!typeArgMapping.ContainsKey(f.TypeNode.Value)) fields.Add(f);
+                    //TODO I can't poly T[] and this is awful
+                    var type = f.TypeNode.Value;
+                    if (f.TypeNode.Type.IsArray) type = type.Substring(0, type.IndexOf('[')); 
+
+                    if (!typeArgMapping.ContainsKey(type)) fields.Add(f);
                     else
                     {
-                        var i = typeArgMapping[f.TypeNode.Value];
+                        var i = typeArgMapping[type];
                         fields.Add(SyntaxFactory.TypedIdentifier(types[i], f.Value));
                     }
                 }

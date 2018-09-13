@@ -10,13 +10,11 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Validate implementations only use trait stuff
          * Poly methods taking traits
          * Assign nested structs t.Start = new Point(1, 1)
          * Do struct poly after type inference?
          * Set multiple variables from single assignment?
          * imports
-         * yield statement?
          * strings
         */
         static void Main(string[] args)

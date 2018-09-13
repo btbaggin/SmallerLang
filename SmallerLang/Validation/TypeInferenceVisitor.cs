@@ -52,7 +52,6 @@ namespace SmallerLang.Validation
                     }
                     else
                     {
-                        
                         if (SmallTypeCache.IsTypeDefined(pNode.Variables[i].Value))
                         {
                             _error.WriteError("Value is already defined as a type", pNode.Variables[i].Span);
@@ -77,6 +76,7 @@ namespace SmallerLang.Validation
                 }
             }
         }
+
         protected override void VisitAssignmentSyntax(AssignmentSyntax pNode)
         {
             base.VisitAssignmentSyntax(pNode);
@@ -88,6 +88,23 @@ namespace SmallerLang.Validation
 
                 //We have to set the type of discards so the tuple is created properly
                 if (Utils.SyntaxHelper.IsDiscard(pNode.Variables[i])) ((DiscardSyntax)pNode.Variables[i]).SetType(t);
+            }
+        }
+
+        protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
+        {
+            base.VisitStructInitializerSyntax(pNode);
+            if(pNode.Type == SmallTypeCache.Undefined)
+            {
+                _error.WriteError($"Use of undeclared type {pNode.Struct.Value}", pNode.Span);
+            }
+            else
+            {
+                var m = pNode.Type.GetConstructor();
+                if(m.ArgumentTypes.Count != pNode.Arguments.Count)
+                {
+                    _error.WriteError($"Constructor to {pNode.Type.Name} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
+                }
             }
         }
 

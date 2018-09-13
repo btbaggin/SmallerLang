@@ -23,7 +23,7 @@ namespace SmallerLang.Syntax
                 {
                     types[i] = Values[i].Type;
                 }
-                return SmallTypeCache.GetTempTuple(types);
+                return SmallTypeCache.GetOrCreateTuple(types);
             }
         }
 

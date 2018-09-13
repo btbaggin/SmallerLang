@@ -54,7 +54,7 @@ namespace SmallerLang.Syntax
             else
             {
                 //Create our temp tuple value
-                var t = SmallTypeCache.GetTempTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
+                var t = SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
 
                 LLVMValueRef v = pContext.AllocateVariable("<temp>tuple", t);
 
