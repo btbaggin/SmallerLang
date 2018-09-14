@@ -215,10 +215,12 @@ namespace SmallerLang.Validation
             if(_currentType != SmallTypeCache.Undefined)
             {
                 //For method calls we need to allow existing variables, but member access should only allow the struct's fields
-                if (pNode.Value.GetType() == typeof(MethodCallSyntax)) _locals = _locals.Copy();
+                if (pNode.Value is MethodCallSyntax) _locals = _locals.Copy();
                 else
                 {
-                    _locals = new VariableCache<SmallType>();
+                    //TODO clean this up
+                    if (pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
+                    else _locals = new VariableCache<SmallType>();
 
                     _locals.AddScope();
                     foreach (var f in _currentType.GetFields())

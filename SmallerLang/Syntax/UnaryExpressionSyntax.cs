@@ -40,7 +40,7 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            switch(Operator)
+            switch (Operator)
             {
                 case UnaryExpressionOperator.Not:
                     return LLVM.BuildNot(pContext.Builder, Value.Emit(pContext), "");
@@ -56,38 +56,45 @@ namespace SmallerLang.Syntax
                 case UnaryExpressionOperator.PreDecrement:
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.PostDecrement:
-                    var v = Value.Emit(pContext);
-                    Utils.LlvmHelper.LoadIfPointer(ref v, pContext);
-                    var iIsFloat = Utils.LlvmHelper.IsFloat(v);
+                    var variable = (IdentifierSyntax)Value;
+                    LLVMValueRef v = pContext.Locals.GetVariable(variable.Value);
 
-                    LLVMValueRef one;
-                    if (v.TypeOf().TypeKind == LLVMTypeKind.LLVMFloatTypeKind) one = pContext.GetFloat(1);
-                    else if (v.TypeOf().TypeKind == LLVMTypeKind.LLVMDoubleTypeKind) one = pContext.GetDouble(1);
-                    else one = pContext.GetInt(1);
+                    if (variable.IsMemberAccess) v = variable.Emit(pContext);
 
-                    LLVMValueRef exp;
-                    if (Operator == UnaryExpressionOperator.PreIncrement || Operator == UnaryExpressionOperator.PostIncrement)
+                    BinaryExpressionOperator op = BinaryExpressionOperator.Equals;
+                    switch (Operator)
                     {
-                        exp = iIsFloat ? LLVM.BuildFAdd(pContext.Builder, v, one, "") : LLVM.BuildAdd(pContext.Builder, v, one, "");
+                        case UnaryExpressionOperator.PostDecrement:
+                        case UnaryExpressionOperator.PreDecrement:
+                            op = BinaryExpressionOperator.Subtraction;
+                            break;
+
+                        case UnaryExpressionOperator.PostIncrement:
+                        case UnaryExpressionOperator.PreIncrement:
+                            op = BinaryExpressionOperator.Addition;
+                            break;
                     }
-                    else
-                    {
-                        exp = iIsFloat ? LLVM.BuildFSub(pContext.Builder, v, one, "") : LLVM.BuildSub(pContext.Builder, v, one, "");
-                    }
+
+                    LLVMValueRef value = BinaryExpressionSyntax.EmitOperator(v, op, pContext.GetInt(1), pContext);
 
                     //Post unary we want to return the original variable value
-                    if(Operator == UnaryExpressionOperator.PostIncrement || Operator == UnaryExpressionOperator.PostDecrement)
+                    if (Operator == UnaryExpressionOperator.PostIncrement || Operator == UnaryExpressionOperator.PostDecrement)
                     {
+                        //Save the old value to a temp variable that we will return
                         var temp = pContext.AllocateVariable("<temp_unary>", Value.Type);
-                        LLVM.BuildStore(pContext.Builder, v, temp);
+                        LLVMValueRef tempValue = Utils.LlvmHelper.IsPointer(v) ? LLVM.BuildLoad(pContext.Builder, v, "") : v;
+                        LLVM.BuildStore(pContext.Builder, tempValue, temp);
 
-                        StoreValueIfVariable(v, exp, pContext);
+                        //Increment the variable
+                        Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
+                        if (Value.GetType() == typeof(IdentifierSyntax) || Value.GetType() == typeof(MemberAccessSyntax))  LLVM.BuildStore(pContext.Builder, value, v);
+
                         return temp;
                     }
-                    
+
                     //If it isn't a variable we cane save we need to return the addition
-                    if (StoreValueIfVariable(v, exp, pContext)) return v;
-                    return exp;
+                    if (Value.GetType() == typeof(IdentifierSyntax) || Value.GetType() == typeof(MemberAccessSyntax)) LLVM.BuildStore(pContext.Builder, value, v);
+                    return value;
 
                 default:
                     throw new NotSupportedException();
@@ -103,22 +110,6 @@ namespace SmallerLang.Syntax
         {
             _type = pNode.Type;
             return base.FromNode(pNode);
-        }
-
-        private bool StoreValueIfVariable(LLVMValueRef pVariable, LLVMValueRef pValue, EmittingContext pContext)
-        {
-            //We only want to store the value back if it's an actual variable.
-            //If it's a function call or something else we can't save it
-            var v = Value;
-            if (Value is MemberAccessSyntax m) v = m.Value;
-            if (v is IdentifierSyntax i)
-            {
-                pVariable = pContext.Locals.GetVariable(i.Value, out bool parameter);
-                LLVM.BuildStore(pContext.Builder, pValue, pVariable);
-                return true;
-            }
-
-            return false;
         }
     }
 }

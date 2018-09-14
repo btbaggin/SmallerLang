@@ -10,7 +10,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Unary operator on a member access ie self.Count++
+         * I can't place Line struct before Point?
          * self.RealField[AnotherRealField] shouldn't be allowed. Need to have self 
          * Poly methods taking traits
          * Assign nested structs t.Start = new Point(1, 1)
