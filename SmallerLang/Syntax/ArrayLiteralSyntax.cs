@@ -10,10 +10,11 @@ namespace SmallerLang.Syntax
 {
     public class ArrayLiteralSyntax : IdentifierSyntax
     {
-        private readonly TypeSyntax _type;
+        public TypeSyntax TypeNode { get; private set; }
+
         public override SmallType Type
         {
-            get { return _type.Type.MakeArrayType(); }
+            get { return TypeNode.Type.MakeArrayType(); }
         }
 
         public int Size
@@ -27,7 +28,7 @@ namespace SmallerLang.Syntax
 
         public ArrayLiteralSyntax(TypeSyntax pType, string pValue) : base(pValue)
         {
-            _type = pType; 
+            TypeNode = pType; 
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)

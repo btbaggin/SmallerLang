@@ -11,5 +11,6 @@ namespace SmallerLang.Utils
         public static string Constructor => "new";
         public static string RunMethod => "run";
         public static string Complete => "complete";
+        public static string Hidden => "hidden";
     }
 }

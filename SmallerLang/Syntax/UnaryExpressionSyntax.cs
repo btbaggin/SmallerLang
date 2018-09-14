@@ -57,6 +57,7 @@ namespace SmallerLang.Syntax
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.PostDecrement:
                     var v = Value.Emit(pContext);
+                    Utils.LlvmHelper.LoadIfPointer(ref v, pContext);
                     var iIsFloat = Utils.LlvmHelper.IsFloat(v);
 
                     LLVMValueRef one;
@@ -78,7 +79,6 @@ namespace SmallerLang.Syntax
                     if(Operator == UnaryExpressionOperator.PostIncrement || Operator == UnaryExpressionOperator.PostDecrement)
                     {
                         var temp = pContext.AllocateVariable("<temp_unary>", Value.Type);
-                        Utils.LlvmHelper.LoadIfPointer(ref v, pContext);
                         LLVM.BuildStore(pContext.Builder, v, temp);
 
                         StoreValueIfVariable(v, exp, pContext);
@@ -109,9 +109,11 @@ namespace SmallerLang.Syntax
         {
             //We only want to store the value back if it's an actual variable.
             //If it's a function call or something else we can't save it
-            if (Value.GetType() == typeof(IdentifierSyntax))
+            var v = Value;
+            if (Value is MemberAccessSyntax m) v = m.Value;
+            if (v is IdentifierSyntax i)
             {
-                pVariable = pContext.Locals.GetVariable(((IdentifierSyntax)Value).Value, out bool parameter);
+                pVariable = pContext.Locals.GetVariable(i.Value, out bool parameter);
                 LLVM.BuildStore(pContext.Builder, pValue, pVariable);
                 return true;
             }

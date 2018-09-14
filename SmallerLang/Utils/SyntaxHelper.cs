@@ -13,7 +13,7 @@ namespace SmallerLang.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LastStatementIsReturn(BlockSyntax pBlock)
         {
-            return pBlock.Statements[pBlock.Statements.Count - 1].GetType() == typeof(ReturnSyntax);
+            return pBlock.Statements.Count > 0 && pBlock.Statements[pBlock.Statements.Count - 1].GetType() == typeof(ReturnSyntax);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

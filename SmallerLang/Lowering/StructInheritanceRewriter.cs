@@ -112,24 +112,34 @@ namespace SmallerLang.Lowering
             return base.VisitStructInitializerSyntax(pNode);
         }
 
+        protected override SyntaxNode VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode)
+        {
+            if(_typeArgMapping.ContainsKey(pNode.TypeNode.Value))
+            {
+                var i = _typeArgMapping[pNode.TypeNode.Value];
+                return SyntaxFactory.ArrayLiteral(_types[i], pNode.Value);
+            }
+            return base.VisitArrayLiteralSyntax(pNode);
+        }
+
+        Dictionary<string, int> _typeArgMapping = new Dictionary<string, int>();
+        IList<TypeSyntax> _types;
         private bool TryPolyStruct(TypeDefinitionSyntax pNode, ref StructInitializerSyntax pInitializer)
         {
-            var types = pInitializer.Struct.GenericArguments;
-            if(types.Count != pNode.TypeParameters.Count)
+            _types = pInitializer.Struct.GenericArguments;
+            if(_types.Count != pNode.TypeParameters.Count)
             {
                 _error.WriteError("Incorrect number of type arguments supplied to struct, expecting " + pNode.TypeParameters.Count, pInitializer.Span);
                 return false;
             }
 
-            Dictionary<string, int> typeArgMapping = new Dictionary<string, int>();
-
             //Get struct name
             var structName = new StringBuilder(pNode.Name);
             structName.Append("<");
-            for(int i = 0; i < types.Count; i++)
+            for(int i = 0; i < _types.Count; i++)
             {
-                structName.Append(types[i].Value + ",");
-                typeArgMapping.Add(pNode.TypeParameters[i], i);
+                structName.Append(_types[i].Value + ",");
+                _typeArgMapping.Add(pNode.TypeParameters[i], i);
             }
             structName = structName.Remove(structName.Length - 1, 1);
             structName.Append(">");
@@ -145,11 +155,12 @@ namespace SmallerLang.Lowering
                     var type = f.TypeNode.Value;
                     if (f.TypeNode.Type.IsArray) type = type.Substring(0, type.IndexOf('[')); 
 
-                    if (!typeArgMapping.ContainsKey(type)) fields.Add(f);
+                    if (!_typeArgMapping.ContainsKey(type)) fields.Add(f);
                     else
                     {
-                        var i = typeArgMapping[type];
-                        fields.Add(SyntaxFactory.TypedIdentifier(types[i], f.Value));
+                        var i = _typeArgMapping[type];
+                        var t = SyntaxFactory.Type(_types[i].Value + (f.TypeNode.Type.IsArray ? "[]" : ""));
+                        fields.Add(SyntaxFactory.TypedIdentifier(t, f.Value));
                     }
                 }
 
@@ -160,22 +171,22 @@ namespace SmallerLang.Lowering
                     //Poly method parameters
                     foreach(var p in m.Parameters)
                     {
-                        if (!typeArgMapping.ContainsKey(p.TypeNode.Value)) parameters.Add(p);
+                        if (!_typeArgMapping.ContainsKey(p.TypeNode.Value)) parameters.Add(p);
                         else
                         {
-                            var i = typeArgMapping[p.TypeNode.Value];
-                            parameters.Add(SyntaxFactory.TypedIdentifier(types[i], p.Value));
+                            var i = _typeArgMapping[p.TypeNode.Value];
+                            parameters.Add(SyntaxFactory.TypedIdentifier(_types[i], p.Value));
                         }
                     }
 
                     //Poly method return values
                     foreach(var r in m.ReturnValues)
                     {
-                        if (!typeArgMapping.ContainsKey(r.Value)) returnValues.Add(r);
+                        if (!_typeArgMapping.ContainsKey(r.Value)) returnValues.Add(r);
                         else
                         {
-                            var i = typeArgMapping[r.Value];
-                            returnValues.Add(types[i]);
+                            var i = _typeArgMapping[r.Value];
+                            returnValues.Add(_types[i]);
                         }
                     }
 
@@ -194,6 +205,7 @@ namespace SmallerLang.Lowering
 
             pInitializer = SyntaxFactory.StructInitializer(pInitializer.Value, SyntaxFactory.Type(structName.ToString()), arguments);
 
+            _typeArgMapping.Clear();
             return true;
         }
     }

@@ -216,14 +216,17 @@ namespace SmallerLang.Validation
             {
                 //For method calls we need to allow existing variables, but member access should only allow the struct's fields
                 if (pNode.Value.GetType() == typeof(MethodCallSyntax)) _locals = _locals.Copy();
-                else _locals = new VariableCache<SmallType>();
-
-                _locals.AddScope();
-                foreach (var f in _currentType.GetFields())
+                else
                 {
-                    if (!_locals.IsVariableDefinedInScope(f.Name))
+                    _locals = new VariableCache<SmallType>();
+
+                    _locals.AddScope();
+                    foreach (var f in _currentType.GetFields())
                     {
-                        _locals.DefineVariableInScope(f.Name, f.Type);
+                        if (!_locals.IsVariableDefinedInScope(f.Name))
+                        {
+                            _locals.DefineVariableInScope(f.Name, f.Type);
+                        }
                     }
                 }
 

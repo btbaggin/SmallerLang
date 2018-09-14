@@ -269,7 +269,7 @@ namespace SmallerLang.Lexer
 
             var i = _tokenizer.GetSpan(_length);
             TrieNode t = _keywords.Prefix(i);
-            if (t.Leaf)
+            if (t.Leaf && t.Depth == i.Length)
             {
                 return CreateToken(t.Type);
             }

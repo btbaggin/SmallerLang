@@ -194,7 +194,9 @@ namespace SmallerLang.Parser
                                 break;
 
                             default:
-                                fields.Add(ParseTypedIdentifier());
+                                var ti = ParseTypedIdentifier();
+                                if (PeekAndExpect(TokenType.Annotation, out string annotation)) ti.Annotation = annotation;
+                                fields.Add(ti);
                                 break;
                         }
                     }
