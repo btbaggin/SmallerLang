@@ -89,7 +89,7 @@ namespace SmallerLang.Validation
         protected override void VisitSelectSyntax(SelectSyntax pNode)
         {
             //Validate if a select is marked as complete, ensure all enum values are used
-            if(Utils.SyntaxHelper.SelectIsComplete(pNode))
+            if(pNode.Annotation == Utils.KeyAnnotations.Complete)
             {
                 var t = pNode.Condition.Type;
                 if(!t.IsEnum)
@@ -108,7 +108,7 @@ namespace SmallerLang.Validation
 
                     foreach (var c in pNode.Cases)
                     {
-                        //Default marks all as found
+                        //Default covers all possible cases so mark all as found
                         if (c.IsDefault)
                         {
                             for (int i = 0; i < fields.Count; i++)
@@ -149,7 +149,6 @@ namespace SmallerLang.Validation
                             c.Append(f);
                             return c;
                         }), pNode.Span);
-
                     }
                 }
             }

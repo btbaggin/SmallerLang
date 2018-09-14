@@ -77,7 +77,7 @@ namespace SmallerLang.Validation
                 _error.WriteError("Method has no return value, so no return statement must be present", pNode.Span);
             }
 
-            if (MethodCache.CastCount(pNode.Parameters[0].Type, pNode.Type) != 1)
+            if (MethodCache.CastCount(pNode.Parameters[0].Type, pNode.Type) > 1)
             {
                 _error.WriteError($"Multiple definitions for cast definition from type {pNode.Parameters[0].Type.ToString()} to {pNode.Type.ToString()} found");
             }

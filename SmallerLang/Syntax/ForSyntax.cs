@@ -53,7 +53,7 @@ namespace SmallerLang.Syntax
             LLVMValueRef cmp = SmallTypeCache.GetLLVMDefault(Condition.Type, pContext);
 
             LLVMValueRef condv;
-            if (Condition.Type.IsFloat())
+            if (Utils.TypeHelper.IsFloat(Condition.Type))
             {
                 condv = LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealONE, cond, cmp, "whilecond");
             }

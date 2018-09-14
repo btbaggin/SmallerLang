@@ -34,6 +34,7 @@ namespace SmallerLang.Emitting
     {
         readonly static Dictionary<string, List<MethodDefinition>> _methods = new Dictionary<string, List<MethodDefinition>>();
         readonly static Dictionary<string, int> _counter = new Dictionary<string, int>();
+        internal const string CAST_METHOD = "<cast>"; //Use a normally invalid method name so we don't get collisions
 
         public static MethodDefinition AddMethod(string pName, Syntax.MethodSyntax pNode)
         {
@@ -75,10 +76,10 @@ namespace SmallerLang.Emitting
         public static bool CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
         {
             pDefinition = default;
-            if(_methods.ContainsKey("cast"))
+            if(_methods.ContainsKey(CAST_METHOD))
             {
                 bool found = false;
-                foreach (var md in _methods["cast"])
+                foreach (var md in _methods[CAST_METHOD])
                 {
                     if(pFromType == md.ArgumentTypes[0] && md.ReturnType == pFromType)
                     {
@@ -101,10 +102,10 @@ namespace SmallerLang.Emitting
 
         internal static int CastCount(SmallType pFromType, SmallType pToType)
         {
-            if (_methods.ContainsKey("cast"))
+            if (_methods.ContainsKey(CAST_METHOD))
             {
                 int count = 0;
-                foreach (var md in _methods["cast"])
+                foreach (var md in _methods[CAST_METHOD])
                 {
                     if (md.ArgumentTypes[0] == pFromType && md.ReturnType == pToType)
                     {

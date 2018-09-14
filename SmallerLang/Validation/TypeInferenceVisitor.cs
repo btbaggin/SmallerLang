@@ -94,17 +94,11 @@ namespace SmallerLang.Validation
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
             base.VisitStructInitializerSyntax(pNode);
-            if(pNode.Type == SmallTypeCache.Undefined)
+
+            var m = pNode.Type.GetConstructor();
+            if(m.ArgumentTypes != null && m.ArgumentTypes.Count != pNode.Arguments.Count)
             {
-                _error.WriteError($"Use of undeclared type {pNode.Struct.Value}", pNode.Span);
-            }
-            else
-            {
-                var m = pNode.Type.GetConstructor();
-                if(m.ArgumentTypes.Count != pNode.Arguments.Count)
-                {
-                    _error.WriteError($"Constructor to {pNode.Type.Name} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
-                }
+                _error.WriteError($"Constructor to {pNode.Type.Name} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
             }
         }
 

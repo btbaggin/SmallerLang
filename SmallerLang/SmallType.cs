@@ -6,27 +6,6 @@ using System.Threading.Tasks;
 
 namespace SmallerLang
 {
-    public struct FieldDefinition
-    {
-        public SmallType Type { get; private set; }
-        public string Name { get; private set; }
-        public object Value { get; private set; }
-
-        public FieldDefinition(SmallType pType, string pName)
-        {
-            Type = pType;
-            Name = pName;
-            Value = null;
-        }
-
-        public FieldDefinition(SmallType pType, string pName, object pValue)
-        {
-            Type = pType;
-            Name = pName;
-            Value = pValue;
-        }
-    }
-
     public class SmallType
     {
         public bool IsArray
@@ -46,8 +25,6 @@ namespace SmallerLang
 
         private readonly SmallType _elementType;
         private readonly FieldDefinition[] _fields;
-        //private readonly int[] _enumValues;
-        //private readonly SmallType[] _fieldTypes;
 
         private readonly List<SmallType> _implements;
 
@@ -186,22 +163,6 @@ namespace SmallerLang
                 if (_implements[i].IsAssignableFrom(pType)) return true;
             }
             return false;
-        }
-
-        internal bool IsFloat()
-        {
-            return this == SmallTypeCache.Float || this == SmallTypeCache.Double;
-        }
-
-        internal bool IsInt()
-        {
-            return this == SmallTypeCache.Short || this == SmallTypeCache.Int || this == SmallTypeCache.Long;
-        }
-
-        internal bool IsNumber()
-        {
-            return this == SmallTypeCache.Float || this == SmallTypeCache.Double || this == SmallTypeCache.Int ||
-                   this == SmallTypeCache.Long || this == SmallTypeCache.Short;
         }
 
         public override int GetHashCode()

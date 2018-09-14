@@ -98,7 +98,7 @@ namespace SmallerLang.Validation
                 case UnaryExpressionOperator.PostDecrement:
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.Negative:
-                    if(!pNode.Value.Type.IsNumber())
+                    if(!Utils.TypeHelper.IsNumber(pNode.Value.Type))
                     {
                         _error.WriteError($"{pNode.Value.Type.ToString()} is not a numeric type", pNode.Span);
                     }
@@ -137,7 +137,11 @@ namespace SmallerLang.Validation
         {
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
-            if(pNode.Struct.Type.HasDefinedConstructor())
+            if(pNode.Struct.Type == SmallTypeCache.Undefined)
+            {
+                _error.WriteError($"Use of undeclared type {pNode.Struct.Value}", pNode.Span);
+            }
+            else if(pNode.Struct.Type.HasDefinedConstructor())
             {
                 var ctor = pNode.Struct.Type.GetConstructor().Name;
                 MethodCache.FindMethod(out MethodDefinition m, pNode.Struct.Type, ctor, types);

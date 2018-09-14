@@ -57,12 +57,6 @@ namespace SmallerLang.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool SelectIsComplete(SelectSyntax pNode)
-        {
-            return pNode.Annotation == "complete";
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SmallType[] SelectNodeTypes<T>(IList<T> pNodes) where T : SyntaxNode
         {
             SmallType[] types = new SmallType[pNodes.Count];

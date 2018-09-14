@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 using LLVMSharp;
 
 namespace SmallerLang.Syntax
@@ -68,18 +69,18 @@ namespace SmallerLang.Syntax
                                                   EmittingContext pContext)
         {
             //We since arrays are pointers, we need to load the value at the pointer
-            Utils.LlvmHelper.LoadIfPointer(ref pLeft, pContext);
-            Utils.LlvmHelper.LoadIfPointer(ref pRight, pContext);
+            LlvmHelper.LoadIfPointer(ref pLeft, pContext);
+            LlvmHelper.LoadIfPointer(ref pRight, pContext);
 
             bool useFloat = false;
-            if(Utils.LlvmHelper.IsFloat(pLeft))
+            if(LlvmHelper.IsFloat(pLeft))
             {
-                if (!Utils.LlvmHelper.IsFloat(pRight)) pRight = LLVM.BuildSIToFP(pContext.Builder, pRight, pLeft.TypeOf(), "");
+                if (!LlvmHelper.IsFloat(pRight)) pRight = LLVM.BuildSIToFP(pContext.Builder, pRight, pLeft.TypeOf(), "");
                 useFloat = true;
             }
-            if(Utils.LlvmHelper.IsFloat(pRight))
+            if(LlvmHelper.IsFloat(pRight))
             {
-                if (!Utils.LlvmHelper.IsFloat(pLeft)) pLeft = LLVM.BuildSIToFP(pContext.Builder, pLeft, pRight.TypeOf(), "");
+                if (!LlvmHelper.IsFloat(pLeft)) pLeft = LLVM.BuildSIToFP(pContext.Builder, pLeft, pRight.TypeOf(), "");
                 useFloat = true;
             }
 
@@ -150,8 +151,8 @@ namespace SmallerLang.Syntax
                 case BinaryExpressionOperator.Division:
                 case BinaryExpressionOperator.Mod:
                     if (pLeft.IsAssignableFrom(pRight)) return pLeft;
-                    if (pLeft.IsFloat() && pRight.IsNumber()) return pLeft;
-                    if (pRight.IsFloat() && pLeft.IsNumber()) return pRight;
+                    if (TypeHelper.IsFloat(pLeft) && TypeHelper.IsNumber(pRight)) return pLeft;
+                    if (TypeHelper.IsFloat(pRight) && TypeHelper.IsNumber(pLeft)) return pRight;
                     return SmallTypeCache.Undefined;
 
                 case BinaryExpressionOperator.Equals:

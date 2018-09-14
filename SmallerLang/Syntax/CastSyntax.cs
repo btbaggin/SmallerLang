@@ -57,7 +57,7 @@ namespace SmallerLang.Syntax
                 {
                     var cmp = SmallTypeCache.GetLLVMDefault(FromType, pContext);
 
-                    if (FromType.IsFloat())
+                    if (Utils.TypeHelper.IsFloat(FromType))
                     {
                         ret = LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealONE, val, cmp, "cast");
                     }
@@ -66,11 +66,11 @@ namespace SmallerLang.Syntax
                         ret = LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, val, cmp, "cast");
                     }
                 }
-                else if (FromType.IsNumber() && Type.IsFloat())
+                else if (Utils.TypeHelper.IsNumber(FromType) && Utils.TypeHelper.IsFloat(Type))
                 {
                     ret = LLVM.BuildSIToFP(pContext.Builder, val, t, "");
                 }
-                else if (FromType.IsNumber() && Type.IsInt())
+                else if (Utils.TypeHelper.IsFloat(FromType) && Utils.TypeHelper.IsNumber(Type))
                 {
                     ret = LLVM.BuildFPToSI(pContext.Builder, val, t, "");
                 }

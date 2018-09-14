@@ -16,20 +16,17 @@ namespace SmallerLang.Lowering
         protected override SyntaxNode VisitSelectSyntax(SelectSyntax pNode)
         {
             _rewrite = false;
-            //Save itvar in case we hit a for statement
+            //Save itVar in case we hit a nested for or select statement
             var it = _itVar;
             _itVar = pNode.Condition;
             var s = base.VisitSelectSyntax(pNode);
 
-            if (!_rewrite)
-            {
-                return s;
-            }
+            if (!_rewrite) return s;
             else
             {
-                if(Utils.SyntaxHelper.SelectIsComplete(pNode))
+                if(pNode.Annotation == Utils.KeyAnnotations.Complete)
                 {
-                    _error.WriteError("complete annotation is ignored on select statements with 'it'", pNode.Span);
+                    _error.WriteWarning("complete annotation is ignored on select statements with 'it'", pNode.Span);
                 }
 
                 //Only rewrite if we have "it"
@@ -44,30 +41,28 @@ namespace SmallerLang.Lowering
                     else
                     {
                         //The condition needs to be a comparison binary expression
-                        ExpressionSyntax e = null;
-                        e = (ExpressionSyntax)Visit(currentCase.Conditions[0]);
-                        if (e.GetType() != typeof(BinaryExpressionSyntax) ||
-                            !IsComparison(((BinaryExpressionSyntax)e).Operator))
+                        ExpressionSyntax baseExpression = (ExpressionSyntax)Visit(currentCase.Conditions[0]);
+                        if (!IsComparison(baseExpression))
                         {
                             //If it isn't make it one
-                            e = SyntaxFactory.BinaryExpression(_itVar, BinaryExpressionOperator.Equals, e);
+                            baseExpression = SyntaxFactory.BinaryExpression(_itVar, BinaryExpressionOperator.Equals, baseExpression);
                         }
 
                         for (int j = 0; j < currentCase.Conditions.Count - 1; j++)
                         {
-                            var e1 = currentCase.Conditions[j + 1];
-                            if (e1.GetType() != typeof(BinaryExpressionSyntax) || !IsComparison(((BinaryExpressionSyntax)e1).Operator))
+                            var newExpression = currentCase.Conditions[j + 1];
+                            if (!IsComparison(newExpression))
                             {
                                 //If it isn't make it one
-                                e1 = SyntaxFactory.BinaryExpression(_itVar, BinaryExpressionOperator.Equals, e1);
+                                newExpression = SyntaxFactory.BinaryExpression(_itVar, BinaryExpressionOperator.Equals, newExpression);
                             }
 
-                            e = SyntaxFactory.BinaryExpression(e, BinaryExpressionOperator.Or, e1);
+                            baseExpression = SyntaxFactory.BinaryExpression(baseExpression, BinaryExpressionOperator.Or, newExpression);
                         }
 
                         //Visit body so we can rewrite any "it"
                         var b = (BlockSyntax)Visit(currentCase.Body);
-                        _currentIf = SyntaxFactory.If(e, b, _currentElse);
+                        _currentIf = SyntaxFactory.If(baseExpression, b, _currentElse);
 
                         if (i > 0)
                         {
@@ -88,16 +83,18 @@ namespace SmallerLang.Lowering
             return _itVar;
         }
 
-        private bool IsComparison(BinaryExpressionOperator pOp)
+        private bool IsComparison(SyntaxNode pNode)
         {
-            return pOp == BinaryExpressionOperator.Equals ||
-                   pOp == BinaryExpressionOperator.GreaterThan ||
-                   pOp == BinaryExpressionOperator.GreaterThanOrEqual ||
-                   pOp == BinaryExpressionOperator.LessThan ||
-                   pOp == BinaryExpressionOperator.LessThanOrEqual ||
-                   pOp == BinaryExpressionOperator.NotEquals ||
-                   pOp == BinaryExpressionOperator.And ||
-                   pOp == BinaryExpressionOperator.Or;
+            if (pNode.GetType() != typeof(BinaryExpressionSyntax)) return false;
+            var op = ((BinaryExpressionSyntax)pNode).Operator;
+            return op == BinaryExpressionOperator.Equals ||
+                   op == BinaryExpressionOperator.GreaterThan ||
+                   op == BinaryExpressionOperator.GreaterThanOrEqual ||
+                   op == BinaryExpressionOperator.LessThan ||
+                   op == BinaryExpressionOperator.LessThanOrEqual ||
+                   op == BinaryExpressionOperator.NotEquals ||
+                   op == BinaryExpressionOperator.And ||
+                   op == BinaryExpressionOperator.Or;
         }
     }
 }

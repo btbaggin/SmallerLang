@@ -59,7 +59,6 @@ namespace SmallerLang.Syntax
                 Structs[i].EmitMethods(pContext);
             }
 
-
             //Emit method bodies
             for (int i = 0; i < Methods.Count; i++)
             {

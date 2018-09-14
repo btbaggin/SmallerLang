@@ -13,7 +13,7 @@ namespace SmallerLang.Syntax
         internal CastDefinitionSyntax(TypedIdentifierSyntax pFromType, BlockSyntax pBody, TypeSyntax pToType) 
             : base("", new List<TypeSyntax>() { pToType }, new List<TypedIdentifierSyntax>() { pFromType }, pBody, false)
         {
-            Name = "cast"; 
+            Name = MethodCache.CAST_METHOD; 
         }
     }
 }

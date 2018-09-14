@@ -49,11 +49,14 @@ namespace SmallerLang.Syntax
                 arguments[start + i] = Arguments[i].Emit(pContext);
 
                 //Load the location of any pointer calculations
-                var op = arguments[start + i].GetInstructionOpcode();
-                if (op == LLVMOpcode.LLVMGetElementPtr) arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
+                //The exceptions to this are structs (arrays are structs) since we pass those as a pointer
+                if (Utils.LlvmHelper.IsPointer(arguments[start + i]) && !Arguments[i].Type.IsStruct && !Arguments[i].Type.IsArray)
+                {
+                    arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
+                }
 
                 //Implicitly cast any derived types
-                if(_definition.ArgumentTypes[i] != Arguments[i].Type)
+                if (_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {
                     var t = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i]);
                     Utils.LlvmHelper.MakePointer(arguments[start + i], ref t);
