@@ -29,7 +29,7 @@ namespace SmallerLang.Syntax
         {
             var m = Type.GetConstructor();
             LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
-            arguments[0] = pContext.Locals.GetVariable(Value, out bool p);
+            arguments[0] = pContext.Locals.GetVariable(Value);
 
             for(int i= 0; i < Arguments.Count; i++)
             {

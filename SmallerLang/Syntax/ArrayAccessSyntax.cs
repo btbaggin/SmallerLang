@@ -34,7 +34,7 @@ namespace SmallerLang.Syntax
             if (pContext.AccessStack.Count == 0)
             {
                 System.Diagnostics.Debug.Assert(pContext.Locals.IsVariableDefined(Value));
-                variable = pContext.Locals.GetVariable(Value, out bool p);
+                variable = pContext.Locals.GetVariable(Value);
             }
             else
             {

@@ -34,6 +34,7 @@ namespace SmallerLang.Syntax
                 //Save the current stack so we can restore it when we are done
                 //We clear this because we are no longer in a member access when emitting the arguments
                 member = pContext.AccessStack.Copy();
+
                 //"consume" the entire access stack to get the object we are calling the method on
                 arguments[0] = MemberAccessStack.BuildGetElementPtr(pContext, null);
                 pContext.AccessStack.Clear();
@@ -58,9 +59,9 @@ namespace SmallerLang.Syntax
                 //Implicitly cast any derived types
                 if (_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {
-                    var t = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i]);
-                    Utils.LlvmHelper.MakePointer(arguments[start + i], ref t);
-                    arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], t, "");
+                    var type = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i]);
+                    Utils.LlvmHelper.MakePointer(arguments[start + i], ref type);
+                    arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], type, "");
                 }
             }
 
@@ -72,6 +73,11 @@ namespace SmallerLang.Syntax
         internal void SetDefinition(MethodDefinition pDef)
         {
             _definition = pDef;
+        }
+
+        internal MethodDefinition GetDefinition()
+        {
+            return _definition;
         }
     }
 }
