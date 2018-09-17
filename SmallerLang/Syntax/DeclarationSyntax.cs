@@ -67,11 +67,11 @@ namespace SmallerLang.Syntax
                 {
                     if(!Utils.SyntaxHelper.IsDiscard(Variables[i]))
                     {
-                        var g = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
-                        g = LLVM.BuildLoad(pContext.Builder, g, "");
+                        var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
+                        indexAccess = LLVM.BuildLoad(pContext.Builder, indexAccess, "");
 
                         var variable = pContext.Locals.GetVariable(Variables[i].Value);
-                        LLVM.BuildStore(pContext.Builder, g, variable);
+                        LLVM.BuildStore(pContext.Builder, indexAccess, variable);
                     }
                 }
 

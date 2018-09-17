@@ -27,16 +27,16 @@ namespace SmallerLang.Syntax
             //We are in a member access, just push the index of this field onto the stack
             if(pContext.AccessStack.Count > 0)
             {
-                var i = pContext.AccessStack.Peek().Type.GetFieldIndex(Value);
-                return pContext.GetInt(i);
+                var idx = pContext.AccessStack.Peek().Type.GetFieldIndex(Value);
+                return pContext.GetInt(idx);
             }
 
             System.Diagnostics.Debug.Assert(pContext.Locals.IsVariableDefined(Value), "Variable " + Value + " not defined in scope");
 
-            var v = pContext.Locals.GetVariable(Value, out bool parameter);
+            var variable = pContext.Locals.GetVariable(Value, out bool parameter);
 
-            if (parameter || Type.IsStruct ||Type.IsArray) return v;
-            return LLVMSharp.LLVM.BuildLoad(pContext.Builder, v, Value);
+            if (parameter || Type.IsStruct ||Type.IsArray) return variable;
+            return LLVMSharp.LLVM.BuildLoad(pContext.Builder, variable, Value);
         }
 
         public void SetType(SmallType pType)

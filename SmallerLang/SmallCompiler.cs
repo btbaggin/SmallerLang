@@ -53,7 +53,7 @@ namespace SmallerLang
             new TypeChecker(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;
 
-            new PostTypeValidation(reporter).Visit(t);
+            new PostTypeValidationVisitor(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;
 
             LLVMModuleRef m = LLVM.ModuleCreateWithName(t.Name);
@@ -64,10 +64,10 @@ namespace SmallerLang
                 //Promote allocas to registers
                 LLVM.AddPromoteMemoryToRegisterPass(passManager);
 
-                //Do simple peephold optmizations
+                //Do simple peephole optimizations
                 LLVM.AddInstructionCombiningPass(passManager);
 
-                //Reassociate expressions
+                //Re-associate expressions
                 LLVM.AddReassociatePass(passManager);
 
                 //Eliminate common subexpressions

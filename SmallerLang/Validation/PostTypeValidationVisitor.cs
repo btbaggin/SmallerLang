@@ -8,9 +8,11 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Validation
 {
-    partial class PostTypeValidation : SyntaxNodeVisitor
+    partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
         string _runMethod;
+        SmallType _currentStruct;
+        SmallType _currentType;
         VariableCache<(bool Used, TextSpan Span)> _locals; //Used to find unused variables
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
@@ -26,6 +28,14 @@ namespace SmallerLang.Validation
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
             _locals.SetVariableValue(pNode.Value, (true, default));
+            if(_currentType != null)
+            {
+                var definition = _currentType.GetField(pNode.Value);
+                if (definition.Visibility == FieldVisibility.Hidden && _currentStruct != _currentType)
+                {
+                    _error.WriteError("Cannot access hidden struct member outside of the struct", pNode.Span);
+                }
+            }
             base.VisitIdentifierSyntax(pNode);
         }
 
@@ -33,10 +43,28 @@ namespace SmallerLang.Validation
         {
             _locals = new VariableCache<(bool, TextSpan)>();
             base.VisitModuleSyntax(pNode);
+
             if(_runMethod == null)
             {
                 _error.WriteError("No run method found!", pNode.Span);
             }
+        }
+
+        protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
+        {
+            _currentStruct = SmallTypeCache.FromString(pNode.Name);
+            base.VisitTypeDefinitionSyntax(pNode);
+        }
+
+        protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
+        {
+            //Save current type so we can validate member visibility
+            var l = _currentType;
+            _currentType = pNode.Identifier.Type;
+
+            base.VisitMemberAccessSyntax(pNode);
+
+            _currentType = l;
         }
 
         private void ValidateRun(MethodSyntax pNode)

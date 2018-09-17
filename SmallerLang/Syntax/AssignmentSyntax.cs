@@ -100,13 +100,13 @@ namespace SmallerLang.Syntax
                         if (currentVar.IsMemberAccess) v = currentVar.Emit(pContext);
 
                         //Load tuple's field
-                        var g = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
-                        g = LLVM.BuildLoad(pContext.Builder, g, "");
+                        var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
+                        indexAccess = LLVM.BuildLoad(pContext.Builder, indexAccess, "");
 
                         if (Operator != AssignmentOperator.Equals)
-                            g = BinaryExpressionSyntax.EmitOperator(variable, AssignToBin(Operator), g, pContext);
+                            indexAccess = BinaryExpressionSyntax.EmitOperator(variable, AssignToBin(Operator), indexAccess, pContext);
 
-                        LLVM.BuildStore(pContext.Builder, g, variable);
+                        LLVM.BuildStore(pContext.Builder, indexAccess, variable);
                     }
                 }
 

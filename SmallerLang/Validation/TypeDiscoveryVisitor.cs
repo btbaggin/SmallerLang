@@ -152,25 +152,21 @@ namespace SmallerLang.Validation
             FieldDefinition[] fields = new FieldDefinition[pDefinition.Fields.Count];
             for (int i = 0; i < pDefinition.Fields.Count; i++)
             {
-                if (fieldNames.Contains(pDefinition.Fields[i].Value))
+                var f = pDefinition.Fields[i];
+                if (fieldNames.Contains(f.Value))
                 {
-                    _error.WriteError($"Duplicate field definition: {pDefinition.Fields[i].Value} within struct {pDefinition.Name}", pDefinition.Fields[i].Span);
+                    _error.WriteError($"Duplicate field definition: {f.Value} within struct {pDefinition.Name}", f.Span);
                 }
                 else
                 {
-                    fieldNames.Add(pDefinition.Fields[i].Value);
-                    fields[i] = new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value);
+                    fieldNames.Add(f.Value);
+                    FieldVisibility visibility = f.Annotation == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
+                    fields[i] = new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value, visibility);
                 }
             }
 
-            if (pDefinition.DefinitionType == DefinitionTypes.Struct)
-            {
-                SmallTypeCache.AddStruct(pDefinition.Name, fields);
-            }
-            else if (pDefinition.DefinitionType == DefinitionTypes.Trait)
-            {
-                SmallTypeCache.AddTrait(pDefinition.Name, fields);
-            }
+            if (pDefinition.DefinitionType == DefinitionTypes.Struct) SmallTypeCache.AddStruct(pDefinition.Name, fields);
+            else if (pDefinition.DefinitionType == DefinitionTypes.Trait) SmallTypeCache.AddTrait(pDefinition.Name, fields);
         }
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)

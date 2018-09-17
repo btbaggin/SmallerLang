@@ -113,12 +113,13 @@ namespace SmallerLang.Syntax
             //Emit field assignments
             for (int i = 0; i < Fields.Count; i++)
             {
-                LLVMValueRef value = SmallTypeCache.GetLLVMDefault(pType.GetFieldType(Fields[i].Value), pContext);
+                var t = pType.GetField(Fields[i].Value).Type;
+                LLVMValueRef value = SmallTypeCache.GetLLVMDefault(t, pContext);
 
                 int f = pType.GetFieldIndex(Fields[i].Value);
-                var a = LLVM.BuildInBoundsGEP(pContext.Builder, p, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Fields[i].Value);
+                var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, p, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Fields[i].Value);
 
-                LLVM.BuildStore(pContext.Builder, value, a);
+                LLVM.BuildStore(pContext.Builder, value, indexAccess);
             }
 
             LLVM.BuildRetVoid(pContext.Builder);

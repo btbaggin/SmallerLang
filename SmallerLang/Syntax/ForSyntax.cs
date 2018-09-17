@@ -55,15 +55,15 @@ namespace SmallerLang.Syntax
             LLVMValueRef condv;
             if (Utils.TypeHelper.IsFloat(Condition.Type))
             {
-                condv = LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealONE, cond, cmp, "whilecond");
+                condv = LLVM.BuildFCmp(pContext.Builder, LLVMRealPredicate.LLVMRealONE, cond, cmp, "for_cond");
             }
             else
             {
-                condv = LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, cond, cmp, "whilecond");
+                condv = LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, cond, cmp, "for_cond");
             }
 
-            var loop = LLVM.AppendBasicBlock(pContext.CurrentMethod, "loop");
-            var end = LLVM.AppendBasicBlock(pContext.CurrentMethod, "loopend");
+            var loop = LLVM.AppendBasicBlock(pContext.CurrentMethod, "for_body");
+            var end = LLVM.AppendBasicBlock(pContext.CurrentMethod, "for_end");
 
             //Jump to end or loop
             LLVM.BuildCondBr(pContext.Builder, condv, loop, end);
@@ -78,7 +78,7 @@ namespace SmallerLang.Syntax
 
             //Jump back to start
             cond = Condition.Emit(pContext);
-            condv = LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, cond, cmp, "whilecond");
+            condv = LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, cond, cmp, "for_cond");
             LLVM.BuildCondBr(pContext.Builder, condv, loop, end);
 
             //End

@@ -8,13 +8,13 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Validation
 {
-    partial class PostTypeValidation : SyntaxNodeVisitor
+    partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
         readonly IErrorReporter _error;
         private bool _returnFound;
         private int _returnValueCount;
 
-        public PostTypeValidation(IErrorReporter pError)
+        public PostTypeValidationVisitor(IErrorReporter pError)
         {
             _error = pError;
         }

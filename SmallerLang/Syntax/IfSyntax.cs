@@ -28,14 +28,14 @@ namespace SmallerLang.Syntax
         {
             var cond = Condition.Emit(pContext);
             Utils.LlvmHelper.LoadIfPointer(ref cond, pContext);
-            var then = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "then");
+            var then = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_then");
 
             LLVMSharp.LLVMBasicBlockRef e = default;
             if (Else != null)
             {
-               e = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "else");
+               e = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_else");
             }
-            var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "ifend");
+            var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_end");
 
             //Jump to if or else
             LLVMSharp.LLVM.BuildCondBr(pContext.Builder, cond, then, Else != null ? e : end);

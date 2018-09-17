@@ -53,7 +53,7 @@ namespace SmallerLang.Syntax
             if (!External)
             {
                 System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(_name), "Method name cannot be blank");
-                var f = pContext.StartMethod(_name, this);
+                var func = pContext.StartMethod(_name, this);
                 pContext.AddDeferredStatementExecution();
                 pContext.Locals.AddScope();
 
@@ -89,8 +89,8 @@ namespace SmallerLang.Syntax
                 //End method
                 pContext.RemoveDeferredStatementExecution();
                 pContext.Locals.RemoveScope();
-                pContext.FinishMethod(f);
-                return f;
+                pContext.FinishMethod(func);
+                return func;
             }
 
             return default;

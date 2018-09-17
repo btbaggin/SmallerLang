@@ -591,7 +591,7 @@ namespace SmallerLang.Parser
                 ExpressionSyntax cond = null;
                 List<ExpressionSyntax> finalizer = new List<ExpressionSyntax>();
 
-                //For loop can either have the initializer, condition, finalizer
+                //For loop can either have the initializer, condition, finalize
                 //Or just an iterator variable
                 //The iterator variable must be an array and it gets lowered to the same construct
                 bool isIterator = !Peek(TokenType.Let);
@@ -611,7 +611,7 @@ namespace SmallerLang.Parser
                     cond = ParseExpression();
                     Expect(TokenType.Colon);
 
-                    //For finalizer (code that runs at end of loop)
+                    //For finalize (code that runs at end of loop)
                     if (!Peek(TokenType.RightParen))
                     {
                         do

@@ -106,10 +106,12 @@ namespace SmallerLang.Emitting
 
         public VariableCache<T> Copy()
         {
-            var t = new VariableCache<T>();
-            t._scopeCount = _scopeCount;
-            Array.Copy(_variables, t._variables, _variables.Length);
-            return t;
+            var copy = new VariableCache<T>
+            {
+                _scopeCount = _scopeCount
+            };
+            Array.Copy(_variables, copy._variables, _variables.Length);
+            return copy;
         }
     }
 }

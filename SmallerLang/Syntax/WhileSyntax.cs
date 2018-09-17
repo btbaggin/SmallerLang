@@ -25,8 +25,8 @@ namespace SmallerLang.Syntax
         {
             //If condition
             var cond = Condition.Emit(pContext);
-            var loop = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "loop");
-            var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "loopend");
+            var loop = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_loop");
+            var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_end");
 
             //Jump to end or loop
             LLVMSharp.LLVM.BuildCondBr(pContext.Builder, cond, loop, end);

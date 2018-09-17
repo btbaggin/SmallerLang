@@ -85,36 +85,36 @@ namespace SmallerLang.Emitting
             pNewName = pMethod.External ? pName : MethodCache.GetMangledName(pName, originalTypes);
 
             //Method header
-            var f = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
-            LLVM.SetLinkage(f, LLVMLinkage.LLVMExternalLinkage);
+            var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
+            LLVM.SetLinkage(func, LLVMLinkage.LLVMExternalLinkage);
 
-            return f;
+            return func;
         }
 
         internal LLVMValueRef EmitMethodHeader(string pName, LLVMTypeRef pReturn, LLVMTypeRef[] pParms)
         {
             //Should only be called to create _main function and struct constructors
-            var f = LLVM.AddFunction(CurrentModule, pName, LLVM.FunctionType(pReturn, pParms, false));
-            LLVM.SetLinkage(f, LLVMLinkage.LLVMExternalLinkage);
+            var func = LLVM.AddFunction(CurrentModule, pName, LLVM.FunctionType(pReturn, pParms, false));
+            LLVM.SetLinkage(func, LLVMLinkage.LLVMExternalLinkage);
 
-            return f;
+            return func;
         }
 
         internal LLVMValueRef StartMethod(string pName, Syntax.MethodSyntax pNode)
         {
-            var f = LLVM.GetNamedFunction(CurrentModule, pName);
-            Debug.Assert(f.Pointer != IntPtr.Zero);
+            var func = LLVM.GetNamedFunction(CurrentModule, pName);
+            Debug.Assert(func.Pointer != IntPtr.Zero);
             Locals.AddScope();
 
             //Emit body
-            var b = LLVM.AppendBasicBlock(f, pName + "body");
-            LLVM.PositionBuilderAtEnd(Builder, b);
+            var body = LLVM.AppendBasicBlock(func, pName + "body");
+            LLVM.PositionBuilderAtEnd(Builder, body);
 
             int start = 0;
             if(CurrentStruct != null)
             {
                 start = 1;
-                LLVMValueRef p = LLVM.GetParam(f, 0);
+                LLVMValueRef p = LLVM.GetParam(func, 0);
                 LLVM.SetValueName(p, "self");
                 Locals.DefineParameter("self", p);
             }
@@ -123,37 +123,37 @@ namespace SmallerLang.Emitting
             for (int i = 0; i < pNode.Parameters.Count; i++)
             {
                 string name = pNode.Parameters[i].Value;
-                LLVMValueRef p = LLVM.GetParam(f, (uint)(i + start));
-                LLVM.SetValueName(p, name);
+                LLVMValueRef parm = LLVM.GetParam(func, (uint)(i + start));
+                LLVM.SetValueName(parm, name);
 
                 Debug.Assert(!Locals.IsVariableDefinedInScope(name), $"Parameter {name} already defined");
-                Locals.DefineParameter(name, p);
+                Locals.DefineParameter(name, parm);
             }
 
-            CurrentMethod = f;
-            return f;
+            CurrentMethod = func;
+            return func;
         }
 
-        public void FinishMethod(LLVMValueRef f)
+        public void FinishMethod(LLVMValueRef pFunction)
         {
             Locals.RemoveScope();
-            ValidateMethod(f);
+            ValidateMethod(pFunction);
         }
 
         internal LLVMValueRef GetMethod(string pName)
         {
-            var f = LLVM.GetNamedFunction(CurrentModule, pName);
-            Debug.Assert(f.Pointer != IntPtr.Zero);
-            return f;
+            var func = LLVM.GetNamedFunction(CurrentModule, pName);
+            Debug.Assert(func.Pointer != IntPtr.Zero);
+            return func;
         }
 
-        internal void ValidateMethod(LLVMValueRef f)
+        internal void ValidateMethod(LLVMValueRef pFunction)
         {
-            if (LLVM.VerifyFunction(f, LLVMVerifierFailureAction.LLVMPrintMessageAction).Value != 0)
+            if (LLVM.VerifyFunction(pFunction, LLVMVerifierFailureAction.LLVMPrintMessageAction).Value != 0)
             {
-                LLVM.DumpValue(f);
+                LLVM.DumpValue(pFunction);
             }
-            LLVM.RunFunctionPassManager(_passManager, f);
+            LLVM.RunFunctionPassManager(_passManager, pFunction);
         }
         #endregion
 
@@ -179,9 +179,9 @@ namespace SmallerLang.Emitting
             //Move to the start of the current function and emit the variable allocation
             var tempBuilder = GetTempBuilder();
             LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
-            var a = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType), pName);
+            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType), pName);
             LLVM.DisposeBuilder(tempBuilder);
-            return a;
+            return alloc;
         }
 
         public LLVMBuilderRef GetTempBuilder()

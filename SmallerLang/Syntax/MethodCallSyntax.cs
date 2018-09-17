@@ -34,7 +34,7 @@ namespace SmallerLang.Syntax
                 //Save the current stack so we can restore it when we are done
                 //We clear this because we are no longer in a member access when emitting the arguments
                 member = pContext.AccessStack.Copy();
-                //"consume" the entire access stack to get the objcet we are calling the method on
+                //"consume" the entire access stack to get the object we are calling the method on
                 arguments[0] = MemberAccessStack.BuildGetElementPtr(pContext, null);
                 pContext.AccessStack.Clear();
                 start = 1;

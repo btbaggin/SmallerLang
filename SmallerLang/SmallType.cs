@@ -28,6 +28,7 @@ namespace SmallerLang
 
         private readonly List<SmallType> _implements;
 
+        #region Constructors
         //Value constructor
         internal SmallType(string pName)
         {
@@ -63,6 +64,7 @@ namespace SmallerLang
             _fields = fields;
             _implements = new List<SmallType>() { SmallTypeCache.Int };
         }
+        #endregion
 
         public SmallType MakeArrayType()
         {
@@ -75,14 +77,16 @@ namespace SmallerLang
             return _elementType;
         }
 
-        public SmallType GetFieldType(string pField)
+        public FieldDefinition GetField(string pField)
         {
-            if (_fields == null) return SmallTypeCache.Undefined;
-            for(int i = 0; i < _fields.Length; i++)
+            if (_fields != null)
             {
-                if (_fields[i].Name == pField) return _fields[i].Type;
+                for (int i = 0; i < _fields.Length; i++)
+                {
+                    if (_fields[i].Name == pField) return _fields[i];
+                }
             }
-            return SmallTypeCache.Undefined;
+            return new FieldDefinition(SmallTypeCache.Undefined, null);
         }
 
         public SmallType GetFieldType(int pIndex)
@@ -124,6 +128,7 @@ namespace SmallerLang
             return _fields.Length;
         }
 
+        #region Type constructor methods
         Emitting.MethodDefinition _constructor;
         bool _constructorSet;
         public Emitting.MethodDefinition GetConstructor()
@@ -146,6 +151,7 @@ namespace SmallerLang
         {
             return _constructorSet;
         }
+        #endregion
 
         public void AddTrait(SmallType pTrait)
         {

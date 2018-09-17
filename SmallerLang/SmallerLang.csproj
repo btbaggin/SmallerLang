@@ -267,7 +267,7 @@
     <Compile Include="Lowering\SelectRewriter.cs" />
     <Compile Include="Validation\TypeChecker.cs" />
     <Compile Include="Validation\TypeInferenceVisitor.cs" />
-    <Compile Include="Validation\ValidationVisitor.cs" />
+    <Compile Include="Validation\PostTypeValidationVisitor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -152,7 +152,7 @@ namespace SmallerLang.Lexer
             _tokenizer.StartToken();
 
             //Identifiers
-            if (char.IsLetter(_tokenizer.Current))
+            if (char.IsLetter(_tokenizer.Current) || _tokenizer.Current == '_')
             {
                 return CreateIdentifier();
             }
@@ -269,6 +269,7 @@ namespace SmallerLang.Lexer
 
             var i = _tokenizer.GetSpan(_length);
             TrieNode t = _keywords.Prefix(i);
+            //Need to check length to prevent things like "item" from saying "it" or "_variable" as "_"
             if (t.Leaf && t.Depth == i.Length)
             {
                 return CreateToken(t.Type);

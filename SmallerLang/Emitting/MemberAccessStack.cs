@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LLVMSharp;
 
 namespace SmallerLang.Emitting
@@ -58,10 +55,12 @@ namespace SmallerLang.Emitting
 
         public MemberAccessStack Copy()
         {
-            var m = new MemberAccessStack();
-            m._items = _items;
-            m.Count = Count;
-            return m;
+            var copy = new MemberAccessStack
+            {
+                _items = _items,
+                Count = Count
+            };
+            return copy;
         }
 
         public void Clear()
@@ -71,14 +70,17 @@ namespace SmallerLang.Emitting
 
         public static LLVMValueRef BuildGetElementPtr(EmittingContext pContext, LLVMValueRef? pValue)
         {
-            List<LLVMValueRef> indexes = new List<LLVMValueRef>(pContext.AccessStack.Count);
-            indexes.Add(pContext.GetInt(0));
+            List<LLVMValueRef> indexes = new List<LLVMValueRef>(pContext.AccessStack.Count)
+            {
+                pContext.GetInt(0)
+            };
 
             for (int j = pContext.AccessStack.Count - 1; j > 0; j--)
             {
                 indexes.Add(pContext.AccessStack.PeekAt(j).Value);
             }
             if(pValue.HasValue) indexes.Add(pValue.Value);
+
             var i = pContext.AccessStack.PeekAt(0).Value;
             return LLVM.BuildInBoundsGEP(pContext.Builder, i, indexes.ToArray(), "memberaccess");
         }
