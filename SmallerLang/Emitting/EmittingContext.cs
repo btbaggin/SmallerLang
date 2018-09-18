@@ -87,6 +87,13 @@ namespace SmallerLang.Emitting
             var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
             LLVM.SetLinkage(func, LLVMLinkage.LLVMExternalLinkage);
 
+            if(pMethod.External)
+            {
+                //Create attribute so we can find it later when executing
+                var attribute = LLVM.CreateStringAttribute(_context, "external", 8, pMethod.Annotation, (uint)pMethod.Annotation.Length);
+                LLVM.AddAttributeAtIndex(func, LLVMAttributeIndex.LLVMAttributeFunctionIndex, attribute);
+            }
+
             return func;
         }
 

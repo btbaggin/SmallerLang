@@ -794,9 +794,9 @@ namespace SmallerLang.Parser
 
                     //new only allowed in assignment and declaration statements
                     ExpressionSyntax right = ParseExpression();
-                   if(typeof(IdentifierSyntax).IsInstanceOfType(e))
+                   if(e is IdentifierSyntax i)
                     {
-                        var newStruct = ParseStructInitializer(((IdentifierSyntax)e).Value);
+                        var newStruct = ParseStructInitializer(i.Value);
                         if (newStruct != null) right = newStruct;
                     }
 

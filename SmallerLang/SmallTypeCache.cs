@@ -10,28 +10,16 @@ namespace SmallerLang
 {
     static class SmallTypeCache
     {
-        internal static SmallType Undefined { get; private set; }
-        internal static SmallType Short { get; private set; }   
-        internal static SmallType Int { get; private set; } 
-        internal static SmallType Long { get; private set; } 
-        internal static SmallType Float { get; private set; } 
-        internal static SmallType Double { get; private set; } 
-        internal static SmallType String { get; private set; } 
-        internal static SmallType Boolean { get; private set; } 
+        static Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)> _cache = new Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)>();
 
-        static Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)> _cache;
-        static SmallTypeCache()
-        {
-            _cache = new Dictionary<string, (SmallType, LLVMTypeRef)>();
-            Undefined = AddType("undefined", LLVMTypeRef.VoidType());
-            Short = AddType("short", LLVMTypeRef.Int16Type());
-            Int = AddType("int", LLVMTypeRef.Int32Type());
-            Long = AddType("long", LLVMTypeRef.Int64Type());
-            Float = AddType("float", LLVMTypeRef.FloatType());
-            Double = AddType("double", LLVMTypeRef.DoubleType());
-            String = AddType("string", LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0));
-            Boolean = AddType("bool", LLVMTypeRef.Int1Type());
-        }
+        internal static SmallType Undefined { get; private set; } = AddType("undefined", LLVMTypeRef.VoidType());
+        internal static SmallType Short { get; private set; } = AddType("short", LLVMTypeRef.Int16Type());
+        internal static SmallType Int { get; private set; } = AddType("int", LLVMTypeRef.Int32Type());
+        internal static SmallType Long { get; private set; } = AddType("long", LLVMTypeRef.Int64Type());
+        internal static SmallType Float { get; private set; } = AddType("float", LLVMTypeRef.FloatType());
+        internal static SmallType Double { get; private set; } = AddType("double", LLVMTypeRef.DoubleType());
+        internal static SmallType String { get; private set; } = AddType("string", LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0));
+        internal static SmallType Boolean { get; private set; } = AddType("bool", LLVMTypeRef.Int1Type());
 
         public static SmallType FromString(string pType)
         {

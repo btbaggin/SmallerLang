@@ -15,7 +15,7 @@ namespace SmallerLang.Validation
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
         int _order;
 
-        List<(TypeDefinitionSyntax Node, bool Permanent, bool Temporary)> _structs;
+        readonly List<(TypeDefinitionSyntax Node, bool Permanent, bool Temporary)> _structs;
 
         public TypeDiscoveryVisitor(IErrorReporter pError)
         {
@@ -64,9 +64,13 @@ namespace SmallerLang.Validation
             /////
             for (int i = 0; i < _structs.Count; i++)
             {
-                if(!_structs[i].Permanent && !_structs[i].Temporary)
+                if(!_structs[i].Permanent && 
+                   !_structs[i].Temporary && 
+                   DiscoverTypes(_structs[i].Node.Name))
                 {
-                    if (DiscoverTypes(_structs[i].Node.Name)) i = -1;
+                    //If we discover a type go back to the beginning to see if any that were dependent
+                    //on this can now be typed
+                    i = -1;
                 }
             }
 
@@ -81,8 +85,8 @@ namespace SmallerLang.Validation
                         _error.WriteError($"Use of undeclared type {structApplies}", s.Span);
                     }
 
-                    var t = SmallTypeCache.FromString(s.Name);
-                    SmallTypeCache.FromString(structApplies).AddTrait(t);
+                    var traitType = SmallTypeCache.FromString(s.Name);
+                    SmallTypeCache.FromString(structApplies).AddTrait(traitType);
 
                     //Validate implementation
                     var trait = _structs[_structIndex[s.Name]].Node;
@@ -104,12 +108,10 @@ namespace SmallerLang.Validation
                     var type = SmallTypeCache.FromString(s.Name);
                     for (int j = 0; j < s.Methods.Count; j++)
                     {
-                        if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m))
+                        if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
+                            s.Methods[j].Annotation == Utils.KeyAnnotations.Constructor)
                         {
-                            if (s.Methods[j].Annotation == Utils.KeyAnnotations.Constructor)
-                            {
-                                type.SetConstructor(m);
-                            }
+                            type.SetConstructor(m);
                         }
                     }
 
@@ -144,11 +146,13 @@ namespace SmallerLang.Validation
 
                 //Only look through user defined types which should be undefined at this point
                 if(!item.Node.TypeParameters.Contains(nt) && 
-                   !SmallTypeCache.IsTypeDefined(nt))
+                   !SmallTypeCache.IsTypeDefined(nt) &&
+                   !DiscoverTypes(nt))
                 {
-                    if (!DiscoverTypes(nt)) return false;
+                    return false;
                 }
             }
+
             item.Permanent = true;
             _structs[idx] = item;
             AddType(item.Node);

@@ -23,7 +23,7 @@ namespace SmallerLang
 
         public string Name { get; private set; }
 
-        public IList<SmallType> Implements => _implements != null ? _implements : new List<SmallType>(0);
+        public IList<SmallType> Implements => _implements ?? new List<SmallType>(0);
 
         private readonly SmallType _elementType;
         private readonly FieldDefinition[] _fields;

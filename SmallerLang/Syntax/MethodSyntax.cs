@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Emitting;
+using LLVMSharp;
 
 namespace SmallerLang.Syntax
 {
@@ -42,13 +43,13 @@ namespace SmallerLang.Syntax
             External = pExternal;
         }
         
-        public LLVMSharp.LLVMValueRef EmitHeader(EmittingContext pContext)
+        public LLVMValueRef EmitHeader(EmittingContext pContext)
         {
             //Emit header
             return pContext.EmitMethodHeader(Name, this, out _name);
         }
 
-        public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
+        public override LLVMValueRef Emit(EmittingContext pContext)
         {
             if (!External)
             {
@@ -77,13 +78,13 @@ namespace SmallerLang.Syntax
 
                 if (ReturnValues.Count == 0)
                 {
-                    LLVMSharp.LLVM.BuildRetVoid(pContext.Builder);
+                    LLVM.BuildRetVoid(pContext.Builder);
                 }
                 else if(!lastIsReturn)
                 {
                     //Return statements have been validated. It probably returned in some other block earlier.
                     //LLVM requires return statement so just return default
-                    LLVMSharp.LLVM.BuildRet(pContext.Builder, SmallTypeCache.GetLLVMDefault(Type, pContext));
+                    LLVM.BuildRet(pContext.Builder, SmallTypeCache.GetLLVMDefault(Type, pContext));
                 }
 
                 //End method

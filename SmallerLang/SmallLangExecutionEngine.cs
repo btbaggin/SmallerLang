@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using LLVMSharp;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace SmallerLang
 {
@@ -12,12 +14,6 @@ namespace SmallerLang
     {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int MainMethod();
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void print(int d);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void print_double(double d);
 
         LLVMExecutionEngineRef _engine;
 
@@ -51,14 +47,7 @@ namespace SmallerLang
                     Console.WriteLine($"Error: {message}");
                 }
 
-                var p = LLVM.GetNamedFunction(m, "print");//TODO actually call printf???
-                var pd = LLVM.GetNamedFunction(m, "print_double");
-                print d = (pD) => Console.WriteLine(pD);
-                print_double dd = (pD) => Console.WriteLine(pD);
-                if(p.Pointer != IntPtr.Zero)
-                    LLVM.AddGlobalMapping(_engine, p, Marshal.GetFunctionPointerForDelegate(d));
-                if(pd.Pointer != IntPtr.Zero)
-                    LLVM.AddGlobalMapping(_engine, pd, Marshal.GetFunctionPointerForDelegate(dd));
+                SetupReversePinvokeCalls(m);
 
                 IntPtr i = (IntPtr)LLVM.GetGlobalValueAddress(_engine, "_main");
                 var main = (MainMethod)Marshal.GetDelegateForFunctionPointer(i, typeof(MainMethod));
@@ -70,8 +59,75 @@ namespace SmallerLang
             }
         }
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private void SetupReversePinvokeCalls(LLVMModuleRef pModule)
+        {
+            //TODO sigh... why am i necessary
+            Dictionary<IntPtr, string> mapping = new Dictionary<IntPtr, string>();
+            var func = LLVM.GetFirstFunction(pModule);
+            do
+            {
+                var attribute = LLVM.GetStringAttributeAtIndex(func, LLVMAttributeIndex.LLVMAttributeFunctionIndex, "external", 8);
+                if (attribute.Pointer != IntPtr.Zero)
+                {
+                    string location;
+                    if (!mapping.ContainsKey(attribute.Pointer))
+                    {
+                        uint length = 0;
+                        location = LLVM.GetStringAttributeValue(attribute, out length);
+                        mapping.Add(attribute.Pointer, location);
+                    }
+                    else location = mapping[attribute.Pointer];
+                    
+                    var methodInfo = Utils.KeyAnnotations.ParseExternalAnnotation(location, func);
+
+                    var d = methodInfo.CreateDelegate(CreateDynamicDelegate(methodInfo));
+                    LLVM.AddGlobalMapping(_engine, func, Marshal.GetFunctionPointerForDelegate(d));
+                }
+                func = func.GetNextFunction();
+            } while (func.Pointer != IntPtr.Zero);
+        }
+
+        private Type CreateDynamicDelegate(MethodInfo pMethod)
+        {
+            //Create assembly
+            AssemblyName name = new AssemblyName
+            {
+                Version = new Version(1, 0, 0, 0),
+                Name = "DynamicDelegateEmit"
+            };
+            AssemblyBuilder assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(name, AssemblyBuilderAccess.RunAndSave);
+            ModuleBuilder module = assembly.DefineDynamicModule("DynamicDelegates", "DynamicDelegateEmit.dll");
+
+            // Create a delegate that has the same signature as the method we would like to hook up to
+            TypeBuilder type = module.DefineType("DynamicDelegateType", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoClass, typeof(MulticastDelegate));
+            ConstructorBuilder constructor = type.DefineConstructor(MethodAttributes.RTSpecialName | MethodAttributes.HideBySig | MethodAttributes.Public, CallingConventions.Standard, new Type[] { typeof(object), typeof(IntPtr) });
+            constructor.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
+
+            //Add the UnmanagedFunctionPointer attribute since we are calling back from SmallLang
+            var con = typeof(UnmanagedFunctionPointerAttribute).GetConstructor(new Type[] { typeof(CallingConvention) });
+            var cab = new CustomAttributeBuilder(con, new object[] { CallingConvention.Cdecl });
+            type.SetCustomAttribute(cab);
+
+            // Grab the parameters of the method
+            ParameterInfo[] parameters = pMethod.GetParameters();
+            Type[] paramTypes = new Type[parameters.Length];
+            for (int i = 0; i < paramTypes.Length; i++)
+            {
+                paramTypes[i] = parameters[i].ParameterType;
+            }
+
+            // Define the Invoke method for the delegate
+            MethodBuilder method = type.DefineMethod("Invoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, pMethod.ReturnType, paramTypes);
+            method.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
+
+            // bake it!
+            Type t = type.CreateType();
+            assembly.Save("DynamicDelegateEmit.dll");
+            return t;
+        }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
         private void Dispose(bool disposing)
         {
             if (!disposedValue)
