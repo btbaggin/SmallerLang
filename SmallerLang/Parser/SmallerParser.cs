@@ -195,7 +195,7 @@ namespace SmallerLang.Parser
 
                             default:
                                 var ti = ParseTypedIdentifier();
-                                if (PeekAndExpect(TokenType.Annotation, out string annotation)) ti.Annotation = annotation;
+                                ti.Annotation = ParseAnnotation();
                                 fields.Add(ti);
                                 break;
                         }
@@ -241,7 +241,7 @@ namespace SmallerLang.Parser
                 Ignore(TokenType.Newline);
 
                 var m = SyntaxFactory.ExternalMethod(name, r, parameters, null).SetSpan<MethodSyntax>(t);
-                if (PeekAndExpect(TokenType.Annotation, out string annotation)) m.Annotation = annotation;
+                m.Annotation = ParseAnnotation();
                 return m;
             }
         }
@@ -312,7 +312,7 @@ namespace SmallerLang.Parser
                 var m = SyntaxFactory.Method(name, returns, parameters, body).SetSpan<MethodSyntax>(t);
 
                 //Annotations!
-                if (PeekAndExpect(TokenType.Annotation, out string annotation)) m.Annotation = annotation;
+                m.Annotation = ParseAnnotation();
                 return m;
             }
         }
@@ -672,7 +672,7 @@ namespace SmallerLang.Parser
 
                 var s = SyntaxFactory.Select(e, cases).SetSpan<SelectSyntax>(t);
                 //Annotations!
-                if (PeekAndExpect(TokenType.Annotation, out string annotation)) s.Annotation = annotation;
+                s.Annotation = ParseAnnotation();
                 return s;
             }
         }
@@ -1103,6 +1103,15 @@ namespace SmallerLang.Parser
 
                 Expect(TokenType.RightBracket);
                 return SyntaxFactory.ArrayAccess(pIdentifier, e).SetSpan<IdentifierSyntax>(t);
+            }
+        }
+
+        private Annotation ParseAnnotation()
+        {
+            using (SpanTracker t = _spans.Create())
+            {
+                if (PeekAndExpect(TokenType.Annotation, out string annotation)) return new Annotation(annotation, t);
+                return default;
             }
         }
         #endregion

@@ -19,7 +19,7 @@ namespace SmallerLang.Syntax
 
         public TextSpan Span { get; private set; }
 
-        public string Annotation { get; internal set; }
+        public Annotation Annotation { get; internal set; }
 
         public abstract SmallType Type { get; }
 

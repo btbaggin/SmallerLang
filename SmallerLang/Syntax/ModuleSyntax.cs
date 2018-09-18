@@ -47,7 +47,7 @@ namespace SmallerLang.Syntax
             for(int i = 0; i < Methods.Count; i++)
             {
                 var m = Methods[i].EmitHeader(pContext);
-                if(Methods[i].Annotation == Utils.KeyAnnotations.RunMethod)
+                if(Methods[i].Annotation.Value == Utils.KeyAnnotations.RunMethod)
                 {
                     _main = m;
                 }

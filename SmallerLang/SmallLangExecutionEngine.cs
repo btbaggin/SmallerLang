@@ -61,7 +61,6 @@ namespace SmallerLang
 
         private void SetupReversePinvokeCalls(LLVMModuleRef pModule)
         {
-            //TODO sigh... why am i necessary
             Dictionary<IntPtr, string> mapping = new Dictionary<IntPtr, string>();
             var func = LLVM.GetFirstFunction(pModule);
             do
@@ -69,6 +68,7 @@ namespace SmallerLang
                 var attribute = LLVM.GetStringAttributeAtIndex(func, LLVMAttributeIndex.LLVMAttributeFunctionIndex, "external", 8);
                 if (attribute.Pointer != IntPtr.Zero)
                 {
+                    //Store the assembly in a dictionary since it seems like accessing the same attribute twice dosen't work?
                     string location;
                     if (!mapping.ContainsKey(attribute.Pointer))
                     {
@@ -79,9 +79,8 @@ namespace SmallerLang
                     else location = mapping[attribute.Pointer];
                     
                     var methodInfo = Utils.KeyAnnotations.ParseExternalAnnotation(location, func);
-
-                    var d = methodInfo.CreateDelegate(CreateDynamicDelegate(methodInfo));
-                    LLVM.AddGlobalMapping(_engine, func, Marshal.GetFunctionPointerForDelegate(d));
+                    var del = methodInfo.CreateDelegate(CreateDynamicDelegate(methodInfo));
+                    LLVM.AddGlobalMapping(_engine, func, Marshal.GetFunctionPointerForDelegate(del));
                 }
                 func = func.GetNextFunction();
             } while (func.Pointer != IntPtr.Zero);

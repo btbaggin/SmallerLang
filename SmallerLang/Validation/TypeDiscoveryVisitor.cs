@@ -109,7 +109,7 @@ namespace SmallerLang.Validation
                     for (int j = 0; j < s.Methods.Count; j++)
                     {
                         if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
-                            s.Methods[j].Annotation == Utils.KeyAnnotations.Constructor)
+                            s.Methods[j].Annotation.Value == Utils.KeyAnnotations.Constructor)
                         {
                             type.SetConstructor(m);
                         }
@@ -174,7 +174,7 @@ namespace SmallerLang.Validation
                 }
                 else
                 {
-                    FieldVisibility visibility = f.Annotation == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
+                    FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
                     fields.Add(new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value, visibility));
                 }
             }
@@ -188,7 +188,7 @@ namespace SmallerLang.Validation
                     {
                         if(!fieldNames.Add(f.Value))
                         {
-                            FieldVisibility visibility = f.Annotation == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
+                            FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
                             fields.Add(new FieldDefinition(f.Type, f.Value, visibility));
                         }
                     }

@@ -71,7 +71,7 @@ namespace SmallerLang.Validation
         {
             //Validate that one and only 1 method is annotated with "run"
             //This method must contain no parameters and return no values
-            if (pNode.Annotation == Utils.KeyAnnotations.RunMethod)
+            if (pNode.Annotation.Value == Utils.KeyAnnotations.RunMethod)
             {
                 if (_runMethod != null)
                 {
@@ -117,7 +117,7 @@ namespace SmallerLang.Validation
         protected override void VisitSelectSyntax(SelectSyntax pNode)
         {
             //Validate if a select is marked as complete, ensure all enum values are used
-            if(pNode.Annotation == Utils.KeyAnnotations.Complete)
+            if(pNode.Annotation.Value == Utils.KeyAnnotations.Complete)
             {
                 var t = pNode.Condition.Type;
                 if(!t.IsEnum)

@@ -345,6 +345,11 @@ namespace SmallerLang.Validation
                 _error.WriteError($"Method {pNode.Value} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
                 return;
             }
+
+            for(int i = 0; i < m.ArgumentTypes.Count; i++)
+            {
+                ForceCastLiteral(m.ArgumentTypes[i], pNode.Arguments[i]);
+            }
             pNode.SetType(m.ReturnType);
         }
 
@@ -449,11 +454,15 @@ namespace SmallerLang.Validation
             MethodCache.FindMethod(out pDef, pType, pName, pArguments);
             if(pDef.Name == null)
             {
-                foreach(var trait in pType.Implements)
+                if(pType != null)
                 {
-                    MethodCache.FindMethod(out pDef, trait, pName, pArguments);
-                    if (pDef.Name != null) return true;
+                    foreach (var trait in pType.Implements)
+                    {
+                        MethodCache.FindMethod(out pDef, trait, pName, pArguments);
+                        if (pDef.Name != null) return true;
+                    }
                 }
+                
                 return false;
             }
 

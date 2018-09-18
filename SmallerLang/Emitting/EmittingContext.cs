@@ -90,7 +90,7 @@ namespace SmallerLang.Emitting
             if(pMethod.External)
             {
                 //Create attribute so we can find it later when executing
-                var attribute = LLVM.CreateStringAttribute(_context, "external", 8, pMethod.Annotation, (uint)pMethod.Annotation.Length);
+                var attribute = LLVM.CreateStringAttribute(_context, "external", 8, pMethod.Annotation.Value, (uint)pMethod.Annotation.Value.Length);
                 LLVM.AddAttributeAtIndex(func, LLVMAttributeIndex.LLVMAttributeFunctionIndex, attribute);
             }
 

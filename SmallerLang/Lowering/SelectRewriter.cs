@@ -24,7 +24,7 @@ namespace SmallerLang.Lowering
             if (!_rewrite) return s;
             else
             {
-                if(pNode.Annotation == Utils.KeyAnnotations.Complete)
+                if(pNode.Annotation.Value == Utils.KeyAnnotations.Complete)
                 {
                     _error.WriteWarning("complete annotation is ignored on select statements with 'it'", pNode.Span);
                 }
