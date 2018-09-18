@@ -32,6 +32,8 @@ namespace SmallerLang.Syntax
 
         public IList<string> TypeParameters { get; private set; }
 
+        internal int EmitOrder { get; set; }
+
         internal TypeDefinitionSyntax(string pName, 
                                       string pImplements,
                                       DefinitionTypes pType,
@@ -52,7 +54,7 @@ namespace SmallerLang.Syntax
 
         public void EmitMethodHeaders(EmittingContext pContext)
         {
-            if (DefinitionType == DefinitionTypes.Struct)
+            if (DefinitionType != DefinitionTypes.Trait)
             {
                 var type = SmallTypeCache.FromString(Name);
                 pContext.CurrentStruct = type;
@@ -69,7 +71,7 @@ namespace SmallerLang.Syntax
         public void EmitMethods(EmittingContext pContext)
         {
             //Only structs should be emitted. The other types get merged with structs
-            if(DefinitionType == DefinitionTypes.Struct)
+            if(DefinitionType != DefinitionTypes.Trait)
             {
                 var type = SmallTypeCache.FromString(Name);
                 pContext.CurrentStruct = type;
@@ -85,7 +87,7 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            if(DefinitionType == DefinitionTypes.Struct)
+            if(DefinitionType != DefinitionTypes.Implement)
             {
                 pContext.EmitDefinition(Name, this);
             }
@@ -123,6 +125,12 @@ namespace SmallerLang.Syntax
             }
 
             LLVM.BuildRetVoid(pContext.Builder);
+        }
+
+        public override SyntaxNode FromNode(SyntaxNode pNode)
+        {
+            EmitOrder = (pNode as TypeDefinitionSyntax).EmitOrder;
+            return base.FromNode(pNode);
         }
     }
 }

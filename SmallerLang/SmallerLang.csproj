@@ -193,7 +193,6 @@
     <Compile Include="Emitting\MethodCache.cs" />
     <Compile Include="FieldDefinition.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Lowering\MethodPolyRewriter.cs" />
     <Compile Include="Utils\TypeHelper.cs" />
     <Compile Include="Validation\TypeDiscoveryVisitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

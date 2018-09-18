@@ -23,6 +23,8 @@ namespace SmallerLang
 
         public string Name { get; private set; }
 
+        public IList<SmallType> Implements => _implements != null ? _implements : new List<SmallType>(0);
+
         private readonly SmallType _elementType;
         private readonly FieldDefinition[] _fields;
 
@@ -112,15 +114,10 @@ namespace SmallerLang
             return -1;
         }
 
-        public IEnumerable<FieldDefinition> GetFields()
+        public FieldDefinition[] GetFields()
         {
-            if(_fields != null)
-            {
-                for (int i = 0; i < _fields.Length; i++)
-                {
-                    yield return _fields[i];
-                }
-            }
+            if(_fields != null) return _fields;
+            return new FieldDefinition[] { };
         }
 
         public int GetFieldCount()

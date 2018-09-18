@@ -108,9 +108,9 @@ namespace SmallerLang
         private static SmallType ParseTypeString(string pType)
         {
             SmallType t = null;
-            var i = pType.LastIndexOf('[');
+            var idx = pType.LastIndexOf('[');
 
-            if (i > -1) t = ParseTypeString(pType.Substring(0, i));
+            if (idx > -1) t = ParseTypeString(pType.Substring(0, idx));
             else if (_cache.ContainsKey(pType)) return _cache[pType].Type;
 
             if (t == null) return Undefined;

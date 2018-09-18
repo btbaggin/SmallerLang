@@ -111,6 +111,7 @@ namespace SmallerLang.Validation
         {
             var t = _currentType;
             _currentType = pNode.Identifier.Type;
+
             base.VisitMemberAccessSyntax(pNode);
             _currentType = t;
         }
@@ -119,7 +120,9 @@ namespace SmallerLang.Validation
         {
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
-            MethodCache.FindMethod(out MethodDefinition m, _currentType, pNode.Value, types);
+            var methodFound = FindMethod(out MethodDefinition m, pNode.Value, _currentType, types);
+            System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
+
             for(int i = 0; i < m.ArgumentTypes.Count; i++)
             {
                 if(!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
@@ -131,6 +134,22 @@ namespace SmallerLang.Validation
             //Method calls are finally validated, set the mangled method name which we will actually call
             pNode.SetDefinition(m);
             base.VisitMethodCallSyntax(pNode);
+        }
+
+        private bool FindMethod(out MethodDefinition pDef, string pName, SmallType pType, params SmallType[] pArguments)
+        {
+            MethodCache.FindMethod(out pDef, pType, pName, pArguments);
+            if (pDef.Name == null)
+            {
+                foreach (var trait in pType.Implements)
+                {
+                    MethodCache.FindMethod(out pDef, trait, pName, pArguments);
+                    if (pDef.Name != null) return true;
+                }
+                return false;
+            }
+
+            return true;
         }
 
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)

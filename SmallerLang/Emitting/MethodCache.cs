@@ -12,13 +12,15 @@ namespace SmallerLang.Emitting
         public string Name { get; private set; }
         public List<SmallType> ArgumentTypes { get; private set; }
         public SmallType ReturnType { get; private set; }
+        public SmallType Struct { get; private set; }
 
-        public MethodDefinition(string pName, string pMangled, List<SmallType> pArguments, SmallType pReturn)
+        public MethodDefinition(string pName, string pMangled, List<SmallType> pArguments, SmallType pReturn, SmallType pStruct)
         {
             Name = pName;
             MangledName = pMangled;
             ArgumentTypes = pArguments;
             ReturnType = pReturn;
+            Struct = pStruct;
         }
 
         public MethodDefinition(string pName)
@@ -27,6 +29,7 @@ namespace SmallerLang.Emitting
             MangledName = pName;
             ArgumentTypes = new List<SmallType>();
             ReturnType = SmallTypeCache.Undefined;
+            Struct = SmallTypeCache.Undefined;
         }
     }
 
@@ -179,13 +182,13 @@ namespace SmallerLang.Emitting
             return retval;
         }
 
-        public static string GetMangledName(string pName, params SmallType[] pType)
+        public static string GetMangledName(string pName, SmallType pType, params SmallType[] pArguments)
         {
-            System.Diagnostics.Debug.Assert(FindMethod(out MethodDefinition m, pName, pType));
+            System.Diagnostics.Debug.Assert(FindMethod(out MethodDefinition m, pType, pName, pArguments));
             return m.MangledName;
         }
 
-        internal static string GetMethodName(SmallType pType, string pMethod)
+        private static string GetMethodName(SmallType pType, string pMethod)
         {
             return pType.Name + "___" + pMethod;
         }
@@ -199,9 +202,10 @@ namespace SmallerLang.Emitting
             {
                 arguments.Add(pMethod.Parameters[i].Type);
             }
+
             SmallType ret = pMethod.Type;
             string mangledName = pMethod.External ? name : name + "_" + pCounter;
-            return new MethodDefinition(pMethod.Name, mangledName, arguments, ret);
+            return new MethodDefinition(pMethod.Name, mangledName, arguments, ret, pInstanceType);
         }
     }
 }

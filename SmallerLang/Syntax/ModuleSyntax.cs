@@ -30,10 +30,10 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            //Emit types
-            for (int i = 0; i < Structs.Count; i++)
+            //Emit types. Need to do it in order of dependencies so all types resolve
+            foreach(var i in Structs.OrderBy((pS) => pS.EmitOrder))
             {
-                Structs[i].Emit(pContext);
+                i.Emit(pContext);
             }
 
             //Emit type methods headers

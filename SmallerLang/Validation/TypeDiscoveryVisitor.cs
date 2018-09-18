@@ -12,12 +12,17 @@ namespace SmallerLang.Validation
     {
         readonly IErrorReporter _error;
         readonly Dictionary<string, int> _structIndex;
+        readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
+        int _order;
+
         List<(TypeDefinitionSyntax Node, bool Permanent, bool Temporary)> _structs;
+
         public TypeDiscoveryVisitor(IErrorReporter pError)
         {
             _error = pError;
             _structIndex = new Dictionary<string, int>();
             _structs = new List<(TypeDefinitionSyntax, bool, bool)>();
+            _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
@@ -42,7 +47,12 @@ namespace SmallerLang.Validation
             for(int i = 0; i < pNode.Structs.Count; i++)
             {
                 var s = pNode.Structs[i];
-                if(s.DefinitionType != DefinitionTypes.Implement)
+                if (s.DefinitionType == DefinitionTypes.Implement)
+                {
+                    if (!_implements.ContainsKey(s.AppliesTo)) _implements.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
+                    _implements[s.AppliesTo].Add(s);
+                }
+                else
                 {
                     _structIndex.Add(s.Name, _structs.Count);
                     _structs.Add((s, false, false));
@@ -60,10 +70,9 @@ namespace SmallerLang.Validation
                 }
             }
 
-            for (int i = 0; i < pNode.Structs.Count; i++)
+            foreach(var i in _implements)
             {
-                var s = pNode.Structs[i];
-                if (s.DefinitionType == DefinitionTypes.Implement)
+                foreach(var s in i.Value)
                 {
                     //Mark any traits for types
                     var structApplies = s.AppliesTo;
@@ -80,7 +89,6 @@ namespace SmallerLang.Validation
                     ValidateImplementation(trait, s);
                 }
             }
-
 
             //Add all methods to the MethodCache
             for (int j = 0; j < pNode.Methods.Count; j++)
@@ -132,10 +140,11 @@ namespace SmallerLang.Validation
             for (int i = 0; i < item.Node.Fields.Count; i++)
             {
                 var nt = item.Node.Fields[i].TypeNode.Value;
+                if (nt.IndexOf('[') > -1) nt = nt.Substring(0, nt.IndexOf('['));
 
                 //Only look through user defined types which should be undefined at this point
-                if(item.Node.Fields[i].Type == SmallTypeCache.Undefined &&
-                   !item.Node.TypeParameters.Contains(nt))
+                if(!item.Node.TypeParameters.Contains(nt) && 
+                   !SmallTypeCache.IsTypeDefined(nt))
                 {
                     if (!DiscoverTypes(nt)) return false;
                 }
@@ -148,25 +157,42 @@ namespace SmallerLang.Validation
 
         private void AddType(TypeDefinitionSyntax pDefinition)
         {
+            pDefinition.EmitOrder = _order++;
+
             HashSet<string> fieldNames = new HashSet<string>();
-            FieldDefinition[] fields = new FieldDefinition[pDefinition.Fields.Count];
+            List<FieldDefinition> fields = new List<FieldDefinition>();
             for (int i = 0; i < pDefinition.Fields.Count; i++)
             {
                 var f = pDefinition.Fields[i];
-                if (fieldNames.Contains(f.Value))
+                if (!fieldNames.Add(f.Value))
                 {
                     _error.WriteError($"Duplicate field definition: {f.Value} within struct {pDefinition.Name}", f.Span);
                 }
                 else
                 {
-                    fieldNames.Add(f.Value);
                     FieldVisibility visibility = f.Annotation == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
-                    fields[i] = new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value, visibility);
+                    fields.Add(new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value, visibility));
+                }
+            }
+             
+            //Merge trait fields into this struct
+            if(_implements.ContainsKey(pDefinition.Name))
+            {
+                foreach(var trait in _implements[pDefinition.Name])
+                {
+                    foreach (var f in trait.Fields)
+                    {
+                        if(!fieldNames.Add(f.Value))
+                        {
+                            FieldVisibility visibility = f.Annotation == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
+                            fields.Add(new FieldDefinition(f.Type, f.Value, visibility));
+                        }
+                    }
                 }
             }
 
-            if (pDefinition.DefinitionType == DefinitionTypes.Struct) SmallTypeCache.AddStruct(pDefinition.Name, fields);
-            else if (pDefinition.DefinitionType == DefinitionTypes.Trait) SmallTypeCache.AddTrait(pDefinition.Name, fields);
+            if (pDefinition.DefinitionType == DefinitionTypes.Struct) SmallTypeCache.AddStruct(pDefinition.Name, fields.ToArray());
+            else if (pDefinition.DefinitionType == DefinitionTypes.Trait) SmallTypeCache.AddTrait(pDefinition.Name, fields.ToArray());
         }
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
@@ -186,6 +212,7 @@ namespace SmallerLang.Validation
                 {
                     SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
+
                 pDefinition = MethodCache.AddMethod(pType, pMethod.Name, pMethod);
                 return true;
             }

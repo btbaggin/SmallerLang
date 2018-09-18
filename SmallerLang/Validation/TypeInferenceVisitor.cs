@@ -212,16 +212,14 @@ namespace SmallerLang.Validation
             _currentStruct = _currentType;
 
             //If field doesn't exist or something went wrong, stop checking things to reduce redundant errors
-            if(_currentType != SmallTypeCache.Undefined)
+            if (_currentType != null && _currentType != SmallTypeCache.Undefined)
             {
-                //For method calls we need to allow existing variables, but member access should only allow the struct's fields
-                if (pNode.Value is MethodCallSyntax) _locals = _locals.Copy();
-                else
-                {
-                    //TODO clean this up
-                    if (pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
-                    else _locals = new VariableCache<SmallType>();
+                //For methods and arrays we need to allow existing variables, but member access should only allow the struct's fields
+                if (pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
+                else _locals = new VariableCache<SmallType>();
 
+                if(!(pNode.Value is MethodCallSyntax))
+                {
                     _locals.AddScope();
                     foreach (var f in _currentType.GetFields())
                     {
@@ -264,14 +262,14 @@ namespace SmallerLang.Validation
             if (!SmallTypeCache.IsTypeDefined(pNode.Value))
             {
                 //Normal identifier, continue as usual
-                if (!_locals.IsVariableDefined(pNode.Value))
+                if (!IsVariableDefined(pNode.Value, out SmallType type))
                 {
                     if (_currentStruct == null) _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
                     else _error.WriteError("Type " + _currentStruct.ToString() + " does not contain a definition for '" + pNode.Value + "'", pNode.Span);
                 }
                 else
                 {
-                    pNode.SetType(_locals.GetVariable(pNode.Value));
+                    pNode.SetType(type);
                 }
             }
             else
@@ -284,13 +282,13 @@ namespace SmallerLang.Validation
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            if (!_locals.IsVariableDefined(pNode.Value))
+            if (!IsVariableDefined(pNode.Value, out SmallType type))
             {
                 _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
             }
             else
             {
-                pNode.SetType(_locals.GetVariable(pNode.Value));
+                pNode.SetType(type);
             }
             TrySetImplicitCastType(pNode.Index, SmallTypeCache.Int);
             base.VisitArrayAccessSyntax(pNode);
@@ -335,7 +333,7 @@ namespace SmallerLang.Validation
             }
 
             //Check to ensure this method exists
-            if (!MethodCache.FindMethod(out MethodDefinition m, _currentType, pNode.Value, types) && m.Name == null)
+            if (!FindMethod(out MethodDefinition m, pNode.Value, _currentType, types))
             {
                 if (_currentStruct == null) _error.WriteError("Method definition for " + pNode.Value + " not found", pNode.Span);
                 else _error.WriteError("Type " + _currentStruct.ToString() + " does not contain method '" + pNode.Value + "'", pNode.Span);
@@ -419,6 +417,47 @@ namespace SmallerLang.Validation
                     c.SetType(pType);
                 }
             }
+        }
+
+        private bool IsVariableDefined(string pName, out SmallType pType)
+        {
+            if(!_locals.IsVariableDefined(pName))
+            {
+                if(_currentType != null)
+                {
+                    foreach(var trait in _currentType.Implements)
+                    {
+                        var i = trait.GetFieldIndex(pName);
+                        if (i > -1)
+                        {
+                            pType = trait.GetFieldType(i);
+                            return true;
+                        }
+                    }
+                }
+
+                pType = null;
+                return false;
+            }
+
+            pType = _locals.GetVariable(pName);
+            return true;
+        }
+
+        private bool FindMethod(out MethodDefinition pDef, string pName, SmallType pType, params SmallType[] pArguments)
+        {
+            MethodCache.FindMethod(out pDef, pType, pName, pArguments);
+            if(pDef.Name == null)
+            {
+                foreach(var trait in pType.Implements)
+                {
+                    MethodCache.FindMethod(out pDef, trait, pName, pArguments);
+                    if (pDef.Name != null) return true;
+                }
+                return false;
+            }
+
+            return true;
         }
     }
 }

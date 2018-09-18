@@ -65,7 +65,6 @@ namespace SmallerLang.Emitting
             {
                 parmTypes = new LLVMTypeRef[pMethod.Parameters.Count + 1];
                 parmTypes[0] = LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(CurrentStruct), 0);
-                pName = CurrentStruct.Name + "___" + pName;
                 start = 1;
             }
             else
@@ -82,7 +81,7 @@ namespace SmallerLang.Emitting
             }
 
             //Do not mangle external calls so they are properly exported
-            pNewName = pMethod.External ? pName : MethodCache.GetMangledName(pName, originalTypes);
+            pNewName = pMethod.External ? pName : MethodCache.GetMangledName(pName, CurrentStruct, originalTypes);
 
             //Method header
             var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
@@ -161,10 +160,12 @@ namespace SmallerLang.Emitting
         public void EmitDefinition(string pName, Syntax.TypeDefinitionSyntax pNode)
         {
             //Get field types
-            LLVMTypeRef[] types = new LLVMTypeRef[pNode.Fields.Count];
+            var fields = SmallTypeCache.FromString(pName).GetFields();
+
+            LLVMTypeRef[] types = new LLVMTypeRef[fields.Length];
             for(int i = 0; i < types.Length; i++)
             {
-                types[i] = SmallTypeCache.GetLLVMType(pNode.Fields[i].Type);
+                types[i] = SmallTypeCache.GetLLVMType(fields[i].Type);
             }
 
             //Emit struct
@@ -179,6 +180,7 @@ namespace SmallerLang.Emitting
             //Move to the start of the current function and emit the variable allocation
             var tempBuilder = GetTempBuilder();
             LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
+
             var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType), pName);
             LLVM.DisposeBuilder(tempBuilder);
             return alloc;

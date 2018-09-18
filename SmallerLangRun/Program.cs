@@ -10,7 +10,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * I can't place Line struct before Point?
+         * have array access parse to MemberAccess.ArrayAccess instead of Member.Access.ArrayAccess
          * self.RealField[AnotherRealField] shouldn't be allowed. Need to have self 
          * Poly methods taking traits
          * Assign nested structs t.Start = new Point(1, 1)

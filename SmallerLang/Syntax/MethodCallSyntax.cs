@@ -37,6 +37,13 @@ namespace SmallerLang.Syntax
 
                 //"consume" the entire access stack to get the object we are calling the method on
                 arguments[0] = MemberAccessStack.BuildGetElementPtr(pContext, null);
+                if(_definition.Struct != null && _definition.Struct != member.PeekAt(member.Count - 1).Type)
+                {
+                    var type = SmallTypeCache.GetLLVMType(_definition.Struct);
+                    Utils.LlvmHelper.MakePointer(arguments[0], ref type);
+                    arguments[0] = LLVM.BuildBitCast(pContext.Builder, arguments[0], type, "");
+                }
+
                 pContext.AccessStack.Clear();
                 start = 1;
             }
@@ -78,6 +85,12 @@ namespace SmallerLang.Syntax
         internal MethodDefinition GetDefinition()
         {
             return _definition;
+        }
+
+        public override SyntaxNode FromNode(SyntaxNode pNode)
+        {
+            _definition = (pNode as MethodCallSyntax)._definition;
+            return base.FromNode(pNode);
         }
     }
 }
