@@ -21,7 +21,7 @@ namespace SmallerLang.Lowering
 
                 //Save itvar in case we are looping in a case body
                 var it = _itVar;
-                _itVar = SyntaxFactory.ArrayAccess(pNode.Iterator.Value, i);
+                _itVar = SyntaxFactory.ArrayAccess(pNode.Iterator, i);
                 var b = (BlockSyntax)Visit(pNode.Body);
                 _itVar = it;
 

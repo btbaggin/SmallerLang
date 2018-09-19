@@ -623,7 +623,7 @@ namespace SmallerLang.Parser
                 }
                 else
                 {
-                    iterator = ParseFullIdentifier();
+                    iterator = ParseArrayAccess();
                 }
 
                 Expect(TokenType.RightParen);
@@ -964,7 +964,7 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 var e = ParseLiteral();
-                if (e == null) e = ParseFullIdentifier();
+                if (e == null) e = ParseArrayAccess();
                 if (e == null && PeekAndExpect(TokenType.LeftParen))
                 {
                     e = ParseExpression();
@@ -1028,7 +1028,26 @@ namespace SmallerLang.Parser
             }
         }
 
-        private IdentifierSyntax ParseFullIdentifier()
+        private IdentifierSyntax ParseArrayAccess()
+        {
+            using (SpanTracker t = _spans.Create())
+            {
+                var e = ParseMemberAccess();
+
+                if(PeekAndExpect(TokenType.LeftBracket))
+                {
+                    var index = ParseExpression();
+                    if (e == null) ReportError("Expecting expression", t);
+
+                    Expect(TokenType.RightBracket);
+                    e = SyntaxFactory.ArrayAccess(e, index);
+                }
+
+                return e?.SetSpan<IdentifierSyntax>(t);
+            }
+        }
+
+        private IdentifierSyntax ParseMemberAccess()
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -1036,7 +1055,7 @@ namespace SmallerLang.Parser
                 if (PeekAndExpect(TokenType.Self))
                 {
                     if (!_allowSelf)
-                        throw ReportError("Self only allowed within structs", t);
+                        ReportError("Self only allowed within structs", t);
                     e = SyntaxFactory.Self();
                 }
                 else if (_stream.Peek(1, out Token tok))
@@ -1045,10 +1064,6 @@ namespace SmallerLang.Parser
                     {
                         case TokenType.LeftParen:
                             e = ParseMethodCall();
-                            break;
-
-                        case TokenType.LeftBracket:
-                            e = ParseArrayAccess();
                             break;
 
                         default:
@@ -1060,9 +1075,10 @@ namespace SmallerLang.Parser
                 //Can be null for cases like struct initializers
                 if (e == null) return null;
 
-                if(PeekAndExpect(TokenType.Period))
+                if (PeekAndExpect(TokenType.Period))
                 {
-                    e = SyntaxFactory.MemberAccess(e, ParseFullIdentifier());
+                    var iden = ParseMemberAccess();
+                    if (iden != null) e = SyntaxFactory.MemberAccess(e, iden);
                 }
 
                 return e.SetSpan<IdentifierSyntax>(t);
@@ -1089,20 +1105,6 @@ namespace SmallerLang.Parser
                 Expect(TokenType.RightParen);
 
                 return SyntaxFactory.MethodCall(pName, arguments).SetSpan<MethodCallSyntax>(t);
-            }
-        }
-
-        private IdentifierSyntax ParseArrayAccess()
-        {
-            using (SpanTracker t = _spans.Create())
-            {
-                Expect(TokenType.Identifier, out string pIdentifier);
-                Expect(TokenType.LeftBracket);
-                var e = ParseExpression();
-                if (e == null) ReportError("Expecting expression", t);
-
-                Expect(TokenType.RightBracket);
-                return SyntaxFactory.ArrayAccess(pIdentifier, e).SetSpan<IdentifierSyntax>(t);
             }
         }
 

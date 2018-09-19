@@ -152,6 +152,7 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
+            Visit((dynamic)pNode.Identifier);
             Visit((dynamic)pNode.Index);
         }
 

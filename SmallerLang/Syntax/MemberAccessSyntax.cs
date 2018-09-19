@@ -55,7 +55,7 @@ namespace SmallerLang.Syntax
 
         private bool IsTerminalNode(SyntaxNode pNode)
         {
-            return pNode.GetType() != typeof(MethodCallSyntax) && pNode.GetType() != typeof(MemberAccessSyntax) && pNode.GetType() != typeof(ArrayAccessSyntax);
+            return pNode.GetType() != typeof(MethodCallSyntax) && pNode.GetType() != typeof(MemberAccessSyntax);
         }
     }
 }

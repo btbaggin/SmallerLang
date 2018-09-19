@@ -9,6 +9,8 @@ namespace SmallerLang.Syntax
 {
     public class IdentifierSyntax : ExpressionSyntax
     {
+        internal bool DoNotLoad { get; set; }
+
         public string Value { get; private set; }
 
         private SmallType _type = SmallTypeCache.Undefined;
@@ -35,7 +37,7 @@ namespace SmallerLang.Syntax
 
             var variable = pContext.Locals.GetVariable(Value, out bool parameter);
 
-            if (parameter || Type.IsStruct ||Type.IsArray) return variable;
+            if (parameter || Type.IsStruct ||Type.IsArray || DoNotLoad) return variable;
             return LLVMSharp.LLVM.BuildLoad(pContext.Builder, variable, Value);
         }
 

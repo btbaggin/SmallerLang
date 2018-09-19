@@ -33,7 +33,7 @@ namespace SmallerLang.Syntax
             return new ArrayLiteralSyntax(pType, pValue);
         }
 
-        public static ArrayAccessSyntax ArrayAccess(string pIdentifier, ExpressionSyntax pValue)
+        public static ArrayAccessSyntax ArrayAccess(IdentifierSyntax pIdentifier, ExpressionSyntax pValue)
         {
             return new ArrayAccessSyntax(pIdentifier, pValue);
         }

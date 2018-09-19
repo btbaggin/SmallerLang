@@ -215,11 +215,10 @@ namespace SmallerLang.Validation
             if (_currentType != null && _currentType != SmallTypeCache.Undefined)
             {
                 //For methods and arrays we need to allow existing variables, but member access should only allow the struct's fields
-                if (pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
-                else _locals = new VariableCache<SmallType>();
-
-                if(!(pNode.Value is MethodCallSyntax))
+                if(pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
+                else
                 {
+                    _locals = new VariableCache<SmallType>();
                     _locals.AddScope();
                     foreach (var f in _currentType.GetFields())
                     {
@@ -282,16 +281,11 @@ namespace SmallerLang.Validation
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            if (!IsVariableDefined(pNode.Value, out SmallType type))
-            {
-                _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
-            }
-            else
-            {
-                pNode.SetType(type);
-            }
+            Visit((dynamic)pNode.Identifier);
+            pNode.SetType(pNode.Identifier.Type);
+
             TrySetImplicitCastType(pNode.Index, SmallTypeCache.Int);
-            base.VisitArrayAccessSyntax(pNode);
+            Visit((dynamic)pNode.Index);
         }
 
         protected override void VisitIfSyntax(IfSyntax pNode)

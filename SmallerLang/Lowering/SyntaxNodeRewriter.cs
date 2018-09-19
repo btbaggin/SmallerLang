@@ -155,7 +155,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            return SyntaxFactory.ArrayAccess(pNode.Value, Visit((dynamic)pNode.Index));
+            return SyntaxFactory.ArrayAccess(pNode.Identifier, Visit((dynamic)pNode.Index));
         }
 
         protected virtual SyntaxNode VisitAssignmentSyntax(AssignmentSyntax pNode)

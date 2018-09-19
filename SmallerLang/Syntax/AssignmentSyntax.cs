@@ -37,29 +37,16 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-#if DEBUG
-            foreach (var v in Variables)
-            {
-                //It's safe to cast because the types have been validated already
-                var variable = (IdentifierSyntax)v;
-
-                //Do not allocate discards
-                if (!Utils.SyntaxHelper.IsDiscard(v))
-                {
-                    System.Diagnostics.Debug.Assert(pContext.Locals.IsVariableDefined(variable.Value), $"Variable {variable.Value} not defined");
-                }
-            }
-#endif
-
             if (Variables.Count == 1)
             {
                 var variable = (IdentifierSyntax)Variables[0];
+                variable.DoNotLoad = true;
+
                 //we want to make sure to emit the variable before the index 
                 //Value could change Variable ie incrementing an array index ie x[y] = y += 1
                 //Emit the field if it's a member access
-                LLVMValueRef v = pContext.Locals.GetVariable(variable.Value);
+                LLVMValueRef v = variable.Emit(pContext);
 
-                if (variable.IsMemberAccess) v = variable.Emit(pContext);
                 LLVMValueRef value = Value.Emit(pContext);
 
                 if (Operator != AssignmentOperator.Equals)
@@ -92,6 +79,8 @@ namespace SmallerLang.Syntax
                 for (int i = 0; i < Variables.Count; i++)
                 {
                     var currentVar = (IdentifierSyntax)Variables[i];
+                    currentVar.DoNotLoad = true;
+
                     if(!Utils.SyntaxHelper.IsDiscard(currentVar))
                     {
                         var variable = pContext.Locals.GetVariable(currentVar.Value);
