@@ -12,15 +12,13 @@ namespace SmallerLang.Emitting
         public string Name { get; private set; }
         public List<SmallType> ArgumentTypes { get; private set; }
         public SmallType ReturnType { get; private set; }
-        public SmallType Struct { get; private set; }
 
-        public MethodDefinition(string pName, string pMangled, List<SmallType> pArguments, SmallType pReturn, SmallType pStruct)
+        public MethodDefinition(string pName, string pMangled, List<SmallType> pArguments, SmallType pReturn)
         {
             Name = pName;
             MangledName = pMangled;
             ArgumentTypes = pArguments;
             ReturnType = pReturn;
-            Struct = pStruct;
         }
 
         public MethodDefinition(string pName)
@@ -29,7 +27,6 @@ namespace SmallerLang.Emitting
             MangledName = pName;
             ArgumentTypes = new List<SmallType>();
             ReturnType = SmallTypeCache.Undefined;
-            Struct = SmallTypeCache.Undefined;
         }
     }
 
@@ -205,7 +202,7 @@ namespace SmallerLang.Emitting
 
             SmallType ret = pMethod.Type;
             string mangledName = pMethod.External ? name : name + "_" + pCounter;
-            return new MethodDefinition(pMethod.Name, mangledName, arguments, ret, pInstanceType);
+            return new MethodDefinition(pMethod.Name, mangledName, arguments, ret);
         }
     }
 }

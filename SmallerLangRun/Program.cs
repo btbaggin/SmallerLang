@@ -48,8 +48,8 @@ namespace SmallerLangRun
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)
             {
-                OutputBytecode = true,
-                Optimizations = false,
+                OutputBytecode = false,
+                Optimizations = true,
                 SourceFile = prog
             };
 

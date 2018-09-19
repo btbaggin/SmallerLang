@@ -12,12 +12,14 @@ namespace SmallerLang.Lowering
         ModuleSyntax _module;
         Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
         Dictionary<string, TypeDefinitionSyntax> _polydStructs;
+        Dictionary<string, List<TypeDefinitionSyntax>> _index;
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             _module = pNode;
             _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
             _polydStructs = new Dictionary<string, TypeDefinitionSyntax>();
+            _index = new Dictionary<string, List<TypeDefinitionSyntax>>();
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
@@ -26,6 +28,15 @@ namespace SmallerLang.Lowering
             foreach (var e in pNode.Enums)
             {
                 enums.Add((EnumSyntax)Visit(e));
+            }
+
+            foreach (var s in pNode.Structs)
+            {
+                if (s.DefinitionType == DefinitionTypes.Implement)
+                {
+                    if (!_index.ContainsKey(s.AppliesTo)) _index.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
+                    _index[s.AppliesTo].Add(s);
+                }
             }
 
             //Add and mark structs for poly
@@ -46,6 +57,28 @@ namespace SmallerLang.Lowering
             }
             structs.AddRange(_polydStructs.Values);
             return SyntaxFactory.Module(pNode.Name, methods, structs, enums);
+        }
+
+        protected override SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
+        {
+            //Add implementation methods to the struct
+            //Fields are handled by TypeDiscoveryVisitor
+            //This is the first pass at rewriting which is when we need to merge methods, fields can just be added to the SmallType
+            if (pNode.DefinitionType == DefinitionTypes.Struct && _index.ContainsKey(pNode.Name))
+            {
+                List<MethodSyntax> methods = new List<MethodSyntax>();
+                foreach (var m in pNode.Methods)
+                {
+                    methods.Add((MethodSyntax)Visit(m));
+                }
+                foreach (var s in _index[pNode.Name])
+                {
+                    methods.AddRange(s.Methods);
+                }
+                return SyntaxFactory.TypeDefinition(pNode.Name, "", pNode.DefinitionType, methods, pNode.Fields, pNode.TypeParameters);
+            }
+
+            return base.VisitTypeDefinitionSyntax(pNode);
         }
 
         protected override SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)
