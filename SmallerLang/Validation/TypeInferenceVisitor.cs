@@ -94,6 +94,10 @@ namespace SmallerLang.Validation
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
             base.VisitStructInitializerSyntax(pNode);
+            for (int i = 0; i < pNode.Values.Count; i++)
+            {
+                if(pNode.Values[i] is MemberAccessSyntax) Visit(pNode.Values[i]);
+            }
 
             var m = pNode.Type.GetConstructor();
             if(m.ArgumentTypes != null && m.ArgumentTypes.Count != pNode.Arguments.Count)

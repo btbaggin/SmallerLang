@@ -29,12 +29,12 @@ namespace SmallerLang.Syntax
             return (T)this;
         }
 
-        public virtual SyntaxNode FromNode(SyntaxNode pNode)
+        public virtual T FromNode<T>(T pNode) where T : SyntaxNode
         {
             Span = pNode.Span;
             Annotation = pNode.Annotation;
             Deferred = pNode.Deferred;
-            return this;
+            return (T)this;
         }
 
         public abstract LLVMValueRef Emit(EmittingContext pContext);

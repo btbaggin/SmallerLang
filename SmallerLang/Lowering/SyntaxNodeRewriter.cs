@@ -160,7 +160,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitAssignmentSyntax(AssignmentSyntax pNode)
         {
-            List<ExpressionSyntax> variables = new List<ExpressionSyntax>(pNode.Variables.Count);
+            List<IdentifierSyntax> variables = new List<IdentifierSyntax>(pNode.Variables.Count);
             foreach(var v in pNode.Variables)
             {
                 variables.Add(Visit((dynamic)v));
@@ -390,13 +390,20 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
+            List<IdentifierSyntax> variables = new List<IdentifierSyntax>(pNode.Values.Count);
+            foreach(var v in pNode.Values)
+            {
+                variables.Add(Visit((dynamic)v));
+            }
+
             var t = (TypeSyntax)Visit(pNode.Struct);
+
             List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pNode.Arguments.Count);
             foreach(var a in pNode.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));
             }
-            return SyntaxFactory.StructInitializer(pNode.Value, t, arguments);
+            return SyntaxFactory.StructInitializer(variables, t, arguments);
         }
 
         protected virtual SyntaxNode VisitStringLiteralSyntax(StringLiteralSyntax pNode)

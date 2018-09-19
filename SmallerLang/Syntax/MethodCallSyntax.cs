@@ -76,12 +76,7 @@ namespace SmallerLang.Syntax
             _definition = pDef;
         }
 
-        internal MethodDefinition GetDefinition()
-        {
-            return _definition;
-        }
-
-        public override SyntaxNode FromNode(SyntaxNode pNode)
+        public override T FromNode<T>(T pNode)
         {
             _definition = (pNode as MethodCallSyntax)._definition;
             return base.FromNode(pNode);

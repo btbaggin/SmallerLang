@@ -106,7 +106,7 @@ namespace SmallerLang.Syntax
             _type = pType;
         }
 
-        public override SyntaxNode FromNode(SyntaxNode pNode)
+        public override T FromNode<T>(T pNode)
         {
             _type = pNode.Type;
             return base.FromNode(pNode);

@@ -38,45 +38,42 @@ namespace SmallerLang.Syntax
 
             var value = Value.Emit(pContext);
 
-            if (Variables.Count == 1)
+            //We only don't need to assign if we call the constructor since that passes a pointer to the object
+            if (Value.GetType() != typeof(StructInitializerSyntax))
             {
-                //We only don't need to assign if we call the constructor since that passes a pointer to the object
-                if (Value.GetType() != typeof(StructInitializerSyntax))
+                if (Variables.Count == 1)
                 {
                     //Need to load address of pointers
                     Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
                     var v = pContext.Locals.GetVariable(Variables[0].Value);
                     LLVM.BuildStore(pContext.Builder, value, v);
                 }
-
-                return value;
-            }
-            else
-            {
-                //Create our temp tuple value
-                var t = SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
-
-                LLVMValueRef v = pContext.AllocateVariable("<temp>tuple", t);
-
-                //Load the value into our temp variable
-                Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
-                LLVM.BuildStore(pContext.Builder, value, v);
-
-                //Access each of the tuples fields, assigning them to our variables
-                for (int i = 0; i < Variables.Count; i++)
+                else
                 {
-                    if(!Utils.SyntaxHelper.IsDiscard(Variables[i]))
-                    {
-                        var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
-                        indexAccess = LLVM.BuildLoad(pContext.Builder, indexAccess, "");
+                    //Create our temp tuple value
+                    var t = SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
+                    LLVMValueRef tuple = pContext.AllocateVariable("<temp>tuple", t);
 
-                        var variable = pContext.Locals.GetVariable(Variables[i].Value);
-                        LLVM.BuildStore(pContext.Builder, indexAccess, variable);
+                    //Load the value into our temp variable
+                    Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
+                    LLVM.BuildStore(pContext.Builder, value, tuple);
+
+                    //Access each of the tuples fields, assigning them to our variables
+                    for (int i = 0; i < Variables.Count; i++)
+                    {
+                        if (!Utils.SyntaxHelper.IsDiscard(Variables[i]))
+                        {
+                            var g = LLVM.BuildInBoundsGEP(pContext.Builder, tuple, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
+                            g = LLVM.BuildLoad(pContext.Builder, g, "");
+
+                            var variable = pContext.Locals.GetVariable(Variables[i].Value);
+                            LLVM.BuildStore(pContext.Builder, g, variable);
+                        }
                     }
                 }
 
-                return value;
             }
+            return value;
         }
     }
 }

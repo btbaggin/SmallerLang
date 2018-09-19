@@ -118,6 +118,15 @@ namespace SmallerLang
                 var data = LLVMTypeRef.PointerType(GetLLVMType(pType.GetElementType()), 0);
                 return LLVMTypeRef.StructType(new LLVMTypeRef[] { length, data }, false);
             }
+            else if(pType.IsTuple)
+            {
+                LLVMTypeRef[] types = new LLVMTypeRef[pType.GetFieldCount()];
+                for(int i = 0; i < types.Length; i++)
+                {
+                    types[i] = GetLLVMType(pType.GetFieldType(i));
+                }
+                return LLVMTypeRef.StructType(types, false);
+            }
             else if (_cache.ContainsKey(pType.Name))
             {
                 return _cache[pType.Name].LLVMType;

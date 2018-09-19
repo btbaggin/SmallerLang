@@ -72,8 +72,7 @@ namespace SmallerLang
                     string location;
                     if (!mapping.ContainsKey(attribute.Pointer))
                     {
-                        uint length = 0;
-                        location = LLVM.GetStringAttributeValue(attribute, out length);
+                        location = LLVM.GetStringAttributeValue(attribute, out uint length);
                         mapping.Add(attribute.Pointer, location);
                     }
                     else location = mapping[attribute.Pointer];

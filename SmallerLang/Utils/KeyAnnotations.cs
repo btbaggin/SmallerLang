@@ -28,10 +28,8 @@ namespace SmallerLang.Utils
 
             try
             {
-                string dll = parts[0] + (parts[0].EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ? "" : ".dll");
-
                 //Try to retrieve assembly
-                Assembly assembly = Assembly.Load(dll);
+                Assembly assembly = Assembly.Load(parts[0] + ".dll");
 
                 //Try to retrieve type
                 Type type = assembly.GetType(parts[1]);
@@ -47,7 +45,7 @@ namespace SmallerLang.Utils
                     else if (t == SmallTypeCache.Int) types[i] = typeof(int);
                     else if (t == SmallTypeCache.Short) types[i] = typeof(short);
                     else if (t == SmallTypeCache.Boolean) types[i] = typeof(bool);
-                    else throw new Exception("Unknown type " + t.ToString());
+                    else throw new InvalidCastException("Unknown type " + t.ToString());
                 }
 
                 MethodInfo method = type.GetMethod(parts[2], types);
@@ -96,7 +94,7 @@ namespace SmallerLang.Utils
                 else if (t.Equals(LLVMTypeRef.Int32Type())) types[i] = typeof(int);
                 else if (t.Equals(LLVMTypeRef.Int16Type())) types[i] = typeof(short);
                 else if (t.Equals(LLVMTypeRef.Int1Type())) types[i] = typeof(bool);
-                else throw new Exception("Unknown type " + t.ToString());
+                else throw new InvalidCastException("Unknown type " + t.ToString());
             }
             return type.GetMethod(parts[2], types);
         }

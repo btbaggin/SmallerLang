@@ -10,8 +10,11 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Better error messages for parameter and returning invalid type
+         * Validate trait things... for some reason I can return a "doble"
+         * Mulitple declarations with struct initializer, not properly initializing memory
+         * Multiple assignment of member/array access
          * Poly methods taking traits
-         * Assign nested structs t.Start = new Point(1, 1)
          * Do struct poly after type inference?
          * Set multiple variables from single assignment?
          * imports

@@ -454,8 +454,8 @@ namespace SmallerLang.Parser
                 List<IdentifierSyntax> variables = new List<IdentifierSyntax>();
                 do
                 {
-                    var i = ParseIdentifier();
                     //We allow underscore to discard the value returned from that slot
+                    var i = ParseIdentifier();
                     if (i == null) i = ParseDiscard();
                     if (i != null) variables.Add(i);
                 } while (PeekAndExpect(TokenType.Comma));
@@ -464,7 +464,7 @@ namespace SmallerLang.Parser
 
                 //new only allowed in assignment and declaration statements
                 ExpressionSyntax right = ParseExpression();
-                var newStruct = ParseStructInitializer(variables[0].Value); //TODO hacky. make work with multiple?
+                var newStruct = ParseStructInitializer(variables);
                 if (newStruct != null) right = newStruct;
 
                 if(right == null)
@@ -487,7 +487,7 @@ namespace SmallerLang.Parser
             }
         }
 
-        private StructInitializerSyntax ParseStructInitializer(string pIdentifier)
+        private StructInitializerSyntax ParseStructInitializer(IList<IdentifierSyntax> pIdentifier)
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -746,14 +746,20 @@ namespace SmallerLang.Parser
             {
                 //Full assignments allow for multiple variables on the left hand side and also use of the _ token
                 //Full assignments are only allowed as separate statements, not in other expressions
-                ExpressionSyntax e = null;
-                List<ExpressionSyntax> variables = new List<ExpressionSyntax>();
-                do
+                ExpressionSyntax e = ParseAndOr();
+                List<IdentifierSyntax> variables = new List<IdentifierSyntax>();
+                if (e is IdentifierSyntax i) variables.Add(i);
+
+                if (PeekAndExpect(TokenType.Comma))
                 {
-                    e = ParseAndOr();
-                    if (e == null) e = ParseDiscard();
-                    if (e != null) variables.Add(e);
-                } while (PeekAndExpect(TokenType.Comma));
+                    do
+                    {
+                        e = ParseArrayAccess();
+                        if (e == null) e = ParseDiscard();
+                        if (!(e is IdentifierSyntax ii)) throw ReportError("Only identifiers can be the subject of assignments", e.Span);
+                        variables.Add(ii);
+                    } while (PeekAndExpect(TokenType.Comma));
+                }
 
                 while (PeekAndExpectOneOf(out TokenType tt, TokenType.Equals, TokenType.PlusEquals,
                                                          TokenType.MinusEquals, TokenType.StarEquals,
@@ -763,13 +769,12 @@ namespace SmallerLang.Parser
 
                     //new only allowed in assignment and declaration statements
                     ExpressionSyntax right = ParseExpressionWithFullAssignment();
-                    var newStruct = ParseStructInitializer(((IdentifierSyntax)variables[0]).Value); //TODO hacky. make work with multiple?
+                    var newStruct = ParseStructInitializer(variables);
                     if (newStruct != null) right = newStruct;
 
                     if (right == null)
                     {
-                        ReportError("Expecting expression", t);
-                        return null;
+                        throw ReportError("Expecting expression", t);
                     }
 
                     e = SyntaxFactory.Assignment(variables, tt.ToAssignmentOperator(), right);
@@ -794,11 +799,10 @@ namespace SmallerLang.Parser
 
                     //new only allowed in assignment and declaration statements
                     ExpressionSyntax right = ParseExpression();
-                   if(e is IdentifierSyntax i)
-                    {
-                        var newStruct = ParseStructInitializer(i.Value);
-                        if (newStruct != null) right = newStruct;
-                    }
+                    if (!(e is IdentifierSyntax i)) throw ReportError("Only identifiers can be the subject of assignment", e.Span);
+
+                    var newStruct = ParseStructInitializer(new List<IdentifierSyntax>() { i });
+                    if (newStruct != null) right = newStruct;
 
                     if (right == null)
                     {
@@ -806,7 +810,7 @@ namespace SmallerLang.Parser
                         return null;
                     }
 
-                    e = SyntaxFactory.Assignment(new List<ExpressionSyntax>() { e }, tt.ToAssignmentOperator(), right);
+                    e = SyntaxFactory.Assignment(new List<IdentifierSyntax>() { i }, tt.ToAssignmentOperator(), right);
                 }
 
                 return e?.SetSpan<ExpressionSyntax>(t);

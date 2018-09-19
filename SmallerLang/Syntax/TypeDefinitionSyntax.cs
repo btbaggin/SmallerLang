@@ -127,7 +127,7 @@ namespace SmallerLang.Syntax
             LLVM.BuildRetVoid(pContext.Builder);
         }
 
-        public override SyntaxNode FromNode(SyntaxNode pNode)
+        public override T FromNode<T>(T pNode)
         {
             EmitOrder = (pNode as TypeDefinitionSyntax).EmitOrder;
             return base.FromNode(pNode);

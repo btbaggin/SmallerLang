@@ -98,9 +98,9 @@ namespace SmallerLang.Syntax
             return new TypeDefinitionSyntax(pName, pImplements, pType, pFields, pMethods, pTypeParameters);
         }
 
-        public static StructInitializerSyntax StructInitializer(string pValue, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)
+        public static StructInitializerSyntax StructInitializer(IList<IdentifierSyntax> pValues, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)
         {
-            return new StructInitializerSyntax(pValue, pStruct, pArguments);
+            return new StructInitializerSyntax(pValues, pStruct, pArguments);
         }
 
         public static MethodCallSyntax MethodCall(string pName, IList<ExpressionSyntax> pArguments)
@@ -138,7 +138,7 @@ namespace SmallerLang.Syntax
             return new DeclarationSyntax(pVariables, pRight);
         }
 
-        public static AssignmentSyntax Assignment(IList<ExpressionSyntax> pVariables, AssignmentOperator pOp, ExpressionSyntax pValue)
+        public static AssignmentSyntax Assignment(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, ExpressionSyntax pValue)
         {
             return new AssignmentSyntax(pVariables, pOp, pValue);
         }

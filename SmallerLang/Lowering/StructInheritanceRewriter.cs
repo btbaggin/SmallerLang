@@ -9,17 +9,18 @@ namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
-        ModuleSyntax _module;
         Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
         Dictionary<string, TypeDefinitionSyntax> _polydStructs;
-        Dictionary<string, List<TypeDefinitionSyntax>> _index;
+        Dictionary<string, List<TypeDefinitionSyntax>> _implementIndex;
+        Dictionary<string, int> _typeArgMapping;
+        IList<TypeSyntax> _types;
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _module = pNode;
             _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
             _polydStructs = new Dictionary<string, TypeDefinitionSyntax>();
-            _index = new Dictionary<string, List<TypeDefinitionSyntax>>();
+            _implementIndex = new Dictionary<string, List<TypeDefinitionSyntax>>();
+            _typeArgMapping = new Dictionary<string, int>();
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
@@ -34,8 +35,8 @@ namespace SmallerLang.Lowering
             {
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    if (!_index.ContainsKey(s.AppliesTo)) _index.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
-                    _index[s.AppliesTo].Add(s);
+                    if (!_implementIndex.ContainsKey(s.AppliesTo)) _implementIndex.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
+                    _implementIndex[s.AppliesTo].Add(s);
                 }
             }
 
@@ -47,7 +48,6 @@ namespace SmallerLang.Lowering
                 if (s.TypeParameters.Count > 0) _structsToPoly.Add(n.Name, n);
                 else structs.Add(n);
             }
-
 
             //Visiting the methods will poly any struct AST nodes
             //It will also transform any call sites to reference the new polyd node
@@ -64,17 +64,19 @@ namespace SmallerLang.Lowering
             //Add implementation methods to the struct
             //Fields are handled by TypeDiscoveryVisitor
             //This is the first pass at rewriting which is when we need to merge methods, fields can just be added to the SmallType
-            if (pNode.DefinitionType == DefinitionTypes.Struct && _index.ContainsKey(pNode.Name))
+            if (pNode.DefinitionType == DefinitionTypes.Struct && _implementIndex.ContainsKey(pNode.Name))
             {
                 List<MethodSyntax> methods = new List<MethodSyntax>();
                 foreach (var m in pNode.Methods)
                 {
                     methods.Add((MethodSyntax)Visit(m));
                 }
-                foreach (var s in _index[pNode.Name])
+
+                foreach (var s in _implementIndex[pNode.Name])
                 {
                     methods.AddRange(s.Methods);
                 }
+
                 return SyntaxFactory.TypeDefinition(pNode.Name, "", pNode.DefinitionType, methods, pNode.Fields, pNode.TypeParameters);
             }
 
@@ -96,16 +98,16 @@ namespace SmallerLang.Lowering
 
         protected override SyntaxNode VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode)
         {
+            //Poly array literals
             if(_typeArgMapping.ContainsKey(pNode.TypeNode.Value))
             {
                 var i = _typeArgMapping[pNode.TypeNode.Value];
                 return SyntaxFactory.ArrayLiteral(_types[i], pNode.Value);
             }
+
             return base.VisitArrayLiteralSyntax(pNode);
         }
 
-        Dictionary<string, int> _typeArgMapping = new Dictionary<string, int>();
-        IList<TypeSyntax> _types;
         private bool TryPolyStruct(TypeDefinitionSyntax pNode, ref StructInitializerSyntax pInitializer)
         {
             _types = pInitializer.Struct.GenericArguments;
@@ -126,6 +128,7 @@ namespace SmallerLang.Lowering
             structName = structName.Remove(structName.Length - 1, 1);
             structName.Append(">");
 
+            //Ensure we haven't created this type before
             if (!_polydStructs.ContainsKey(structName.ToString()))
             {
                 //Rebuild a new struct with the generic types replaced
@@ -172,11 +175,13 @@ namespace SmallerLang.Lowering
                         }
                     }
 
-                    var mNew = (MethodSyntax)SyntaxFactory.Method(m.Name, returnValues, parameters, (BlockSyntax)Visit(m.Body)).FromNode(m);
+                    //Ensure we save annotations and things
+                    var mNew = SyntaxFactory.Method(m.Name, returnValues, parameters, (BlockSyntax)Visit(m.Body)).FromNode(m);
                     methods.Add(mNew);
                 }
 
-                _polydStructs.Add(structName.ToString(), SyntaxFactory.TypeDefinition(structName.ToString(), pNode.AppliesTo, pNode.DefinitionType, methods, fields, new List<string>()));
+                var newType = SyntaxFactory.TypeDefinition(structName.ToString(), pNode.AppliesTo, pNode.DefinitionType, methods, fields, new List<string>()).FromNode(pNode);
+                _polydStructs.Add(structName.ToString(), newType);
             }
 
             List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pInitializer.Arguments.Count);
@@ -185,7 +190,7 @@ namespace SmallerLang.Lowering
                 arguments.Add(Visit((dynamic)a));
             }
 
-            pInitializer = SyntaxFactory.StructInitializer(pInitializer.Value, SyntaxFactory.Type(structName.ToString()), arguments);
+            pInitializer = SyntaxFactory.StructInitializer(pInitializer.Values, SyntaxFactory.Type(structName.ToString()), arguments);
 
             _typeArgMapping.Clear();
             return true;
