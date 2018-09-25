@@ -17,11 +17,11 @@ namespace SmallerLang.Syntax
             get { return TypeNode.Type.MakeArrayType(); }
         }
 
-        public int Size
+        public uint Size
         {
             get
             {
-                int.TryParse(Value, out int i);
+                uint.TryParse(Value, out uint i);
                 return i;
             }
         }
@@ -33,17 +33,17 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            var v = pContext.AllocateVariable("array_temp", Type);
+            var variable = pContext.AllocateVariable("array_temp", Type);
 
-            var a = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
-            LLVM.BuildStore(pContext.Builder, pContext.GetInt(int.Parse(Value)), a);
+            var length = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+            LLVM.BuildStore(pContext.Builder, pContext.GetInt(int.Parse(Value)), length);
 
-            var arraya = LLVM.BuildAlloca(pContext.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(Type.GetElementType()), (uint)Size), "");
-            var arrayaccess = LLVM.BuildInBoundsGEP(pContext.Builder, arraya, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
-            var d = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
-            LLVM.BuildStore(pContext.Builder, arrayaccess, d);
+            var data = LLVM.BuildAlloca(pContext.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(Type.GetElementType()), Size), "");
+            var dataAccess = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+            var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
+            LLVM.BuildStore(pContext.Builder, dataAccess, variableData);
 
-            return v;
+            return variable;
         }
     }
 }

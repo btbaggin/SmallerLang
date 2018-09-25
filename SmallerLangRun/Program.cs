@@ -10,8 +10,6 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Better error messages for parameter and returning invalid type
-         * Validate trait things... for some reason I can return a "doble"
          * Mulitple declarations with struct initializer, not properly initializing memory
          * Multiple assignment of member/array access
          * Poly methods taking traits

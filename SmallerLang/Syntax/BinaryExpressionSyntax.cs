@@ -161,8 +161,8 @@ namespace SmallerLang.Syntax
                 case BinaryExpressionOperator.LessThan:
                 case BinaryExpressionOperator.LessThanOrEqual:
                 case BinaryExpressionOperator.NotEquals:
-                    if (!pLeft.IsAssignableFrom(pRight)) return SmallTypeCache.Undefined;
-                    return pLeft;
+                    if (pLeft.IsAssignableFrom(pRight)) return pLeft;
+                    return SmallTypeCache.Undefined;
 
                 default:
                     throw new NotSupportedException("Unknown binary expression operator " + pOp.ToString());

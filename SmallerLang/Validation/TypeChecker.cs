@@ -22,7 +22,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            if(!pNode.Index.Type.IsAssignableFrom(SmallTypeCache.Int))
+            if(!CanCast(pNode.Index.Type, SmallTypeCache.Int))
             {
                 _error.WriteError($"Type of {pNode.Index.Type.ToString()} cannot be converted to {SmallTypeCache.Int.ToString()}", pNode.Index.Span);
             }
@@ -38,11 +38,11 @@ namespace SmallerLang.Validation
             var isTuple = pNode.Value.Type.IsTuple;
             for (int i = 0; i < pNode.Variables.Count; i++)
             {
-                var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
+                var valueType = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
-                if (!pNode.Variables[i].Type.IsAssignableFrom(t))
+                if (!CanCast(pNode.Variables[i].Type, valueType))
                 {
-                    _error.WriteError($"Type of {pNode.Variables[i].Type.ToString()} cannot be converted to {t.ToString()}", pNode.Span);
+                    _error.WriteError($"Type of {pNode.Variables[i].Type.ToString()} cannot be converted to {valueType.ToString()}", pNode.Span);
                 }
             }
             base.VisitAssignmentSyntax(pNode);
@@ -54,18 +54,20 @@ namespace SmallerLang.Validation
             {
                 case BinaryExpressionOperator.And:
                 case BinaryExpressionOperator.Or:
-                    if (!pNode.Left.Type.IsAssignableFrom(SmallTypeCache.Boolean))
+                    if (!CanCast(pNode.Left.Type, SmallTypeCache.Boolean))
                     {
                         _error.WriteError($"Type of {pNode.Left.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Span);
                     }
-                    if(!pNode.Right.Type.IsAssignableFrom(SmallTypeCache.Boolean))
+                    if(!CanCast(pNode.Right.Type, SmallTypeCache.Boolean))
                     {
                         _error.WriteError($"Type of {pNode.Right.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Span);
                     }
                     break;
 
                 default:
-                    if(BinaryExpressionSyntax.GetResultType(pNode.Left.Type, pNode.Operator, pNode.Right.Type) == SmallTypeCache.Undefined)
+                    if (pNode.Left.Type != SmallTypeCache.Undefined && 
+                        pNode.Right.Type != SmallTypeCache.Undefined &&
+                        BinaryExpressionSyntax.GetResultType(pNode.Left.Type, pNode.Operator, pNode.Right.Type) == SmallTypeCache.Undefined)
                     {
                         _error.WriteError($"Type of {pNode.Left.Type.ToString()} cannot be converted to {pNode.Right.Type.ToString()}", pNode.Span);
                     }
@@ -80,7 +82,7 @@ namespace SmallerLang.Validation
             switch (pNode.Operator)
             {
                 case UnaryExpressionOperator.Not:
-                    if(!pNode.Value.Type.IsAssignableFrom(SmallTypeCache.Boolean))
+                    if(!CanCast(pNode.Value.Type, SmallTypeCache.Boolean))
                     {
                         _error.WriteError($"Type of {pNode.Value.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Value.Span);
                     }
@@ -125,7 +127,7 @@ namespace SmallerLang.Validation
 
             for(int i = 0; i < m.ArgumentTypes.Count; i++)
             {
-                if(!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
+                if(!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
                 {
                     _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
                 }
@@ -166,7 +168,7 @@ namespace SmallerLang.Validation
                 MethodCache.FindMethod(out MethodDefinition m, pNode.Struct.Type, ctor, types);
                 for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
-                    if (!pNode.Arguments[i].Type.IsAssignableFrom(m.ArgumentTypes[i]))
+                    if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
                     {
                         _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
                     }
@@ -184,6 +186,13 @@ namespace SmallerLang.Validation
 
         protected override void VisitMethodSyntax(MethodSyntax pNode)
         {
+            for(int i = 0; i < pNode.ReturnValues.Count; i++)
+            {
+                if(pNode.ReturnValues[i].Type == SmallTypeCache.Undefined)
+                {
+                    _error.WriteError($"Use of undefined type {pNode.ReturnValues[i].Value}", pNode.ReturnValues[i].Span);
+                }
+            }
             _methodReturns = Utils.SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
             base.VisitMethodSyntax(pNode);
         }
@@ -192,7 +201,7 @@ namespace SmallerLang.Validation
         {
             for(int i = 0; i < pNode.Values.Count; i++)
             {
-                if (!pNode.Values[i].Type.IsAssignableFrom(_methodReturns[i]))
+                if (!CanCast(pNode.Values[i].Type, _methodReturns[i]))
                 {
                     _error.WriteError($"Type of {pNode.Values[i].Type.ToString()} cannot be converted to {_methodReturns[i].ToString()}", pNode.Values[i].Span);
                 }
@@ -202,7 +211,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitForSyntax(ForSyntax pNode)
         {
-            if (!pNode.Condition.Type.IsAssignableFrom(SmallTypeCache.Boolean))
+            if (!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
                 _error.WriteError($"Type of {pNode.Condition.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Condition.Span);
             }
@@ -211,7 +220,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitIfSyntax(IfSyntax pNode)
         {
-            if (!pNode.Condition.Type.IsAssignableFrom(SmallTypeCache.Boolean))
+            if (!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
                 _error.WriteError($"Type of {pNode.Condition.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Condition.Span);
             }
@@ -220,7 +229,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitWhileSyntax(WhileSyntax pNode)
         {
-            if(!pNode.Condition.Type.IsAssignableFrom(SmallTypeCache.Boolean))
+            if(!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
                 _error.WriteError($"Type of {pNode.Condition.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Condition.Span);
             }
@@ -237,12 +246,26 @@ namespace SmallerLang.Validation
         {
             foreach(var c in pNode.Conditions)
             {
-                if(!_casetype.IsAssignableFrom(c.Type))
+                if(!CanCast(_casetype, c.Type))
                 {
                     _error.WriteError($"Type of {c.Type.ToString()} cannot be converted to {_casetype.ToString()}", pNode.Span);
                 }
             }
             base.VisitCaseSyntax(pNode);
+        }
+
+        protected override void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
+        {
+            if (pNode.Type == SmallTypeCache.Undefined)
+            {
+                _error.WriteError($"Use of undefined type {pNode.TypeNode.Value}", pNode.Span);
+            }
+            base.VisitTypedIdentifierSyntax(pNode);
+        }
+
+        private bool CanCast(SmallType pFrom, SmallType pTo)
+        {
+            return pFrom == SmallTypeCache.Undefined || pTo == SmallTypeCache.Undefined || pFrom.IsAssignableFrom(pTo);
         }
     }
 }
