@@ -23,6 +23,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //If condition
             var cond = Condition.Emit(pContext);
             var loop = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_loop");

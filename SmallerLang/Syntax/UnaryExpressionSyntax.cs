@@ -40,6 +40,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             switch (Operator)
             {
                 case UnaryExpressionOperator.Not:

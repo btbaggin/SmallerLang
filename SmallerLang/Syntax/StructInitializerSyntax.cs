@@ -27,6 +27,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
             var m = Type.GetConstructor();
 

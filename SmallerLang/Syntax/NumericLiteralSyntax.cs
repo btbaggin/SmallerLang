@@ -49,6 +49,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             switch(NumberType)
             {
                 case NumberTypes.Integer:

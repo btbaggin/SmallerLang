@@ -24,6 +24,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             var cond = Condition.Emit(pContext);
 
             var endBlock = LLVM.AppendBasicBlock(pContext.CurrentMethod, "endswitch");

@@ -75,6 +75,8 @@ namespace SmallerLang.Syntax
             LLVM.BuildRet(pContext.Builder, pContext.GetInt(0));
             pContext.ValidateMethod(main);
 
+            pContext.FinishDebug();
+
             return main;
         }
     }

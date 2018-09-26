@@ -23,6 +23,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             If?.Emit(pContext);
             Body?.Emit(pContext);
             return default;

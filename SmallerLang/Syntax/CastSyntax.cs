@@ -34,6 +34,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             var val = Value.Emit(pContext);
             if (FromType == Type) return val;
 

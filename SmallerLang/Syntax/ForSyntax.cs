@@ -41,7 +41,10 @@ namespace SmallerLang.Syntax
             //Iterator should have been rewritten to normal for loop
             System.Diagnostics.Debug.Assert(Iterator == null);
 
+            pContext.EmitDebugLocation(this);
+
             pContext.Locals.AddScope();
+            pContext.AddDebugScope(Span);
 
             foreach (var d in Initializer)
             {
@@ -83,7 +86,8 @@ namespace SmallerLang.Syntax
 
             //End
             LLVM.PositionBuilderAtEnd(pContext.Builder, end);
-            
+
+            pContext.RemoveDebugScope();
             pContext.Locals.RemoveScope();
 
             return default;

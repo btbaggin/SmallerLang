@@ -26,6 +26,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //We are in a member access, just push the index of this field onto the stack
             if(pContext.AccessStack.Count > 0)
             {

@@ -22,6 +22,7 @@ namespace SmallerLang.Syntax
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
             System.Diagnostics.Debug.Assert(_definition.MangledName != null);
+            pContext.EmitDebugLocation(this);
 
             LLVMValueRef[] arguments = null;
             MemberAccessStack member = null;

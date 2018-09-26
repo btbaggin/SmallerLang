@@ -26,6 +26,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //We are in a member access, just push the index of this field onto the stack
             LLVMValueRef variable = Identifier.Emit(pContext);
             var index = Index.Emit(pContext);

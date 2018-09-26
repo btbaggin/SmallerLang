@@ -26,6 +26,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             var cond = Condition.Emit(pContext);
             Utils.LlvmHelper.LoadIfPointer(ref cond, pContext);
             var then = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_then");

@@ -21,6 +21,7 @@ namespace SmallerLang.Syntax
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
             pContext.Locals.AddScope();
+            pContext.AddDebugScope(Span);
 
             foreach(var s in Statements)
             {
@@ -28,6 +29,7 @@ namespace SmallerLang.Syntax
                 else pContext.AddDeferredStatement(s);
             }
 
+            pContext.RemoveDebugScope();
             pContext.Locals.RemoveScope();
             return default;
         }

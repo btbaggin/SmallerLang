@@ -26,6 +26,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //Most of the code for case is generated in SelectSyntax
             var b = LLVM.AppendBasicBlock(pContext.CurrentMethod, "case");
             LLVM.PositionBuilderAtEnd(pContext.Builder, b);

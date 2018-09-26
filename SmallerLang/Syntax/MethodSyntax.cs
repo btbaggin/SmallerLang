@@ -51,12 +51,15 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             if (!External)
             {
                 System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(_name), "Method name cannot be blank");
                 var func = pContext.StartMethod(_name, this);
                 pContext.AddDeferredStatementExecution();
                 pContext.Locals.AddScope();
+                pContext.AddDebugScope(Span);
 
                 //Method bodies are slightly special because we want all variables to be declared in their scope
                 //Don't call Body.Emit because that starts a new scope and all our variables will be not declared for deferred statements
@@ -89,6 +92,7 @@ namespace SmallerLang.Syntax
 
                 //End method
                 pContext.RemoveDeferredStatementExecution();
+                pContext.RemoveDebugScope();
                 pContext.Locals.RemoveScope();
                 pContext.FinishMethod(func);
                 return func;

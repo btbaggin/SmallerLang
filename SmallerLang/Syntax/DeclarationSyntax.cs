@@ -24,6 +24,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             foreach (var v in Variables)
             {
                 //Do not allocate discards

@@ -24,8 +24,10 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //Check if this is a "static" method
-            if(!SmallTypeCache.IsTypeDefined(Identifier.Value))
+            if (!SmallTypeCache.IsTypeDefined(Identifier.Value))
             {
                 LLVMValueRef i = Identifier.Emit(pContext);
                 pContext.AccessStack.Push(i, Identifier.Type);

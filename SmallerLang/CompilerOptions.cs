@@ -13,6 +13,7 @@ namespace SmallerLang
         public string OutputFile { get; set; }
         public bool Optimizations { get; set; }
         public bool OutputBytecode { get; set; }
+        public bool Debug { get; set; }
 
         public CompilerOptions(string pOutputFile)
         {
@@ -21,6 +22,7 @@ namespace SmallerLang
             OutputFile = pOutputFile;
             Optimizations = true;
             OutputBytecode = false;
+            Debug = false;
         }
 
         public CompilerOptions(string pSource, string pOutputFile)
@@ -30,6 +32,7 @@ namespace SmallerLang
             OutputFile = pOutputFile;
             Optimizations = true;
             OutputBytecode = false;
+            Debug = false;
         }
     }
 }

@@ -78,7 +78,7 @@ namespace SmallerLang
             }
             LLVM.InitializeFunctionPassManager(passManager);
 
-            using (var c = new EmittingContext(m, passManager))
+            using (var c = new EmittingContext(m, passManager, pOptions.Debug))
             {
                 t.Emit(c);
 
