@@ -8,7 +8,7 @@ namespace SmallerLang.Lexer
 {
     class BufferedTokenStream : ITokenStream
     {
-        public string Source { get => mSource.Source; }
+        public string Source { get => _source.Source; }
 
         public ref Token Current { get { return ref _tokens[Index]; } }
 
@@ -22,15 +22,13 @@ namespace SmallerLang.Lexer
 
         public int SourceColumn { get; private set; }
 
-        readonly ITokenSource mSource;
+        readonly ITokenSource _source;
         Token[] _tokens;
         int _tokenCount;
-        Stack<int> mstkMarkers;
 
         public BufferedTokenStream(ITokenSource pSource)
         {
-            mSource = pSource;
-            mstkMarkers = new Stack<int>();
+            _source = pSource;
             _tokens = new Token[128];
             Index = 0;
             Fetch(1);
@@ -38,11 +36,11 @@ namespace SmallerLang.Lexer
 
         public bool MoveNext()
         {
-            SourceLine = mSource.Line;
-            SourceColumn = mSource.Column;
+            SourceLine = _source.Line;
+            SourceColumn = _source.Column;
             Index++;
             Sync(Index);
-            SourceIndex = mSource.Index - Current.Length;
+            SourceIndex = _source.Index - Current.Length;
             return _tokenCount > Index;
         }
 
@@ -61,7 +59,6 @@ namespace SmallerLang.Lexer
 
         public void Reset()
         {
-            mstkMarkers = new Stack<int>();
             Index = 0;
         }
 
@@ -75,7 +72,7 @@ namespace SmallerLang.Lexer
         {
             for (int i = 0; i < plngNum; i++)
             {
-                if (mSource.GetNextToken(out Token t))
+                if (_source.GetNextToken(out Token t))
                 {
                     if(_tokens.Length <= _tokenCount)
                     {
@@ -85,11 +82,6 @@ namespace SmallerLang.Lexer
                     _tokenCount++;
                 }
             }
-        }
-
-        public void CommitTransaction()
-        {
-            if (mstkMarkers.Count > 0) mstkMarkers.Pop();
         }
 
         public void Seek(int pIndex)
