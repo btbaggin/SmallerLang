@@ -202,5 +202,10 @@ namespace SmallerLang.Syntax
         {
             return new EnumSyntax(pName, pNames, pValues);
         }
+
+        public static WorkspaceSyntax Workspace(string pName, IList<ModuleSyntax> pModules)
+        {
+            return new WorkspaceSyntax(pName, pModules);
+        }
     }
 }

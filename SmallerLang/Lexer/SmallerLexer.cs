@@ -60,6 +60,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("enum", TokenType.Enum);
             _keywords.Insert("self", TokenType.Self);
             _keywords.Insert("lengthof", TokenType.LengthOf);
+            _keywords.Insert("import", TokenType.Import);
 
             //Types
             _keywords.Insert("float", TokenType.TypeFloat);

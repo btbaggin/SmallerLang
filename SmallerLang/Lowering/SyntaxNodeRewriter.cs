@@ -144,6 +144,10 @@ namespace SmallerLang.Lowering
                     node = VisitWhileSyntax(w);
                     break;
 
+                case WorkspaceSyntax w:
+                    node = VisitWorkspaceSyntax(w);
+                    break;
+
                 default:
                     throw new ArgumentException("pNode not of any supported type");
             }
@@ -424,6 +428,16 @@ namespace SmallerLang.Lowering
         protected virtual SyntaxNode VisitWhileSyntax(WhileSyntax pNode)
         {
             return SyntaxFactory.While(Visit((dynamic)pNode.Condition), (BlockSyntax)Visit(pNode.Body));
+        }
+        
+        protected virtual SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
+        {
+            List<ModuleSyntax> modules = new List<ModuleSyntax>(pNode.Modules.Count);
+            foreach(var m in pNode.Modules)
+            {
+                modules.Add((ModuleSyntax)Visit(m));
+            }
+            return SyntaxFactory.Workspace(pNode.Name, modules);
         }
     }
 }

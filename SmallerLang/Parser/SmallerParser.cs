@@ -29,71 +29,100 @@ namespace SmallerLang.Parser
             _spans = new SpanManager(_stream);
         }
 
-        public ModuleSyntax Parse()
+        public WorkspaceSyntax Parse()
         {
             _source = _stream.Source.AsMemory();
-            return ParseModule();
+            return ParseWorkspace();
+        }
+
+        private WorkspaceSyntax ParseWorkspace()
+        {
+            //Module name
+            string name = "CHANGE ME"; //TODO
+            IgnoreNewlines();
+
+            List<ModuleSyntax> modules = new List<ModuleSyntax>();
+            if(PeekAndExpect(TokenType.Import))
+            {
+                do
+                {
+                    Expect(TokenType.String, out string path);
+                    IgnoreNewlines();
+
+                    string source = System.IO.File.ReadAllText(path);
+
+                    IErrorReporter reporter = new ConsoleErrorReporter(source);
+                    var lexer = new SmallerLexer(reporter);
+                    var stream = lexer.StartTokenStream(source);
+                    var p = new SmallerParser(stream, reporter);
+
+                    modules.AddRange(p.Parse().Modules);
+
+                } while (PeekAndExpect(TokenType.Import));
+            }
+
+            modules.Add(ParseModule());
+
+            return SyntaxFactory.Workspace(name, modules);
         }
 
         private ModuleSyntax ParseModule()
         {
-            //Module name
-            Expect(TokenType.LeftBracket);
-            Expect(TokenType.Identifier, out string name);
-            Expect(TokenType.RightBracket);
-
-            //Module content
-            List<MethodSyntax> methods = new List<MethodSyntax>();
-            List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
-            List<EnumSyntax> enums = new List<EnumSyntax>();
-            try
+            using (SpanTracker t = _spans.Create())
             {
-                while (!Peek(TokenType.EndOfFile))
+                //Module content
+                List<MethodSyntax> methods = new List<MethodSyntax>();
+                List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
+                List<EnumSyntax> enums = new List<EnumSyntax>();
+                try
                 {
-                    IgnoreNewlines();
-                    switch (Current.Type)
+                    while (!Peek(TokenType.EndOfFile))
                     {
-                        case TokenType.Enum:
-                            enums.Add(ParseEnum());
-                            break;
+                        IgnoreNewlines();
+                        switch (Current.Type)
+                        {
+                            case TokenType.Enum:
+                                enums.Add(ParseEnum());
+                                break;
 
-                        case TokenType.Extern:
-                            methods.Add(ParseExtern());
-                            break;
+                            case TokenType.Extern:
+                                methods.Add(ParseExtern());
+                                break;
 
-                        case TokenType.Identifier:
-                            methods.Add(ParseMethod());
-                            break;
+                            case TokenType.Identifier:
+                                methods.Add(ParseMethod());
+                                break;
 
-                        case TokenType.Cast:
-                            methods.Add(ParseCastDefinition());
-                            break;
+                            case TokenType.Cast:
+                                methods.Add(ParseCastDefinition());
+                                break;
 
-                        case TokenType.Struct:
-                        case TokenType.Trait:
-                        case TokenType.Implement:
-                            definitions.Add(ParseTypeDefinition());
-                            break;
+                            case TokenType.Struct:
+                            case TokenType.Trait:
+                            case TokenType.Implement:
+                                definitions.Add(ParseTypeDefinition());
+                                break;
 
-                        case TokenType.EndOfFile:
-                            break;
+                            case TokenType.EndOfFile:
+                                break;
 
-                        default:
-                            _error.WriteError($"Unknown token {Current.Type}");
-                            Ignore(Current.Type);
-                            break;
+                            default:
+                                _error.WriteError($"Unknown token {Current.Type}");
+                                Ignore(Current.Type);
+                                break;
+                        }
                     }
                 }
-            }
-            catch (ParseException)
-            {
-                //Some error occurred while parsing the method
-                //Try to move to the next statement
-                Synchronize();
-                return null;
-            }
+                catch (ParseException)
+                {
+                    //Some error occurred while parsing the method
+                    //Try to move to the next statement
+                    Synchronize();
+                    return null;
+                }
 
-            return SyntaxFactory.Module(name, methods, definitions, enums);
+                return SyntaxFactory.Module(methods, definitions, enums).SetSpan<ModuleSyntax>(t);
+            }
         }
 
         private EnumSyntax ParseEnum()

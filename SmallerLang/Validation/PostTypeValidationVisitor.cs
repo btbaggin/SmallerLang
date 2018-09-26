@@ -39,12 +39,19 @@ namespace SmallerLang.Validation
             base.VisitIdentifierSyntax(pNode);
         }
 
+        ModuleSyntax _mainModule;
+        protected override void VisitWorkspaceSyntax(WorkspaceSyntax pNode)
+        {
+            _mainModule = pNode.GetMainModule();
+            base.VisitWorkspaceSyntax(pNode);
+        }
+
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
             _locals = new VariableCache<(bool, TextSpan)>();
             base.VisitModuleSyntax(pNode);
 
-            if(_runMethod == null)
+            if(pNode == _mainModule && _runMethod == null)
             {
                 _error.WriteError("No run method found!", pNode.Span);
             }

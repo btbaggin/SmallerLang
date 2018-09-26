@@ -143,6 +143,10 @@ namespace SmallerLang.Validation
                     VisitWhileSyntax(w);
                     break;
 
+                case WorkspaceSyntax w:
+                    VisitWorkspaceSyntax(w);
+                    break;
+
                 default:
                     throw new ArgumentException("pNode not of any supported type");
             }
@@ -362,6 +366,14 @@ namespace SmallerLang.Validation
         {
             Visit((dynamic)pNode.Condition);
             Visit(pNode.Body);
+        }
+
+        protected virtual void VisitWorkspaceSyntax(WorkspaceSyntax pNode)
+        {
+            foreach(var m in pNode.Modules)
+            {
+                Visit(m);
+            }
         }
     }
 }

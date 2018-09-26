@@ -39,7 +39,7 @@ namespace SmallerLang
 
             pModule = null;
             var t = parser.Parse();
-            t = (ModuleSyntax)new TreeRewriter(reporter).Visit(t);
+            t = (WorkspaceSyntax)new TreeRewriter(reporter).Visit(t);
 
             new PreTypeValidation(reporter).Visit(t);
             if(reporter.ErrorOccurred) return false;
@@ -56,7 +56,7 @@ namespace SmallerLang
             new PostTypeValidationVisitor(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;
 
-            LLVMModuleRef m = LLVM.ModuleCreateWithName(t.Name);
+            LLVMModuleRef m = t.CreateModule();
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(m);
 
             if(pOptions.Optimizations)
