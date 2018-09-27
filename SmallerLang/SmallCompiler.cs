@@ -49,6 +49,8 @@ namespace SmallerLang
             new TypeInferenceVisitor(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;
 
+            t = (ModuleSyntax)new MethodTraitRewriter(reporter).Visit(t);
+
             //Validation passes
             new TypeChecker(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;

@@ -54,7 +54,8 @@ namespace SmallerLang.Syntax
 
         public void EmitMethodHeaders(EmittingContext pContext)
         {
-            if (DefinitionType != DefinitionTypes.Trait)
+            //Only structs should be emitted. The other types get merged with structs
+            if (DefinitionType == DefinitionTypes.Struct)
             {
                 var type = SmallTypeCache.FromString(Name);
                 pContext.CurrentStruct = type;
@@ -71,7 +72,7 @@ namespace SmallerLang.Syntax
         public void EmitMethods(EmittingContext pContext)
         {
             //Only structs should be emitted. The other types get merged with structs
-            if(DefinitionType != DefinitionTypes.Trait)
+            if(DefinitionType == DefinitionTypes.Struct)
             {
                 var type = SmallTypeCache.FromString(Name);
                 pContext.CurrentStruct = type;
@@ -107,20 +108,19 @@ namespace SmallerLang.Syntax
         {
             var func = pContext.GetMethod(Name + ".ctor");
 
-            var b = LLVM.AppendBasicBlock(func, Name + "body");
-            LLVM.PositionBuilderAtEnd(pContext.Builder, b);
+            var body = LLVM.AppendBasicBlock(func, Name + "body");
+            LLVM.PositionBuilderAtEnd(pContext.Builder, body);
 
-            LLVMValueRef p = LLVM.GetParam(func, 0);
+            LLVMValueRef parm = LLVM.GetParam(func, 0);
 
             //Emit field assignments
-            for (int i = 0; i < Fields.Count; i++)
+            var fields = pType.GetFields();
+            for (int i = 0; i < fields.Length; i++)
             {
-                var t = pType.GetField(Fields[i].Value).Type;
-                LLVMValueRef value = SmallTypeCache.GetLLVMDefault(t, pContext);
+                //Set all fields to their default value
+                LLVMValueRef value = SmallTypeCache.GetLLVMDefault(fields[i].Type, pContext);
 
-                int f = pType.GetFieldIndex(Fields[i].Value);
-                var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, p, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(f) }, "field_" + Fields[i].Value);
-
+                var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, parm, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "field_" + fields[i].Value);
                 LLVM.BuildStore(pContext.Builder, value, indexAccess);
             }
 
