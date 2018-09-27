@@ -83,7 +83,7 @@ namespace SmallerLang.Syntax
                     if (Operator == UnaryExpressionOperator.PostIncrement || Operator == UnaryExpressionOperator.PostDecrement)
                     {
                         //Save the old value to a temp variable that we will return
-                        var temp = pContext.AllocateVariable("<temp_unary>", Value.Type);
+                        var temp = pContext.AllocateVariable("<temp_unary>", Value);
                         LLVMValueRef tempValue = Utils.LlvmHelper.IsPointer(v) ? LLVM.BuildLoad(pContext.Builder, v, "") : v;
                         LLVM.BuildStore(pContext.Builder, tempValue, temp);
 

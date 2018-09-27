@@ -189,6 +189,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DebugType.cs" />
     <Compile Include="Emitting\MemberAccessStack.cs" />
     <Compile Include="Emitting\MethodCache.cs" />
     <Compile Include="FieldDefinition.cs" />

@@ -15,7 +15,6 @@ namespace SmallerLang.Utils
         [DllImport(libraryPath, EntryPoint = "LLVMDIBuilderCreateFile", CallingConvention = CallingConvention.Cdecl)]
         public static extern LLVMMetadataRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef @Builder, [MarshalAs(UnmanagedType.LPStr)] string @Filename, size_t @FilenameLen, [MarshalAs(UnmanagedType.LPStr)] string @Directory, size_t @DirectoryLen);
 
-        //https://reviews.llvm.org/file/data/cllrwsvwkjb5tqslqfk4/PHID-FILE-eamutgusbxaol54mb25h/D11864.id31579.diff
         [DllImport(libraryPath, EntryPoint = "LLVMDIBuilderCreateAutoVariable", CallingConvention = CallingConvention.Cdecl)]
         public static extern LLVMMetadataRef LLVMDIBuilderCreateAutoVariable(LLVMDIBuilderRef @Builder, LLVMMetadataRef @Scope, [MarshalAs(UnmanagedType.LPStr)] string @Name, LLVMMetadataRef @File, uint @Line, LLVMMetadataRef @Ty, int AlwaysPreserve, uint Flags);
 

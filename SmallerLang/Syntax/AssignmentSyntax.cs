@@ -68,7 +68,7 @@ namespace SmallerLang.Syntax
             {
                 //Create our temp tuple value
                 var t = SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
-                v = pContext.AllocateVariable("<temp>tuple", t);
+                v = pContext.AllocateVariable("<temp_tuple>", t);
 
                 LLVMValueRef value = Value.Emit(pContext);
                 //Load the value into our temp variable

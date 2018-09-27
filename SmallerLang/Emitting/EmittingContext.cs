@@ -137,7 +137,7 @@ namespace SmallerLang.Emitting
                 LLVMValueRef p = LLVM.GetParam(func, 0);
                 LLVM.SetValueName(p, "self");
                 Locals.DefineParameter("self", p);
-                EmitDebugParameter("self", pNode.Span.Line, 0);
+                EmitDebugParameter("self", CurrentStruct, pNode.Span.Line, 0);
             }
 
             //Set parameter names and define in scope
@@ -146,7 +146,7 @@ namespace SmallerLang.Emitting
                 string name = pNode.Parameters[i].Value;
                 LLVMValueRef parm = LLVM.GetParam(func, (uint)(i + start));
                 LLVM.SetValueName(parm, name);
-                EmitDebugParameter("self", pNode.Span.Line, (i + start));
+                EmitDebugParameter(name, pNode.Parameters[i].Type, pNode.Span.Line, i + start);
 
                 Debug.Assert(!Locals.IsVariableDefinedInScope(name), $"Parameter {name} already defined");
                 Locals.DefineParameter(name, parm);
@@ -201,6 +201,18 @@ namespace SmallerLang.Emitting
         }
         #endregion
 
+        public LLVMValueRef AllocateVariable(string pName, Syntax.SyntaxNode pNode)
+        {
+            //Move to the start of the current function and emit the variable allocation
+            var tempBuilder = GetTempBuilder();
+            LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
+
+            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pNode.Type), pName);
+            EmitDebugVariable(tempBuilder, alloc, pName, pNode.Type, pNode.Span.Line);
+            LLVM.DisposeBuilder(tempBuilder);
+            return alloc;
+        }
+
         public LLVMValueRef AllocateVariable(string pName, SmallType pType)
         {
             //Move to the start of the current function and emit the variable allocation
@@ -208,7 +220,7 @@ namespace SmallerLang.Emitting
             LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
 
             var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType), pName);
-            EmitDebugVariable(tempBuilder, alloc, pName, 0);//TODO don't hardcode 0
+            EmitDebugVariable(tempBuilder, alloc, pName, pType, 0);
             LLVM.DisposeBuilder(tempBuilder);
             return alloc;
         }
@@ -306,25 +318,26 @@ namespace SmallerLang.Emitting
             LLVM.SetCurrentDebugLocation(Builder, LLVM.MetadataAsValue(_context, currentLine));
         }
 
-        private void EmitDebugVariable(LLVMBuilderRef pBuilder, LLVMValueRef pVar, string pName, int pLine)
+        private void EmitDebugVariable(LLVMBuilderRef pBuilder, LLVMValueRef pVar, string pName, SmallType pType, int pLine)
         {
             if (!_emitDebug) return;
 
             LLVMMetadataRef loc = GetCurrentDebugScope();
 
-            var type = LLVM.DIBuilderCreateBasicType(_debugInfo, "int", 32, 0, 0); //TODO can't have hardcoded types
-            var variable = Utils.LlvmPInvokes.LLVMDIBuilderCreateAutoVariable(_debugInfo, loc, pName, _debugFile, (uint)pLine, type, 0, 0);
-            LLVM.DIBuilderInsertDeclareAtEnd(_debugInfo, pVar, variable, LLVM.DIBuilderCreateExpression(_debugInfo, IntPtr.Zero, 0), LLVM.GetInsertBlock(pBuilder));
+            var type = DebugType.GetLLVMDebugType(_debugInfo, GetCurrentDebugScope(), _debugFile, pType);
+            var variable = Utils.LlvmPInvokes.LLVMDIBuilderCreateAutoVariable(_debugInfo, loc, pName, _debugFile, (uint)pLine, type.Value, 0, 0);
+            var expr = LLVM.DIBuilderCreateExpression(_debugInfo, IntPtr.Zero, 0);
+            //LLVM.DIBuilderInsertDeclareAtEnd(_debugInfo, pVar, variable, expr, LLVM.GetInsertBlock(pBuilder));
         }
 
-        private void EmitDebugParameter(string pName, int pLine, int pParmIndex)
+        private void EmitDebugParameter(string pName, SmallType pType, int pLine, int pParmIndex)
         {
             if (!_emitDebug) return;
 
             LLVMMetadataRef loc = GetCurrentDebugScope();
 
-            var type = LLVM.DIBuilderCreateBasicType(_debugInfo, "int", 32, 0, 0); //TODO can't have hardcoded types
-            Utils.LlvmPInvokes.LLVMDIBuilderCreateParameterVariable(_debugInfo, loc, pName, (uint)pParmIndex, _debugFile, (uint)pLine, type, 0, 0);
+            var type = DebugType.GetLLVMDebugType(_debugInfo, GetCurrentDebugScope(), _debugFile, pType);
+            Utils.LlvmPInvokes.LLVMDIBuilderCreateParameterVariable(_debugInfo, loc, pName, (uint)pParmIndex, _debugFile, (uint)pLine, type.Value, 0, 0);
         }
 
         public void FinishDebug()
@@ -370,6 +383,7 @@ namespace SmallerLang.Emitting
                 if (disposing) { /* No managed resources to free*/ }
 
                 LLVM.DisposeBuilder(Builder);
+                if (_emitDebug) LLVM.DIBuilderDestroy(_debugInfo);
                 Locals = null;
                 disposedValue = true;
             }

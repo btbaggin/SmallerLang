@@ -33,7 +33,7 @@ namespace SmallerLang.Syntax
                 {
                     System.Diagnostics.Debug.Assert(!pContext.Locals.IsVariableDefinedInScope(v.Value), "Variable " + v.Value + " already defined");
 
-                    LLVMValueRef var = pContext.AllocateVariable(v.Value, v.Type);
+                    LLVMValueRef var = pContext.AllocateVariable(v.Value, v);
                     pContext.Locals.DefineVariableInScope(v.Value, var);
                 }
             }
@@ -54,7 +54,7 @@ namespace SmallerLang.Syntax
                 {
                     //Create our temp tuple value
                     var t = SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
-                    LLVMValueRef tuple = pContext.AllocateVariable("<temp>tuple", t);
+                    LLVMValueRef tuple = pContext.AllocateVariable("<temp_tuple>", t);
 
                     //Load the value into our temp variable
                     Utils.LlvmHelper.LoadIfPointer(ref value, pContext);

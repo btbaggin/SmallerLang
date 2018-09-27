@@ -35,7 +35,7 @@ namespace SmallerLang.Syntax
         {
             pContext.EmitDebugLocation(this);
 
-            var variable = pContext.AllocateVariable("array_temp", Type);
+            var variable = pContext.AllocateVariable("array_temp", this);
 
             var length = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
             LLVM.BuildStore(pContext.Builder, pContext.GetInt(int.Parse(Value)), length);
