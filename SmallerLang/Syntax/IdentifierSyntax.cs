@@ -7,7 +7,7 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class IdentifierSyntax : ExpressionSyntax
+    public class IdentifierSyntax : SyntaxNode
     {
         internal bool DoNotLoad { get; set; }
 
@@ -18,6 +18,8 @@ namespace SmallerLang.Syntax
         {
             get { return _type; }
         }
+
+        public override SyntaxType SyntaxType => SyntaxType.Identifier;
 
         internal IdentifierSyntax(string pValue)
         {

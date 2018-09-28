@@ -13,6 +13,8 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.Block;
+
         public BlockSyntax(IList<SyntaxNode> pStatements)
         {
             Statements = pStatements;

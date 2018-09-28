@@ -8,6 +8,8 @@ namespace SmallerLang.Syntax
 {
     public class SelfSyntax : IdentifierSyntax
     {
+        public override SyntaxType SyntaxType => SyntaxType.Self;
+
         internal SelfSyntax() : base("self") { }
     }
 }

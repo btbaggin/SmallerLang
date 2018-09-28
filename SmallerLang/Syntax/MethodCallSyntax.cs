@@ -10,11 +10,13 @@ namespace SmallerLang.Syntax
 {
     public class MethodCallSyntax : IdentifierSyntax
     {
-        public IList<ExpressionSyntax> Arguments { get; private set; }
+        public IList<SyntaxNode> Arguments { get; private set; }
+
+        public override SyntaxType SyntaxType => SyntaxType.MethodCall;
 
         MethodDefinition _definition;
 
-        internal MethodCallSyntax(string pName, IList<ExpressionSyntax> pArguments) : base(pName)
+        internal MethodCallSyntax(string pName, IList<SyntaxNode> pArguments) : base(pName)
         {
             Arguments = pArguments;
         }

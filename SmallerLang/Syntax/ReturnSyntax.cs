@@ -8,9 +8,9 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class ReturnSyntax : ExpressionSyntax
+    public class ReturnSyntax : SyntaxNode
     {
-        public IList<ExpressionSyntax> Values { get; private set; }
+        public IList<SyntaxNode> Values { get; private set; }
 
         public override SmallType Type
         {
@@ -27,7 +27,9 @@ namespace SmallerLang.Syntax
             }
         }
 
-        internal ReturnSyntax(IList<ExpressionSyntax> pValues)
+        public override SyntaxType SyntaxType => SyntaxType.Return;
+
+        internal ReturnSyntax(IList<SyntaxNode> pValues)
         {
             Values = pValues;
         }

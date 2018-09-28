@@ -33,7 +33,7 @@ namespace SmallerLang.Syntax
             return new ArrayLiteralSyntax(pType, pValue);
         }
 
-        public static ArrayAccessSyntax ArrayAccess(IdentifierSyntax pIdentifier, ExpressionSyntax pValue)
+        public static ArrayAccessSyntax ArrayAccess(IdentifierSyntax pIdentifier, SyntaxNode pValue)
         {
             return new ArrayAccessSyntax(pIdentifier, pValue);
         }
@@ -50,7 +50,7 @@ namespace SmallerLang.Syntax
             return Block(statements);
         }
 
-        public static IfSyntax If(ExpressionSyntax pCondition, BlockSyntax pBody, ElseSyntax pElse)
+        public static IfSyntax If(SyntaxNode pCondition, BlockSyntax pBody, ElseSyntax pElse)
         {
             return new IfSyntax(pCondition, pBody, pElse);
         }
@@ -60,7 +60,7 @@ namespace SmallerLang.Syntax
             return new ElseSyntax(pBody, pIf);
         }
 
-        public static WhileSyntax While(ExpressionSyntax pCondition, BlockSyntax pBody)
+        public static WhileSyntax While(SyntaxNode pCondition, BlockSyntax pBody)
         {
             return new WhileSyntax(pCondition, pBody);
         }
@@ -70,7 +70,7 @@ namespace SmallerLang.Syntax
             return new ForSyntax(pIterator, pBody);
         }
 
-        public static ForSyntax For(IList<DeclarationSyntax> pInitializer, ExpressionSyntax pCondition, IList<ExpressionSyntax> pFinalizer, BlockSyntax pBody)
+        public static ForSyntax For(IList<DeclarationSyntax> pInitializer, SyntaxNode pCondition, IList<SyntaxNode> pFinalizer, BlockSyntax pBody)
         {
             return new ForSyntax(pInitializer, pCondition, pFinalizer, pBody);
         }
@@ -98,32 +98,32 @@ namespace SmallerLang.Syntax
             return new TypeDefinitionSyntax(pName, pImplements, pType, pFields, pMethods, pTypeParameters);
         }
 
-        public static StructInitializerSyntax StructInitializer(IList<IdentifierSyntax> pValues, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)
+        public static StructInitializerSyntax StructInitializer(IList<IdentifierSyntax> pValues, TypeSyntax pStruct, IList<SyntaxNode> pArguments)
         {
             return new StructInitializerSyntax(pValues, pStruct, pArguments);
         }
 
-        public static MethodCallSyntax MethodCall(string pName, IList<ExpressionSyntax> pArguments)
+        public static MethodCallSyntax MethodCall(string pName, IList<SyntaxNode> pArguments)
         {
             return new MethodCallSyntax(pName, pArguments);
         }
 
-        public static BinaryExpressionSyntax BinaryExpression(ExpressionSyntax pLeft, BinaryExpressionOperator pOperator, ExpressionSyntax pRight)
+        public static BinaryExpressionSyntax BinaryExpression(SyntaxNode pLeft, BinaryExpressionOperator pOperator, SyntaxNode pRight)
         {
             return new BinaryExpressionSyntax(pLeft, pOperator, pRight);
         }
 
-        public static UnaryExpressionSyntax UnaryExpression(ExpressionSyntax pValue, UnaryExpressionOperator pOperator)
+        public static UnaryExpressionSyntax UnaryExpression(SyntaxNode pValue, UnaryExpressionOperator pOperator)
         {
             return new UnaryExpressionSyntax(pValue, pOperator);
         }
 
-        public static CastSyntax Cast(ExpressionSyntax pValue)
+        public static CastSyntax Cast(SyntaxNode pValue)
         {
             return new CastSyntax(pValue);
         }
 
-        public static CastSyntax Cast(ExpressionSyntax pValue, TypeSyntax pType)
+        public static CastSyntax Cast(SyntaxNode pValue, TypeSyntax pType)
         {
             return new CastSyntax(pValue, pType);
         }
@@ -133,12 +133,12 @@ namespace SmallerLang.Syntax
             return new CastDefinitionSyntax(pFromType, pBody, pToType);
         }
 
-        public static DeclarationSyntax Declaration(IList<IdentifierSyntax> pVariables, ExpressionSyntax pRight)
+        public static DeclarationSyntax Declaration(IList<IdentifierSyntax> pVariables, SyntaxNode pRight)
         {
             return new DeclarationSyntax(pVariables, pRight);
         }
 
-        public static AssignmentSyntax Assignment(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, ExpressionSyntax pValue)
+        public static AssignmentSyntax Assignment(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
         {
             return new AssignmentSyntax(pVariables, pOp, pValue);
         }
@@ -163,7 +163,7 @@ namespace SmallerLang.Syntax
             return new TypeSyntax(pValue, pGenericArgs);
         }
 
-        public static ReturnSyntax Return(IList<ExpressionSyntax> pValue)
+        public static ReturnSyntax Return(IList<SyntaxNode> pValue)
         {
             return new ReturnSyntax(pValue);
         }
@@ -173,12 +173,12 @@ namespace SmallerLang.Syntax
             return new MemberAccessSyntax(pIdentifier, pValue);
         }
 
-        public static SelectSyntax Select(ExpressionSyntax pCondition, IList<CaseSyntax> pCases)
+        public static SelectSyntax Select(SyntaxNode pCondition, IList<CaseSyntax> pCases)
         {
             return new SelectSyntax(pCondition, pCases);
         }
 
-        public static CaseSyntax Case(IList<ExpressionSyntax> pConditions, BlockSyntax pBody)
+        public static CaseSyntax Case(IList<SyntaxNode> pConditions, BlockSyntax pBody)
         {
             return new CaseSyntax(pConditions, pBody);
         }

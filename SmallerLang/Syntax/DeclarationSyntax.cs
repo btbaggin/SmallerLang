@@ -12,11 +12,13 @@ namespace SmallerLang.Syntax
     {
         public IList<IdentifierSyntax> Variables { get; private set; }
 
-        public ExpressionSyntax Value { get; private set; }
+        public SyntaxNode Value { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal DeclarationSyntax(IList<IdentifierSyntax> pVariables, ExpressionSyntax pValue)
+        public override SyntaxType SyntaxType => SyntaxType.Declaration;
+
+        internal DeclarationSyntax(IList<IdentifierSyntax> pVariables, SyntaxNode pValue)
         {
             Variables = pVariables;
             Value = pValue;
@@ -39,7 +41,7 @@ namespace SmallerLang.Syntax
             var value = Value.Emit(pContext);
 
             //We only don't need to assign if we call the constructor since that passes a pointer to the object
-            if (Value.GetType() != typeof(StructInitializerSyntax))
+            if (Value.SyntaxType != SyntaxType.StructInitializer)
             {
                 if (Variables.Count == 1)
                 {

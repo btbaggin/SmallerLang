@@ -10,7 +10,6 @@ namespace SmallerLang.Lowering
 {
     class MethodTraitRewriter : SyntaxNodeRewriter
     {
-        //TODO needs to handle overloads
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
         readonly IErrorReporter _error;
@@ -126,7 +125,7 @@ namespace SmallerLang.Lowering
             }
 
             //Have the call site point to the new method
-            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pCallSite.Arguments.Count);
+            List<SyntaxNode> arguments = new List<SyntaxNode>(pCallSite.Arguments.Count);
             foreach (var a in pCallSite.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));

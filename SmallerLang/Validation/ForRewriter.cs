@@ -25,7 +25,7 @@ namespace SmallerLang.Lowering
                 var b = (BlockSyntax)Visit(pNode.Body);
                 _itVar = it;
 
-                return SyntaxFactory.For(new List<DeclarationSyntax>() { d }, c, new List<ExpressionSyntax>() { f }, b);
+                return SyntaxFactory.For(new List<DeclarationSyntax>() { d }, c, new List<SyntaxNode>() { f }, b);
             }
 
             return base.VisitForSyntax(pNode);

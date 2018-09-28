@@ -14,13 +14,15 @@ namespace SmallerLang.Syntax
 
         public IList<DeclarationSyntax> Initializer { get; private set; }
 
-        public ExpressionSyntax Condition { get; private set; }
+        public SyntaxNode Condition { get; private set; }
 
-        public IList<ExpressionSyntax> Finalizer { get; private set; }
+        public IList<SyntaxNode> Finalizer { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
+
+        public override SyntaxType SyntaxType => SyntaxType.For;
 
         internal ForSyntax(IdentifierSyntax pIterator, BlockSyntax pBody)
         {
@@ -28,7 +30,7 @@ namespace SmallerLang.Syntax
             Body = pBody;
         }
 
-        internal ForSyntax(IList<DeclarationSyntax> pInitializer, ExpressionSyntax pCondition, IList<ExpressionSyntax> pFinalizer, BlockSyntax pBody)
+        internal ForSyntax(IList<DeclarationSyntax> pInitializer, SyntaxNode pCondition, IList<SyntaxNode> pFinalizer, BlockSyntax pBody)
         {
             Initializer = pInitializer;
             Condition = pCondition;

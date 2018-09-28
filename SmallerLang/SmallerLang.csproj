@@ -195,6 +195,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Lowering\MethodTraitRewriter.cs" />
     <Compile Include="Syntax\Annotation.cs" />
+    <Compile Include="Syntax\SyntaxType.cs" />
     <Compile Include="Utils\TypeHelper.cs" />
     <Compile Include="Validation\TypeDiscoveryVisitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -241,7 +242,6 @@
     <Compile Include="Syntax\BooleanLiteralSyntax.cs" />
     <Compile Include="Syntax\DeclarationSyntax.cs" />
     <Compile Include="Syntax\ElseSyntax.cs" />
-    <Compile Include="Syntax\ExpressionSyntax.cs" />
     <Compile Include="Syntax\ForSyntax.cs" />
     <Compile Include="Syntax\IdentifierSyntax.cs" />
     <Compile Include="Syntax\IfSyntax.cs" />
@@ -264,11 +264,12 @@
     <Compile Include="Lexer\Trie.cs" />
     <Compile Include="Utils\EnumExtensions.cs" />
     <Compile Include="Utils\SyntaxHelper.cs" />
-    <Compile Include="Validation\MethodCacheVisitor.cs" />
+    <Compile Include="Validation\MethodValidationVisitor.cs" />
     <Compile Include="Lowering\SelectRewriter.cs" />
     <Compile Include="Validation\TypeChecker.cs" />
     <Compile Include="Validation\TypeInferenceVisitor.cs" />
     <Compile Include="Validation\PostTypeValidationVisitor.cs" />
+    <Compile Include="VisitorStore.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

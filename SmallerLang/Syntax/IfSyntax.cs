@@ -9,7 +9,7 @@ namespace SmallerLang.Syntax
 {
     public class IfSyntax : SyntaxNode
     {
-        public ExpressionSyntax Condition { get; private set; }
+        public SyntaxNode Condition { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
@@ -17,7 +17,9 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal IfSyntax(ExpressionSyntax pCondition, BlockSyntax pBody, ElseSyntax  pElse)
+        public override SyntaxType SyntaxType => SyntaxType.If;
+
+        internal IfSyntax(SyntaxNode pCondition, BlockSyntax pBody, ElseSyntax  pElse)
         {
             Condition = pCondition;
             Body = pBody;

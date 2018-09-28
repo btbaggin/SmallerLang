@@ -184,7 +184,7 @@ namespace SmallerLang.Lowering
                 _polydStructs.Add(structName.ToString(), newType);
             }
 
-            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pInitializer.Arguments.Count);
+            List<SyntaxNode> arguments = new List<SyntaxNode>(pInitializer.Arguments.Count);
             foreach(var a in pInitializer.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));

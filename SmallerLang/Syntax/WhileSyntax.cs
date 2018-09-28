@@ -9,13 +9,15 @@ namespace SmallerLang.Syntax
 {
     public class WhileSyntax : SyntaxNode
     {
-        public ExpressionSyntax Condition { get; private set; }
+        public SyntaxNode Condition { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        public WhileSyntax(ExpressionSyntax pCondition, BlockSyntax pBody)
+        public override SyntaxType SyntaxType => SyntaxType.While;
+
+        public WhileSyntax(SyntaxNode pCondition, BlockSyntax pBody)
         {
             Condition = pCondition;
             Body = pBody;

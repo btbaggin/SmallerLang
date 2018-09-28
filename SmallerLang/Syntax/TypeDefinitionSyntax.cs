@@ -20,6 +20,8 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.TypeDefinition;
+
         public DefinitionTypes DefinitionType { get; private set; }
 
         public string Name { get; private set; }

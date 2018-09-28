@@ -10,9 +10,7 @@ namespace SmallerLang.Validation
 {
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
-        string _runMethod;
-        SmallType _currentStruct;
-        SmallType _currentType;
+        VisitorStore _store = new VisitorStore();
         VariableCache<(bool Used, TextSpan Span)> _locals; //Used to find unused variables
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
@@ -28,13 +26,23 @@ namespace SmallerLang.Validation
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
             _locals.SetVariableValue(pNode.Value, (true, default));
-            if(_currentType != null)
+            var currentStruct = _store.GetValueOrDefault<SmallType>("CurrentStruct");
+            var currentType = _store.GetValueOrDefault<SmallType>("CurrentType");
+
+            if(currentType != null)
             {
-                var definition = _currentType.GetField(pNode.Value);
-                if (definition.Visibility == FieldVisibility.Hidden && _currentStruct != _currentType)
+                var definition = currentType.GetField(pNode.Value);
+                if (definition.Visibility == FieldVisibility.Hidden && currentStruct != currentType)
                 {
                     _error.WriteError("Cannot access hidden struct member outside of the struct", pNode.Span);
                 }
+            }
+
+            if(currentStruct != null && 
+               _store.GetValueOrDefault<bool>("InConstructor") && 
+               _store.GetValueOrDefault<bool>("InAssignment"))
+            {
+                _usedFields.Add(pNode.Value);
             }
             base.VisitIdentifierSyntax(pNode);
         }
@@ -42,53 +50,31 @@ namespace SmallerLang.Validation
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
             _locals = new VariableCache<(bool, TextSpan)>();
-            base.VisitModuleSyntax(pNode);
-
-            if(_runMethod == null)
+            using (var v = _store.AddValue<string>("RunMethod", null))
             {
-                _error.WriteError("No run method found!", pNode.Span);
+                base.VisitModuleSyntax(pNode);
+
+                if (v.Value == null)
+                {
+                    _error.WriteError("No run method found!", pNode.Span);
+                }
             }
         }
 
         protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            _currentStruct = SmallTypeCache.FromString(pNode.Name);
-            base.VisitTypeDefinitionSyntax(pNode);
+            using (var s = _store.AddValue("CurrentStruct", SmallTypeCache.FromString(pNode.Name)))
+            {
+                base.VisitTypeDefinitionSyntax(pNode);
+            }
         }
 
         protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
             //Save current type so we can validate member visibility
-            var l = _currentType;
-            _currentType = pNode.Identifier.Type;
-
-            base.VisitMemberAccessSyntax(pNode);
-
-            _currentType = l;
-        }
-
-        private void ValidateRun(MethodSyntax pNode)
-        {
-            //Validate that one and only 1 method is annotated with "run"
-            //This method must contain no parameters and return no values
-            if (pNode.Annotation.Value == Utils.KeyAnnotations.RunMethod)
+            using (var t = _store.AddValue("CurrentType", pNode.Identifier.Type))
             {
-                if (_runMethod != null)
-                {
-                    _error.WriteError($"Two run methods found: {_runMethod} and {pNode.Name}", pNode.Span);
-                    return;
-                }
-
-                _runMethod = pNode.Name;
-                if (pNode.Parameters.Count != 0)
-                {
-                    _error.WriteError("Run method must have no parameters", pNode.Span);
-                }
-
-                if (pNode.ReturnValues.Count != 0)
-                {
-                    _error.WriteError("Run method must not return a value", pNode.Span);
-                }
+                base.VisitMemberAccessSyntax(pNode);
             }
         }
 

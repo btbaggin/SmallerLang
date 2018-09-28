@@ -33,6 +33,8 @@ namespace SmallerLang.Syntax
             }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.Method;
+
         string _name;
         internal MethodSyntax(string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {

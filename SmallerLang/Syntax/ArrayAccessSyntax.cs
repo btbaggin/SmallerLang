@@ -14,11 +14,13 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => base.Type.GetElementType();
 
+        public override SyntaxType SyntaxType => SyntaxType.ArrayAccess;
+
         public IdentifierSyntax Identifier { get; private set; }
 
-        public ExpressionSyntax Index { get; private set; }
+        public SyntaxNode Index { get; private set; }
 
-        public ArrayAccessSyntax(IdentifierSyntax pVariable, ExpressionSyntax pIndex) : base(null)
+        public ArrayAccessSyntax(IdentifierSyntax pVariable, SyntaxNode pIndex) : base(null)
         {
             Identifier = pVariable;
             Index = pIndex;

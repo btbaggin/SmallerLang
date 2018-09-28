@@ -16,6 +16,8 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => Value.Type;
 
+        public override SyntaxType SyntaxType => SyntaxType.MemberAccess;
+
         internal MemberAccessSyntax(IdentifierSyntax pIdentifier, IdentifierSyntax pValue) : base(pIdentifier.Value)
         {
             Identifier = pIdentifier;
@@ -55,7 +57,7 @@ namespace SmallerLang.Syntax
 
         private bool IsTerminalNode(SyntaxNode pNode)
         {
-            return pNode.GetType() != typeof(MethodCallSyntax) && pNode.GetType() != typeof(MemberAccessSyntax);
+            return pNode.SyntaxType != SyntaxType.MethodCall && pNode.SyntaxType != SyntaxType.MemberAccess;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace SmallerLang.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LastStatementIsReturn(BlockSyntax pBlock)
         {
-            return pBlock.Statements.Count > 0 && pBlock.Statements[pBlock.Statements.Count - 1].GetType() == typeof(ReturnSyntax);
+            return pBlock.Statements.Count > 0 && pBlock.Statements[pBlock.Statements.Count - 1].SyntaxType == SyntaxType.Return;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,7 +29,7 @@ namespace SmallerLang.Utils
             for(int i = 0; i < pMethod.Arguments.Count; i++)
             {
                 if (pMethod.Arguments[i].Type == SmallTypeCache.Undefined &&
-                   pMethod.Arguments[i].GetType() == typeof(CastSyntax))
+                   pMethod.Arguments[i].SyntaxType == SyntaxType.Cast)
                 {
                     return true;
                 }
@@ -41,19 +41,19 @@ namespace SmallerLang.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsUndefinedCast(SyntaxNode pNode)
         {
-            return pNode?.Type == SmallTypeCache.Undefined && pNode?.GetType() == typeof(CastSyntax);
+            return pNode?.Type == SmallTypeCache.Undefined && pNode?.SyntaxType == SyntaxType.Cast;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsCastDefinition(SyntaxNode pNode)
         {
-            return pNode?.GetType() == typeof(CastDefinitionSyntax);
+            return pNode?.SyntaxType == SyntaxType.CastDefinition;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDiscard(SyntaxNode pNode)
         {
-            return pNode.GetType() == typeof(DiscardSyntax);
+            return pNode.SyntaxType == SyntaxType.Discard;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,5 +66,12 @@ namespace SmallerLang.Utils
             }
             return types;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsMemberAccess(SyntaxNode pNode)
+        {
+            return pNode.SyntaxType == SyntaxType.MemberAccess || pNode.SyntaxType == SyntaxType.ArrayAccess;
+        }
+
     }
 }

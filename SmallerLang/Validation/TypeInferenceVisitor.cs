@@ -383,10 +383,8 @@ namespace SmallerLang.Validation
 
         private void ForceCastLiteral(SmallType pType, SyntaxNode pRight)
         {
-            if (pRight.GetType() == typeof(NumericLiteralSyntax))
+            if (pRight is NumericLiteralSyntax n)
             {
-                var n = (NumericLiteralSyntax)pRight;
-
                 if (pType == SmallTypeCache.Float)
                 {
                     n.NumberType = NumberTypes.Float;
@@ -412,13 +410,9 @@ namespace SmallerLang.Validation
 
         private void TrySetImplicitCastType(SyntaxNode pNode, SmallType pType)
         {
-            if(pNode.GetType() == typeof(CastSyntax))
+            if(pNode is CastSyntax c && c.Type == SmallTypeCache.Undefined)
             {
-                var c = (CastSyntax)pNode;
-                if(c.Type == SmallTypeCache.Undefined)
-                {
-                    c.SetType(pType);
-                }
+                c.SetType(pType);
             }
         }
 

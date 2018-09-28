@@ -18,9 +18,9 @@ namespace SmallerLang.Syntax
         ConcatEquals,
     }
 
-    public class AssignmentSyntax : ExpressionSyntax
+    public class AssignmentSyntax : SyntaxNode
     {
-        public ExpressionSyntax Value { get; private set; }
+        public SyntaxNode Value { get; private set; }
 
         public AssignmentOperator Operator { get; private set; }
 
@@ -28,7 +28,9 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => Value.Type;
 
-        internal AssignmentSyntax(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, ExpressionSyntax pValue)
+        public override SyntaxType SyntaxType => SyntaxType.Assignment;
+
+        internal AssignmentSyntax(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
         {
             Variables = pVariables;
             Operator = pOp;
@@ -49,7 +51,7 @@ namespace SmallerLang.Syntax
                 v = variable.Emit(pContext);
                 LLVMValueRef value = Value.Emit(pContext);
 
-                if (Value.GetType() != typeof(StructInitializerSyntax))
+                if (Value.SyntaxType != SyntaxType.StructInitializer)
                 {
                     //Struct initializers take a pointer to the object so we don't need to store it
                     if (Operator != AssignmentOperator.Equals)

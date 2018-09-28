@@ -195,7 +195,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitCaseSyntax(CaseSyntax pNode)
         {
-            List<ExpressionSyntax> conditions = new List<ExpressionSyntax>(pNode.Conditions.Count);
+            List<SyntaxNode> conditions = new List<SyntaxNode>(pNode.Conditions.Count);
             foreach(var c in pNode.Conditions)
             {
                 conditions.Add(Visit((dynamic)c));
@@ -274,7 +274,7 @@ namespace SmallerLang.Lowering
             }
             Visit((dynamic)pNode.Condition);
 
-            List<ExpressionSyntax> finalizer = new List<ExpressionSyntax>(pNode.Finalizer.Count);
+            List<SyntaxNode> finalizer = new List<SyntaxNode>(pNode.Finalizer.Count);
             foreach (var f in pNode.Finalizer)
             {
                 finalizer.Add(Visit((dynamic)f));
@@ -321,7 +321,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
-            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pNode.Arguments.Count);
+            List<SyntaxNode> arguments = new List<SyntaxNode>(pNode.Arguments.Count);
             foreach (var a in pNode.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));
@@ -368,7 +368,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitReturnSyntax(ReturnSyntax pNode)
         {
-            List<ExpressionSyntax> values = new List<ExpressionSyntax>(pNode.Values.Count);
+            List<SyntaxNode> values = new List<SyntaxNode>(pNode.Values.Count);
             foreach(var v in pNode.Values)
             {
                 values.Add(Visit((dynamic)v));
@@ -403,7 +403,7 @@ namespace SmallerLang.Lowering
 
             var t = (TypeSyntax)Visit(pNode.Struct);
 
-            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pNode.Arguments.Count);
+            List<SyntaxNode> arguments = new List<SyntaxNode>(pNode.Arguments.Count);
             foreach(var a in pNode.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));

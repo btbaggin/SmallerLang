@@ -11,7 +11,7 @@ namespace SmallerLang.Lowering
     {
         IfSyntax _currentIf;
         ElseSyntax _currentElse;
-        ExpressionSyntax _itVar;
+        SyntaxNode _itVar;
         bool _rewrite;
         protected override SyntaxNode VisitSelectSyntax(SelectSyntax pNode)
         {
@@ -41,7 +41,7 @@ namespace SmallerLang.Lowering
                     else
                     {
                         //The condition needs to be a comparison binary expression
-                        ExpressionSyntax baseExpression = (ExpressionSyntax)Visit(currentCase.Conditions[0]);
+                        SyntaxNode baseExpression = Visit(currentCase.Conditions[0]);
                         if (!IsComparison(baseExpression))
                         {
                             //If it isn't make it one
@@ -85,7 +85,7 @@ namespace SmallerLang.Lowering
 
         private bool IsComparison(SyntaxNode pNode)
         {
-            if (pNode.GetType() != typeof(BinaryExpressionSyntax)) return false;
+            if (pNode.SyntaxType != SyntaxType.BinaryExpression) return false;
             var op = ((BinaryExpressionSyntax)pNode).Operator;
             return op == BinaryExpressionOperator.Equals ||
                    op == BinaryExpressionOperator.GreaterThan ||

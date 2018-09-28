@@ -7,9 +7,11 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class TypeSyntax : ExpressionSyntax
+    public class TypeSyntax : SyntaxNode
     {
         public override SmallType Type => SmallTypeCache.FromString(Value);
+
+        public override SyntaxType SyntaxType => SyntaxType.Type;
 
         public IList<TypeSyntax> GenericArguments { get; private set; }
 

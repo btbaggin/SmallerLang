@@ -10,6 +10,8 @@ namespace SmallerLang.Syntax
 {
     public class ItSyntax : IdentifierSyntax
     {
+        public override SyntaxType SyntaxType => SyntaxType.It;
+
         internal ItSyntax() : base("it") { }
 
         public override LLVMValueRef Emit(EmittingContext pContext)

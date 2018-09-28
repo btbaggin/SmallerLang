@@ -12,6 +12,8 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.Enum;
+
         public string Name { get; private set; }
 
         public IList<IdentifierSyntax> Names { get; private set; }
