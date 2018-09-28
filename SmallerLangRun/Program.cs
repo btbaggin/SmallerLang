@@ -11,6 +11,7 @@ namespace SmallerLangRun
     {
         /*TODO
          * ensure all struct members are assigned in constructor
+         * Allow returning traits from methods?
          * tree shaking of methods
          * control flow analysis?
          * Multiple assignment of member/array access

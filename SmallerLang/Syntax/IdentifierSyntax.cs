@@ -37,7 +37,7 @@ namespace SmallerLang.Syntax
 
             var variable = pContext.Locals.GetVariable(Value, out bool parameter);
 
-            if (parameter || Type.IsStruct ||Type.IsArray || DoNotLoad) return variable;
+            if (parameter || Type.IsStruct || Type.IsArray || Type.IsTrait || DoNotLoad) return variable;
             return LLVMSharp.LLVM.BuildLoad(pContext.Builder, variable, Value);
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SmallerLang.Syntax;
 
 namespace SmallerLang.Emitting
 {
@@ -157,6 +158,28 @@ namespace SmallerLang.Emitting
 
             pMethod = retval;
             return false;
+        }
+
+        public static MethodSyntax MatchMethod(MethodCallSyntax pCallSite, IEnumerable<MethodSyntax> pMethods)
+        {
+            var arguments = Utils.SyntaxHelper.SelectNodeTypes(pCallSite.Arguments);
+
+            foreach(var m in pMethods)
+            {
+                var parameters = Utils.SyntaxHelper.SelectNodeTypes(m.Parameters);
+                if(arguments.Length == parameters.Length)
+                {
+                    bool found = true;
+                    for (int i = 0; i < arguments.Length && found; i++)
+                    {
+                        found = arguments[i].IsAssignableFrom(parameters[i]);
+                    }
+
+                    if (found) return m;
+                }
+            }
+
+            return null;
         }
 
         public static IList<MethodDefinition> GetAllMatches(string pName, int pParmCount)

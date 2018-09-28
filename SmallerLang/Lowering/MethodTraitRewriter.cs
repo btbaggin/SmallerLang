@@ -11,15 +11,15 @@ namespace SmallerLang.Lowering
     class MethodTraitRewriter : SyntaxNodeRewriter
     {
         //TODO needs to handle overloads
-        readonly Dictionary<string, MethodSyntax> _methodsToPoly;
-        readonly Dictionary<string, MethodSyntax> _polydMethods;
+        readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
+        readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
         readonly IErrorReporter _error;
 
         public MethodTraitRewriter(IErrorReporter pError)
         {
             _error = pError;
-            _methodsToPoly = new Dictionary<string, MethodSyntax>();
-            _polydMethods = new Dictionary<string, MethodSyntax>();
+            _methodsToPoly = new Dictionary<string, List<MethodSyntax>>();
+            _polydMethods = new Dictionary<string, List<MethodSyntax>>();
         }
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
@@ -31,7 +31,8 @@ namespace SmallerLang.Lowering
                 {
                     if(p.Type.IsTrait)
                     {
-                        _methodsToPoly.Add(m.Name, m);
+                        if (!_methodsToPoly.ContainsKey(m.Name)) _methodsToPoly.Add(m.Name, new List<MethodSyntax>());
+                        _methodsToPoly[m.Name].Add(m);
                         break;
                     }
                 }
@@ -45,7 +46,10 @@ namespace SmallerLang.Lowering
                     methods.Add((MethodSyntax)Visit(m));
                 }       
             }
-            methods.AddRange(_polydMethods.Values);
+            foreach(var v in _polydMethods.Values)
+            {
+                methods.AddRange(v);
+            }
 
             return SyntaxFactory.Module(pNode.Name, methods, pNode.Structs, pNode.Enums);
         }
@@ -54,7 +58,9 @@ namespace SmallerLang.Lowering
         {
             if(_methodsToPoly.ContainsKey(pNode.Value))
             {
-                var m = _methodsToPoly[pNode.Value];
+                var m = MethodCache.MatchMethod(pNode, _methodsToPoly[pNode.Value]);
+                if (m == null) throw new InvalidOperationException("Unable to find matching method");
+
                 if(TryPolyMethod(m, ref pNode))
                 {
                     return pNode;
@@ -115,7 +121,8 @@ namespace SmallerLang.Lowering
                 tiv.Visit(method);
                 MethodCache.AddMethod(name.ToString(), method);
 
-                _polydMethods.Add(name.ToString(), method);
+                if (!_polydMethods.ContainsKey(name.ToString())) _polydMethods.Add(name.ToString(), new List<MethodSyntax>());
+                _polydMethods[name.ToString()].Add(method);
             }
 
             //Have the call site point to the new method
