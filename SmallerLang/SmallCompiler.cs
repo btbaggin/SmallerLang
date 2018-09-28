@@ -48,20 +48,20 @@ namespace SmallerLang
             var parser = new SmallerParser(stream, _error);
 
             var t = parser.Parse();
-            t = new TreeRewriter(reporter).VisitModule(t);
+            t = new TreeRewriter(_error).VisitModule(t);
 
             //Info gathering passes
-            new PreTypeValidation(reporter).Visit(t);
-            if(reporter.ErrorOccurred) return false;
+            new PreTypeValidation(_error).Visit(t);
+            if(_error.ErrorOccurred) return false;
 
-            new TypeDiscoveryVisitor(reporter).Visit(t);
+            new TypeDiscoveryVisitor(_error).Visit(t);
 
             //Type inference
-            new TypeInferenceVisitor(reporter).Visit(t);
-            if (reporter.ErrorOccurred) return false;
+            new TypeInferenceVisitor(_error).Visit(t);
+            if (_error.ErrorOccurred) return false;
 
             //Method polymorph
-            t = new MethodTraitRewriter(reporter).VisitModule(t);
+            t = new MethodTraitRewriter(_error).VisitModule(t);
 
             //Validation passes
             new TypeChecker(_error).Visit(t);
