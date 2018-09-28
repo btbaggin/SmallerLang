@@ -186,7 +186,7 @@ namespace SmallerLang.Validation
                 {
                     foreach (var f in trait.Fields)
                     {
-                        if(!fieldNames.Add(f.Value))
+                        if(fieldNames.Add(f.Value))
                         {
                             FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
                             fields.Add(new FieldDefinition(f.Type, f.Value, visibility));

@@ -112,9 +112,9 @@ namespace SmallerLang.Validation
         protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
             var t = _currentType;
+            Visit((dynamic)pNode.Identifier);
             _currentType = pNode.Identifier.Type;
-
-            base.VisitMemberAccessSyntax(pNode);
+            Visit((dynamic)pNode.Value);
             _currentType = t;
         }
 
@@ -161,6 +161,10 @@ namespace SmallerLang.Validation
             if(pNode.Struct.Type == SmallTypeCache.Undefined)
             {
                 _error.WriteError($"Use of undeclared type {pNode.Struct.Value}", pNode.Span);
+            }
+            else if(pNode.Struct.Type.IsTrait)
+            {
+                _error.WriteError("Traits cannot be directly initialized", pNode.Span);
             }
             else if(pNode.Struct.Type.HasDefinedConstructor())
             {

@@ -10,9 +10,11 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Mulitple declarations with struct initializer, not properly initializing memory
+         * ensure all struct members are assigned in constructor
+         * Allow returning traits from methods?
+         * tree shaking of methods
+         * control flow analysis?
          * Multiple assignment of member/array access
-         * Poly methods taking traits
          * Do struct poly after type inference?
          * Set multiple variables from single assignment?
          * imports
