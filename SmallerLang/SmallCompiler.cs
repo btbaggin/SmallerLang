@@ -30,7 +30,7 @@ namespace SmallerLang
 
         public bool Compile(CompilerOptions pOptions, out LLVMModuleRef? pModule)
         {
-            string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : System.IO.File.ReadAllText(pOptions.SourceFile);
+            string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : System.IO.File.ReadAllText(pOptions.SourceFile);//TODO ensure file exists
 
             IErrorReporter reporter = new ConsoleErrorReporter(source);
             var lexer = new SmallerLexer(reporter);
@@ -39,17 +39,20 @@ namespace SmallerLang
 
             pModule = null;
             var t = parser.Parse();
-            t = (ModuleSyntax)new TreeRewriter(reporter).Visit(t);
+            t = new TreeRewriter(reporter).VisitModule(t);
 
+            //Info gathering passes
             new PreTypeValidation(reporter).Visit(t);
             if(reporter.ErrorOccurred) return false;
 
             new TypeDiscoveryVisitor(reporter).Visit(t);
-            //Info gathering passes
+
+            //Type inference
             new TypeInferenceVisitor(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;
 
-            t = (ModuleSyntax)new MethodTraitRewriter(reporter).Visit(t);
+            //Method polymorph
+            t = new MethodTraitRewriter(reporter).VisitModule(t);
 
             //Validation passes
             new TypeChecker(reporter).Visit(t);
@@ -58,8 +61,8 @@ namespace SmallerLang
             new PostTypeValidationVisitor(reporter).Visit(t);
             if (reporter.ErrorOccurred) return false;
 
-            LLVMModuleRef m = LLVM.ModuleCreateWithName(t.Name);
-            LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(m);
+            LLVMModuleRef module = LLVM.ModuleCreateWithName(t.Name);
+            LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
 
             if(pOptions.Optimizations)
             {
@@ -80,20 +83,20 @@ namespace SmallerLang
             }
             LLVM.InitializeFunctionPassManager(passManager);
 
-            using (var c = new EmittingContext(m, passManager))
+            using (var c = new EmittingContext(module, passManager))
             {
                 t.Emit(c);
 
-                if (LLVM.VerifyModule(m, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message).Value != 0)
+                if (LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message).Value != 0)
                 {
-                    LLVM.DumpModule(m);
+                    LLVM.DumpModule(module);
                     LLVM.DisposePassManager(passManager);
                     pModule = null;
                     return false;
                 }
             }
                 
-            pModule = m;
+            pModule = module;
             LLVM.DisposePassManager(passManager);
             return true;
         }

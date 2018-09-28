@@ -96,7 +96,7 @@ namespace SmallerLang
             AssemblyBuilder assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(name, AssemblyBuilderAccess.RunAndSave);
             ModuleBuilder module = assembly.DefineDynamicModule("DynamicDelegates", "DynamicDelegateEmit.dll");
 
-            // Create a delegate that has the same signature as the method we would like to hook up to
+            //Create a delegate that has the same signature as the method we would like to hook up to
             TypeBuilder type = module.DefineType("DynamicDelegateType", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoClass, typeof(MulticastDelegate));
             ConstructorBuilder constructor = type.DefineConstructor(MethodAttributes.RTSpecialName | MethodAttributes.HideBySig | MethodAttributes.Public, CallingConventions.Standard, new Type[] { typeof(object), typeof(IntPtr) });
             constructor.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
@@ -114,11 +114,11 @@ namespace SmallerLang
                 paramTypes[i] = parameters[i].ParameterType;
             }
 
-            // Define the Invoke method for the delegate
+            //Define the Invoke method for the delegate
             MethodBuilder method = type.DefineMethod("Invoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual, pMethod.ReturnType, paramTypes);
             method.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
 
-            // bake it!
+            //bake it!
             Type t = type.CreateType();
             assembly.Save("DynamicDelegateEmit.dll");
             return t;

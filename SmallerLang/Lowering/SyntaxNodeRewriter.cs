@@ -9,6 +9,11 @@ namespace SmallerLang.Lowering
 {
     public abstract class SyntaxNodeRewriter
     {
+        public ModuleSyntax VisitModule(ModuleSyntax pNode)
+        {
+            return (ModuleSyntax)Visit(pNode);
+        }
+
         public SyntaxNode Visit(SyntaxNode pNode)
         {
             if (pNode == null) return null;

@@ -10,6 +10,9 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * ensure all struct members are assigned in constructor
+         * tree shaking of methods
+         * control flow analysis?
          * Multiple assignment of member/array access
          * Do struct poly after type inference?
          * Set multiple variables from single assignment?
