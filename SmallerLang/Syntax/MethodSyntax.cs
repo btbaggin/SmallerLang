@@ -78,6 +78,10 @@ namespace SmallerLang.Syntax
                     }
                 }
 
+                //We want to dispose variables after deferred statements because
+                //then variables referenced in deferred statements will still be valid
+                BlockSyntax.BuildCallToDispose(pContext);
+
                 if (ReturnValues.Count == 0)
                 {
                     LLVM.BuildRetVoid(pContext.Builder);
@@ -91,6 +95,7 @@ namespace SmallerLang.Syntax
 
                 //End method
                 pContext.RemoveDeferredStatementExecution();
+
                 pContext.Locals.RemoveScope();
                 pContext.FinishMethod(func);
                 return func;

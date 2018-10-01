@@ -68,8 +68,7 @@ namespace SmallerLang.Validation
 
                 if (ic.Value)
                 {
-                    var s = _store.GetValueOrDefault<SmallType>("CurrentStruct");
-                    if(s != null)
+                    if(_store.GetValueOrDefault("CurrentStruct", out SmallType s))
                     {
                         foreach (var f in s.GetFields())
                         {

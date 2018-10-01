@@ -7,34 +7,53 @@ using LLVMSharp;
 
 namespace SmallerLang.Emitting
 {
-    public class VariableCache<T>
+    public struct LocalDefinition
     {
-        private Dictionary<string, (T TItem, bool IsParameter)>[] _variables;
+        public string Name { get; private set; }
+        public bool IsParameter { get; private set; }
+        public LLVMValueRef Value { get; private set; }
+        public SmallType Type { get; private set; }
+        public bool IsReferenced { get; set; }
+
+        public LocalDefinition(string pName, bool pIsParameter, LLVMValueRef pValue, SmallType pType)
+        {
+            Name = pName;
+            IsParameter = pIsParameter;
+            Value = pValue;
+            Type = pType;
+            IsReferenced = false;
+        }
+    }
+
+    public class VariableCache
+    {
+        private Dictionary<string, LocalDefinition>[] _variables;
         private int _scopeCount;
 
         public VariableCache()
         {
-            _variables = new Dictionary<string, (T, bool)>[128];
+            _variables = new Dictionary<string, LocalDefinition>[128];
             _scopeCount = -1;
         }
 
-        public void SetVariableValue(string pName, T pValue)
+        public void SetVariableReferenced(string pName)
         {
             for (int i = _scopeCount; i >= 0; i--)
             {
                 if (_variables[i].ContainsKey(pName))
                 {
-                    bool parm = _variables[i][pName].IsParameter;
-                    _variables[i][pName] = (pValue, parm);
+                    var ld = _variables[i][pName];
+                    ld.IsReferenced = true;
+                    _variables[i][pName] = ld;
                 }
             }
         }
 
-        public IEnumerable<(string Variable, T Value)> GetVariablesInScope()
+        public IEnumerable<LocalDefinition> GetVariablesInScope()
         {
             foreach(var kv in _variables[_scopeCount])
             {
-                yield return (kv.Key, kv.Value.TItem);
+                yield return kv.Value;
             }
         }
 
@@ -57,30 +76,32 @@ namespace SmallerLang.Emitting
             return _variables[_scopeCount].ContainsKey(pName);
         }
 
-        public void DefineVariableInScope(string pName, T pValue)
+        public void DefineVariableInScope(string pName, SmallType pType, LLVMValueRef pValue)
         {
-            _variables[_scopeCount].Add(pName, (pValue, false));
+            var ld = new LocalDefinition(pName, false, pValue, pType);
+            _variables[_scopeCount].Add(pName, ld);
         }
 
-        public void DefineParameter(string pName, T pValue)
+        public void DefineParameter(string pName, SmallType pType, LLVMValueRef pValue)
         {
-            _variables[_scopeCount].Add(pName, (pValue, true));
+            var ld = new LocalDefinition(pName, true, pValue, pType);
+            _variables[_scopeCount].Add(pName, ld);
         }
 
-        public T GetVariable(string pName)
-        {
-            return GetVariable(pName, out bool p);
-        }
+        //public T GetVariable(string pName)
+        //{
+        //    return GetVariable(pName, out bool p);
+        //}
 
-        public T GetVariable(string pName, out bool pParameter)
+        public LocalDefinition GetVariable(string pName)
         {
             //We have to look from the most recent scope to the oldest
             for (int i = _scopeCount; i >= 0; i--)
             {
                 if (_variables[i].ContainsKey(pName))
                 {
-                    pParameter = _variables[i][pName].IsParameter;
-                    return _variables[i][pName].TItem;
+                    //pParameter = _variables[i][pName].IsParameter;
+                    return _variables[i][pName];
                 }
             }
 
@@ -95,7 +116,7 @@ namespace SmallerLang.Emitting
             }
 
             _scopeCount++;
-            _variables[_scopeCount] = new Dictionary<string, (T, bool)>();
+            _variables[_scopeCount] = new Dictionary<string, LocalDefinition>();
         }
 
         public void RemoveScope()
@@ -104,9 +125,9 @@ namespace SmallerLang.Emitting
             _scopeCount--;
         }
 
-        public VariableCache<T> Copy()
+        public VariableCache Copy()
         {
-            var copy = new VariableCache<T>
+            var copy = new VariableCache()
             {
                 _scopeCount = _scopeCount
             };

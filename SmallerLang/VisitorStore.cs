@@ -60,6 +60,17 @@ namespace SmallerLang
             return default;
         }
 
+        public bool GetValueOrDefault<T>(string pName, out T pValue)
+        {
+            if(HasValue(pName))
+            {
+                pValue = GetValue<T>(pName);
+                return true;
+            }
+            pValue = default;
+            return false;
+        }
+
         public bool HasValue(string pName)
         {
             return _values.ContainsKey(pName);

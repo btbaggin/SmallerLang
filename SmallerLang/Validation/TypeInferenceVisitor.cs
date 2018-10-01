@@ -12,13 +12,13 @@ namespace SmallerLang.Validation
     {
         SmallType _currentType;
         SmallType _currentStruct;
-        VariableCache<SmallType> _locals;
+        VariableCache _locals;
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
 
         public TypeInferenceVisitor(IErrorReporter pError)
         {
-            _locals = new VariableCache<SmallType>();
+            _locals = new VariableCache();
             _error = pError;
         }
 
@@ -65,7 +65,7 @@ namespace SmallerLang.Validation
                             var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
                             pNode.Variables[i].SetType(t);
-                            _locals.DefineVariableInScope(pNode.Variables[i].Value, pNode.Variables[i].Type);
+                            _locals.DefineVariableInScope(pNode.Variables[i].Value, pNode.Variables[i].Type, default);
 
                             if (isTuple && pNode.Value.Type.GetFieldCount() != pNode.Variables.Count)
                             {
@@ -222,13 +222,13 @@ namespace SmallerLang.Validation
                 if(pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
                 else
                 {
-                    _locals = new VariableCache<SmallType>();
+                    _locals = new VariableCache();
                     _locals.AddScope();
                     foreach (var f in _currentType.GetFields())
                     {
                         if (!_locals.IsVariableDefinedInScope(f.Name))
                         {
-                            _locals.DefineVariableInScope(f.Name, f.Type);
+                            _locals.DefineVariableInScope(f.Name, f.Type, default);
                         }
                     }
                 }
@@ -256,7 +256,7 @@ namespace SmallerLang.Validation
             }
             else
             {
-                _locals.DefineVariableInScope(pNode.Value, pNode.Type);
+                _locals.DefineVariableInScope(pNode.Value, pNode.Type, default);
             }
         }
 
@@ -437,7 +437,7 @@ namespace SmallerLang.Validation
                 return false;
             }
 
-            pType = _locals.GetVariable(pName);
+            pType = _locals.GetVariable(pName).Type;
             return true;
         }
 

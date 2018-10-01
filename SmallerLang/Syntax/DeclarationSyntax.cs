@@ -34,7 +34,7 @@ namespace SmallerLang.Syntax
                     System.Diagnostics.Debug.Assert(!pContext.Locals.IsVariableDefinedInScope(v.Value), "Variable " + v.Value + " already defined");
 
                     LLVMValueRef var = pContext.AllocateVariable(v.Value, v.Type);
-                    pContext.Locals.DefineVariableInScope(v.Value, var);
+                    pContext.Locals.DefineVariableInScope(v.Value, v.Type, var);
                 }
             }
 
@@ -48,7 +48,7 @@ namespace SmallerLang.Syntax
                     //Need to load address of pointers
                     Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
                     var v = pContext.Locals.GetVariable(Variables[0].Value);
-                    LLVM.BuildStore(pContext.Builder, value, v);
+                    LLVM.BuildStore(pContext.Builder, value, v.Value);
                 }
                 else
                 {
@@ -69,7 +69,7 @@ namespace SmallerLang.Syntax
                             g = LLVM.BuildLoad(pContext.Builder, g, "");
 
                             var variable = pContext.Locals.GetVariable(Variables[i].Value);
-                            LLVM.BuildStore(pContext.Builder, g, variable);
+                            LLVM.BuildStore(pContext.Builder, g, variable.Value);
                         }
                     }
                 }

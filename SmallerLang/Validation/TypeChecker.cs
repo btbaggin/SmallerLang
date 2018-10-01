@@ -26,7 +26,7 @@ namespace SmallerLang.Validation
             {
                 _error.WriteError($"Type of {pNode.Index.Type.ToString()} cannot be converted to {SmallTypeCache.Int.ToString()}", pNode.Index.Span);
             }
-            if(!pNode.BaseType.IsArray)
+            if(!pNode.Identifier.Type.IsArray)
             {
                 _error.WriteError($"Array access can only be on array types", pNode.Span);
             }

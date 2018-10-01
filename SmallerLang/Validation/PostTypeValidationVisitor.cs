@@ -11,25 +11,24 @@ namespace SmallerLang.Validation
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
         VisitorStore _store = new VisitorStore();
-        VariableCache<(bool Used, TextSpan Span)> _locals; //Used to find unused variables
+        VariableCache _locals; //Used to find unused variables
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
             foreach(var v in pNode.Variables)
             {
                 Visit((dynamic)v);
-                _locals.DefineVariableInScope(v.Value, (false, v.Span));
+                _locals.DefineVariableInScope(v.Value, v.Type, default);
             }
             Visit((dynamic)pNode.Value);
         }
 
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            _locals.SetVariableValue(pNode.Value, (true, default));
+            _locals.SetVariableReferenced(pNode.Value);
             var currentStruct = _store.GetValueOrDefault<SmallType>("CurrentStruct");
-            var currentType = _store.GetValueOrDefault<SmallType>("CurrentType");
 
-            if(currentType != null)
+            if(_store.GetValueOrDefault("CurrentType", out SmallType currentType))
             {
                 var definition = currentType.GetField(pNode.Value);
                 if (definition.Visibility == FieldVisibility.Hidden && currentStruct != currentType)
@@ -49,7 +48,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _locals = new VariableCache<(bool, TextSpan)>();
+            _locals = new VariableCache();
             using (var v = _store.AddValue<string>("RunMethod", null))
             {
                 base.VisitModuleSyntax(pNode);
@@ -90,11 +89,11 @@ namespace SmallerLang.Validation
             //Report any unused variables
             _locals.AddScope();
             base.VisitBlockSyntax(pNode);
-            foreach (var (Variable, Value) in _locals.GetVariablesInScope())
+            foreach (var ld in _locals.GetVariablesInScope())
             {
-                if (!Value.Used)
+                if (!ld.IsReferenced)
                 {
-                    _error.WriteWarning($"Variable {Variable} is defined but never used", Value.Span);
+                    _error.WriteWarning($"Variable {ld.Name} is defined but never used"); //TODO span
                 }
             }
             _locals.RemoveScope();

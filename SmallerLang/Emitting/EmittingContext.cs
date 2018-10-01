@@ -17,7 +17,7 @@ namespace SmallerLang.Emitting
         public LLVMValueRef CurrentMethod { get; private set; }
         public LLVMBuilderRef Builder { get; private set; }
 
-        public VariableCache<LLVMValueRef> Locals { get; private set; }
+        public VariableCache Locals { get; private set; }
 
         internal SmallType CurrentStruct { get; set; }
 
@@ -35,7 +35,7 @@ namespace SmallerLang.Emitting
             _context = LLVM.GetGlobalContext();
             _deferredStatements = new Stack<List<Syntax.SyntaxNode>>();
             Builder = LLVM.CreateBuilder();
-            Locals = new VariableCache<LLVMValueRef>();
+            Locals = new VariableCache();
             AccessStack = new MemberAccessStack();
         }
 
@@ -122,7 +122,7 @@ namespace SmallerLang.Emitting
                 start = 1;
                 LLVMValueRef p = LLVM.GetParam(func, 0);
                 LLVM.SetValueName(p, "self");
-                Locals.DefineParameter("self", p);
+                Locals.DefineParameter("self", CurrentStruct, p);
             }
 
             //Set parameter names and define in scope
@@ -133,7 +133,7 @@ namespace SmallerLang.Emitting
                 LLVM.SetValueName(parm, name);
 
                 Debug.Assert(!Locals.IsVariableDefinedInScope(name), $"Parameter {name} already defined");
-                Locals.DefineParameter(name, parm);
+                Locals.DefineParameter(name, pNode.Parameters[i].Type, parm);
             }
 
             CurrentMethod = func;

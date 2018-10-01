@@ -79,18 +79,28 @@ namespace SmallerLang.Validation
                 foreach(var s in i.Value)
                 {
                     //Mark any traits for types
-                    var structApplies = s.AppliesTo;
-                    if (!_structIndex.ContainsKey(structApplies))
+                    bool validateTrait = true;
+                    if (!SmallTypeCache.IsTypeDefined(s.Name))
                     {
-                        _error.WriteError($"Use of undeclared type {structApplies}", s.Span);
+                        _error.WriteError($"Use of undeclared type {s.Name}", s.Span);
+                        validateTrait = false;
                     }
 
-                    var traitType = SmallTypeCache.FromString(s.Name);
-                    SmallTypeCache.FromString(structApplies).AddTrait(traitType);
+                    if (!SmallTypeCache.IsTypeDefined(s.AppliesTo))
+                    {
+                        _error.WriteError($"Use of undeclared type {s.AppliesTo}", s.Span);
+                        validateTrait = false;
+                    }
+                    
+                    if(validateTrait)
+                    {
+                        var traitType = SmallTypeCache.FromString(s.Name);
+                        SmallTypeCache.FromString(s.AppliesTo).AddTrait(traitType);
 
-                    //Validate implementation
-                    var trait = _structs[_structIndex[s.Name]].Node;
-                    ValidateImplementation(trait, s);
+                        //Validate implementation
+                        var trait = _structs[_structIndex[s.Name]].Node;
+                        ValidateImplementation(trait, s);
+                    }
                 }
             }
 

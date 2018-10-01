@@ -58,11 +58,9 @@ namespace SmallerLang.Syntax
                 case UnaryExpressionOperator.PreDecrement:
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.PostDecrement:
-                    //TODO cleanup?
                     var variable = (IdentifierSyntax)Value;
-                    LLVMValueRef v = pContext.Locals.GetVariable(variable.Value);
-
-                    if (Utils.SyntaxHelper.IsMemberAccess(variable)) v = variable.Emit(pContext);
+                    variable.DoNotLoad = true;
+                    LLVMValueRef v = variable.Emit(pContext);
 
                     BinaryExpressionOperator op = BinaryExpressionOperator.Equals;
                     switch (Operator)

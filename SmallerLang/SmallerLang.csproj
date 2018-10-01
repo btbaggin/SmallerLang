@@ -211,7 +211,7 @@
     <Compile Include="Syntax\TypeDefinitionSyntax.cs" />
     <Compile Include="Utils\KeyAnnotations.cs" />
     <Compile Include="Utils\LLVMHelper.cs" />
-    <Compile Include="Validation\ForRewriter.cs" />
+    <Compile Include="Lowering\ForRewriter.cs" />
     <Compile Include="Validation\PreTypeValidation.cs" />
     <Compile Include="Lowering\ReturnBlockRewriter.cs" />
     <Compile Include="Lowering\StructInheritanceRewriter.cs" />

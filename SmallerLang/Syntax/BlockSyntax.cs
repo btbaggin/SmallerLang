@@ -30,8 +30,30 @@ namespace SmallerLang.Syntax
                 else pContext.AddDeferredStatement(s);
             }
 
+            BuildCallToDispose(pContext);
+
             pContext.Locals.RemoveScope();
             return default;
+        }
+
+        static SmallType _disposeType;
+        internal static void BuildCallToDispose(EmittingContext pContext)
+        {
+            _disposeType = SmallTypeCache.FromString("Disposable");
+            if(_disposeType != SmallTypeCache.Undefined)
+            {
+                foreach (var v in pContext.Locals.GetVariablesInScope())
+                {
+                    if (v.Type.IsAssignableFrom(_disposeType))
+                    {
+                        if (MethodCache.FindMethod(out MethodDefinition pDef, v.Type, "Dispose", new SmallType[] { }))
+                        {
+                            var func = pContext.GetMethod(pDef.MangledName);
+                            LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");
+                        }
+                    }
+                }
+            }
         }
     }
 }
