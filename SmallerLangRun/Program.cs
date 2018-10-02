@@ -12,6 +12,7 @@ namespace SmallerLangRun
         /*TODO
          * Enumerable
          * Private variables in implements
+         * Trait dependencies?
          * Allow returning traits from methods?
          * tree shaking of methods
          * control flow analysis?

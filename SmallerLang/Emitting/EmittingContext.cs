@@ -76,7 +76,7 @@ namespace SmallerLang.Emitting
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
                 parmTypes[start + i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type);
-                if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[i] = LLVMTypeRef.PointerType(parmTypes[i], 0);
+                if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
                 originalTypes[i] = pMethod.Parameters[i].Type;
             }
 

@@ -29,18 +29,33 @@ namespace SmallerLang.Syntax
             //Check if this is a "static" method
             if(!SmallTypeCache.IsTypeDefined(Identifier.Value))
             {
-                LLVMValueRef i = Identifier.Emit(pContext);
-                pContext.AccessStack.Push(i, Identifier.Type);
+                LLVMValueRef identifier = Identifier.Emit(pContext);
+
+                //For every method call we need to stop and allocate a new variable
+                //This is because our method call is going to return a value, but we need a pointer.
+                //To solve this we allocate a temporary variable, store the value, and continue
+                if (Identifier.SyntaxType == SyntaxType.MethodCall)
+                {
+                    var tempVar = pContext.AllocateVariable("memberaccess_temp", Identifier.Type);
+                    LLVM.BuildStore(pContext.Builder, identifier, tempVar);
+                    identifier = tempVar;
+                    pContext.AccessStack.Clear();
+                }
+
+                //Store the index we pushed at.
+                //We will later pop only if that index still exists
+                //This allows things like MethodCalls to wipe the stack (because the arguments aren't in the same stack) while still properly popping values
+                var index = pContext.AccessStack.Push(identifier, Identifier.Type);
                     
-                LLVMValueRef v = Value.Emit(pContext);
+                LLVMValueRef value = Value.Emit(pContext);
                 //Terminal nodes are fully emitted in their child most node
                 if(IsTerminalNode(Value))
                 {
-                    v = MemberAccessStack.BuildGetElementPtr(pContext, v);
+                    value = MemberAccessStack.BuildGetElementPtr(pContext, value);
                 }
 
-                pContext.AccessStack.Pop();
-                return v;
+                pContext.AccessStack.PopFrom(index);
+                return value;
             }
             else
             {

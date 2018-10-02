@@ -1224,7 +1224,6 @@ namespace SmallerLang.Parser
 
         private void Synchronize()
         {
-            _stream.MoveNext();
             while (!Peek(TokenType.EndOfFile))
             {
                 switch (_stream.Current.Type)

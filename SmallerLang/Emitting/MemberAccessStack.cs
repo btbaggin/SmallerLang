@@ -27,19 +27,19 @@ namespace SmallerLang.Emitting
             _items = new MemberAccessItem[8];
         }
 
-        public void Push(LLVMValueRef pValue, SmallType pType)
+        public int Push(LLVMValueRef pValue, SmallType pType)
         {
             if(Count >= _items.Length)
             {
                 Array.Resize(ref _items, _items.Length + 4);
             }
             _items[Count] = new MemberAccessItem(pValue, pType);
-            Count++;
+            return Count++;
         }
 
-        public MemberAccessItem Pop()
+        public void PopFrom(int pIndex)
         {
-            return _items[--Count];
+            if(pIndex < Count) Count--;
         }
 
         public MemberAccessItem Peek()

@@ -26,16 +26,11 @@ namespace SmallerLang.Syntax
             System.Diagnostics.Debug.Assert(_definition.MangledName != null);
 
             LLVMValueRef[] arguments = null;
-            MemberAccessStack member = null;
             int start = 0;
             //If we are calling an instance method, we need to add the "self" parameter
             if (pContext.AccessStack.Count > 0)
             {
                 arguments = new LLVMValueRef[Arguments.Count + 1];
-
-                //Save the current stack so we can restore it when we are done
-                //We clear this because we are no longer in a member access when emitting the arguments
-                member = pContext.AccessStack.Copy();
 
                 //"consume" the entire access stack to get the object we are calling the method on
                 arguments[0] = MemberAccessStack.BuildGetElementPtr(pContext, null);
@@ -67,8 +62,6 @@ namespace SmallerLang.Syntax
                     arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], type, "");
                 }
             }
-
-            if (member != null) pContext.AccessStack = member;
 
             return LLVM.BuildCall(pContext.Builder, pContext.GetMethod(_definition.MangledName), arguments, "");
         }
