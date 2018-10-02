@@ -113,20 +113,18 @@ namespace SmallerLang.Validation
             //Add struct methods to MethodCache
             foreach (var s in pNode.Structs)
             {
-                if(s.DefinitionType != DefinitionTypes.Implement)
-                {
-                    var type = SmallTypeCache.FromString(s.Name);
-                    for (int j = 0; j < s.Methods.Count; j++)
-                    {
-                        if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
-                            s.Methods[j].Annotation.Value == Utils.KeyAnnotations.Constructor)
-                        {
-                            type.SetConstructor(m);
-                        }
-                    }
+                SmallType type = s.GetApplicableType();
 
-                    if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
+                for (int j = 0; j < s.Methods.Count; j++)
+                {
+                    if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
+                        s.Methods[j].Annotation.Value == Utils.KeyAnnotations.Constructor)
+                    {
+                        type.SetConstructor(m);
+                    }
                 }
+
+                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
             }
         }
 

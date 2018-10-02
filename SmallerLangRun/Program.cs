@@ -10,9 +10,8 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Disposable and Enumerable
-         * Need to rename private variables in implements to avoid collision
-         * ensure all struct members are assigned in constructor
+         * Enumerable
+         * Private variables in implements
          * Allow returning traits from methods?
          * tree shaking of methods
          * control flow analysis?

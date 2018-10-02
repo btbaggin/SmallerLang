@@ -57,39 +57,38 @@ namespace SmallerLang.Syntax
         public void EmitMethodHeaders(EmittingContext pContext)
         {
             //Only structs should be emitted. The other types get merged with structs
-            if (DefinitionType == DefinitionTypes.Struct)
-            {
-                var type = SmallTypeCache.FromString(Name);
-                pContext.CurrentStruct = type;
-                foreach (var m in Methods)
-                {
-                    m.EmitHeader(pContext);
-                }
+            if (DefinitionType == DefinitionTypes.Trait) return;
 
-                if (!type.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext);
-                pContext.CurrentStruct = null;
+            var type = GetApplicableType();
+            pContext.CurrentStruct = type;
+            foreach (var m in Methods)
+            {
+                m.EmitHeader(pContext);
             }
+
+            if (!type.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext);
+            pContext.CurrentStruct = null;
         }
 
         public void EmitMethods(EmittingContext pContext)
         {
             //Only structs should be emitted. The other types get merged with structs
-            if(DefinitionType == DefinitionTypes.Struct)
-            {
-                var type = SmallTypeCache.FromString(Name);
-                pContext.CurrentStruct = type;
-                foreach (var m in Methods)
-                {
-                    m.Emit(pContext);
-                }
+            if (DefinitionType == DefinitionTypes.Trait) return;
 
-                if (!type.HasDefinedConstructor()) EmitGenericConstructor(pContext, type);
-                pContext.CurrentStruct = null;
+            var type = GetApplicableType();
+            pContext.CurrentStruct = type;
+            foreach (var m in Methods)
+            {
+                m.Emit(pContext);
             }
+
+            if (!type.HasDefinedConstructor() && DefinitionType == DefinitionTypes.Struct) EmitGenericConstructor(pContext, type);
+            pContext.CurrentStruct = null;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            //We need both structs and traits to have definitions because either could be referenced as a type
             if(DefinitionType != DefinitionTypes.Implement)
             {
                 pContext.EmitDefinition(Name, this);
@@ -133,6 +132,12 @@ namespace SmallerLang.Syntax
         {
             EmitOrder = (pNode as TypeDefinitionSyntax).EmitOrder;
             return base.FromNode(pNode);
+        }
+
+        public SmallType GetApplicableType()
+        {
+            return DefinitionType != DefinitionTypes.Implement ? SmallTypeCache.FromString(Name) : SmallTypeCache.FromString(AppliesTo);
+
         }
     }
 }

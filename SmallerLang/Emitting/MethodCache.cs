@@ -29,6 +29,11 @@ namespace SmallerLang.Emitting
             ArgumentTypes = new List<SmallType>();
             ReturnType = SmallTypeCache.Undefined;
         }
+
+        public override string ToString()
+        {
+            return MangledName;
+        }
     }
 
     public static class MethodCache
