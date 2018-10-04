@@ -11,10 +11,7 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type
         {
-            get
-            {
-                return SmallTypeCache.FromString(GetFullTypeName(this));
-            } 
+            get { return SmallTypeCache.FromString(GetFullTypeName(this)); } 
         }
 
         public override SyntaxType SyntaxType => SyntaxType.Type;

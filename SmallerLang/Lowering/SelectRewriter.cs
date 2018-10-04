@@ -19,10 +19,9 @@ namespace SmallerLang.Lowering
             //Save itVar in case we hit a nested for or select statement
             var it = _itVar;
             _itVar = pNode.Condition;
-            var s = base.VisitSelectSyntax(pNode);
+            SyntaxNode retval = base.VisitSelectSyntax(pNode);
 
-            if (!_rewrite) return s;
-            else
+            if (_rewrite)
             {
                 if(pNode.Annotation.Value == Utils.KeyAnnotations.Complete)
                 {
@@ -72,14 +71,17 @@ namespace SmallerLang.Lowering
                     }
                 }
 
-                _itVar = it;
-                return _currentIf;
+                retval = _currentIf;
             }
-        }
+
+            _itVar = it;
+            return retval;
+        } 
 
         protected override SyntaxNode VisitItSyntax(ItSyntax pNode)
         {
             _rewrite = true;
+            if (_itVar == null) return pNode;
             return _itVar;
         }
 

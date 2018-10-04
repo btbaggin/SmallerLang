@@ -166,11 +166,11 @@ namespace SmallerLang.Parser
                     Expect(TokenType.GreaterThan);
                 }
 
-                string implementOn = null;
+                TypeSyntax implementOn = null;
                 if (type == DefinitionTypes.Implement)
                 {
                     Expect(TokenType.On);
-                    Expect(TokenType.Identifier, out implementOn);
+                    implementOn = ParseType();
                 }
 
                 Ignore(TokenType.Newline);
@@ -264,7 +264,7 @@ namespace SmallerLang.Parser
                 Ignore(TokenType.Newline);
 
                 //Method body
-                var body = ParseBlock();
+                var body = ParseBlock(false);
                 return SyntaxFactory.CastDefinition(p, body, r).SetSpan<CastDefinitionSyntax>(t);
             }
         }
@@ -306,7 +306,7 @@ namespace SmallerLang.Parser
                 {
                     //Method body
                     Ignore(TokenType.Newline);
-                    body = ParseBlock();
+                    body = ParseBlock(false);
                 }
                 
                 var m = SyntaxFactory.Method(name, returns, parameters, body).SetSpan<MethodSyntax>(t);
@@ -352,10 +352,15 @@ namespace SmallerLang.Parser
             }
         }
 
-        private BlockSyntax ParseBlock()
+        private BlockSyntax ParseBlock(bool pAllowSingle)
         {
             using (SpanTracker t = _spans.Create())
             {
+                if (pAllowSingle && !Peek(TokenType.LeftBrace))
+                {
+                    return SyntaxFactory.SingleBlock(ParseStatement()).SetSpan<BlockSyntax>(t);
+                }
+
                 Expect(TokenType.LeftBrace);
                 IgnoreNewlines();
 
@@ -398,7 +403,7 @@ namespace SmallerLang.Parser
                         break;
 
                     case TokenType.LeftBrace:
-                        node = ParseBlock();
+                        node = ParseBlock(false);
                         break;
 
                     case TokenType.Return:
@@ -523,9 +528,7 @@ namespace SmallerLang.Parser
 
                 //If body
                 Ignore(TokenType.Newline);
-                BlockSyntax body = null;
-                if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                else body = SyntaxFactory.SingleBlock(ParseStatement());
+                BlockSyntax body = ParseBlock(true);
                 Ignore(TokenType.Newline);
 
                 //Else
@@ -549,8 +552,7 @@ namespace SmallerLang.Parser
                 else
                 {
                     Ignore(TokenType.Newline);
-                    if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                    else body = SyntaxFactory.SingleBlock(ParseStatement());
+                    body = ParseBlock(true);
                 }
 
                 return SyntaxFactory.Else(i, body).SetSpan<ElseSyntax>(t);
@@ -570,9 +572,7 @@ namespace SmallerLang.Parser
                 Ignore(TokenType.Newline);
 
                 //While body
-                BlockSyntax body = null;
-                if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                else body = SyntaxFactory.SingleBlock(ParseStatement());
+                BlockSyntax body = ParseBlock(true);
 
                 return SyntaxFactory.While(condition, body).SetSpan<WhileSyntax>(t);
             }
@@ -631,9 +631,7 @@ namespace SmallerLang.Parser
 
                 //For body
                 _allowIt = isIterator;
-                BlockSyntax body = null;
-                if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                else body = SyntaxFactory.SingleBlock(ParseStatement());
+                BlockSyntax body = ParseBlock(true);
                 _allowIt = false;
 
                 if(!isIterator)
@@ -641,7 +639,7 @@ namespace SmallerLang.Parser
                     return SyntaxFactory.For(initializer, cond, finalizer, body).SetSpan<ForSyntax>(t);
                 }
 
-                return SyntaxFactory.For(iterator, body);
+                return SyntaxFactory.For(iterator, body).SetSpan<ForSyntax>(t);
             }
         }
 
@@ -993,7 +991,7 @@ namespace SmallerLang.Parser
                 else if (PeekAndExpect(TokenType.String, out v)) e = SyntaxFactory.StringLiteral(v);
                 else if (PeekAndExpect(TokenType.True, out v)) e = SyntaxFactory.BooleanLiteral(v);
                 else if (PeekAndExpect(TokenType.False, out v)) e = SyntaxFactory.BooleanLiteral(v);
-                else if (_allowIt && PeekAndExpect(TokenType.It)) e = SyntaxFactory.It(); //It only allowed in certain situations
+                //else if (_allowIt && PeekAndExpect(TokenType.It)) e = SyntaxFactory.It(); //It only allowed in certain situations
                 else if (PeekAndExpect(TokenType.LeftBracket))
                 {
                     var type = ParseType();
@@ -1061,6 +1059,10 @@ namespace SmallerLang.Parser
                     if (!_allowSelf)
                         ReportError("Self only allowed within structs", t);
                     e = SyntaxFactory.Self();
+                }
+                else if(_allowIt && PeekAndExpect(TokenType.It))
+                {
+                    e = SyntaxFactory.It();
                 }
                 else if (_stream.Peek(1, out Token tok))
                 {

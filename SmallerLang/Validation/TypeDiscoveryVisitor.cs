@@ -29,8 +29,8 @@ namespace SmallerLang.Validation
         {
             //////
             ////// Discover enums
+            ////// Add enums first since they can't reference anything, but things can reference enums
             //////
-            //Add enums first since they can't reference anything, but things can reference enums
             foreach (var e in pNode.Enums)
             {
                 string[] fields = new string[e.Names.Count];
@@ -49,8 +49,9 @@ namespace SmallerLang.Validation
                 var s = pNode.Structs[i];
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    if (!_implements.ContainsKey(s.AppliesTo)) _implements.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
-                    _implements[s.AppliesTo].Add(s);
+                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
+                    _implements[applies].Add(s);
                 }
                 else
                 {
@@ -86,16 +87,17 @@ namespace SmallerLang.Validation
                         validateTrait = false;
                     }
 
-                    if (!SmallTypeCache.IsTypeDefined(s.AppliesTo))
+                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    if (!SmallTypeCache.IsTypeDefined(applies))
                     {
-                        _error.WriteError($"Use of undeclared type {s.AppliesTo}", s.Span);
+                        _error.WriteError($"Use of undeclared type {applies}", s.Span);
                         validateTrait = false;
                     }
                     
                     if(validateTrait)
                     {
                         var traitType = SmallTypeCache.FromString(s.Name);
-                        SmallTypeCache.FromString(s.AppliesTo).AddTrait(traitType);
+                        s.AppliesTo.Type.AddTrait(traitType);
 
                         //Validate implementation
                         var trait = _structs[_structIndex[s.Name]].Node;
@@ -213,7 +215,7 @@ namespace SmallerLang.Validation
 
             if (found)
             {
-                _error.WriteError($"Redeclaration of method signature {pMethod.Name}", pMethod.Span);
+                _error.WriteError($"Redeclaration of method signature {pMethod}", pMethod.Span);
                 pDefinition = default;
                 return false;
             }

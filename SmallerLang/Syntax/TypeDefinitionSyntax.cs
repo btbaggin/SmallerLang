@@ -26,7 +26,7 @@ namespace SmallerLang.Syntax
 
         public string Name { get; private set; }
 
-        public string AppliesTo { get; private set; }
+        public TypeSyntax AppliesTo { get; private set; }
 
         public IList<TypedIdentifierSyntax> Fields { get; private set; }
 
@@ -37,7 +37,7 @@ namespace SmallerLang.Syntax
         internal int EmitOrder { get; set; }
 
         internal TypeDefinitionSyntax(string pName, 
-                                      string pImplements,
+                                      TypeSyntax pImplements,
                                       DefinitionTypes pType,
                                       IList<TypedIdentifierSyntax> pFields, 
                                       IList<MethodSyntax> pMethods, 
@@ -136,7 +136,7 @@ namespace SmallerLang.Syntax
 
         public SmallType GetApplicableType()
         {
-            return DefinitionType != DefinitionTypes.Implement ? SmallTypeCache.FromString(Name) : SmallTypeCache.FromString(AppliesTo);
+            return DefinitionType != DefinitionTypes.Implement ? SmallTypeCache.FromString(Name) : AppliesTo.Type;
 
         }
     }

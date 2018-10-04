@@ -10,7 +10,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Enumerable
+         * Generic traits
          * Private variables in implements
          * Trait dependencies?
          * Allow returning traits from methods?
@@ -46,7 +46,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\Poly.sml";
+            var prog = @"C:\Test\SML\Iterator.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

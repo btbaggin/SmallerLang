@@ -32,7 +32,26 @@ namespace SmallerLang.Emitting
 
         public override string ToString()
         {
-            return MangledName;
+            var name = new StringBuilder();
+            name.Append(Name);
+            name.Append("(");
+
+            foreach (var p in ArgumentTypes)
+            {
+                name.Append(p.ToString());
+                name.Append(",");
+            }
+            if (ArgumentTypes.Count > 0) name = name.Remove(name.Length - 1, 1);
+
+            name.Append(")");
+
+            if (ReturnType != SmallTypeCache.Undefined)
+            {
+                name.Append(" -> ");
+                name.Append(ReturnType.ToString());
+            }
+
+            return name.ToString();
         }
     }
 
@@ -57,22 +76,6 @@ namespace SmallerLang.Emitting
             }
             _counter[name]++;
             var md = GetDefinition(pNode, _counter[name], pType);
-            _methods[name].Add(md);
-            return md;
-        }
-
-        internal static MethodDefinition AddMethod(SmallType pType, string pName, List<SmallType> pParameters, SmallType pReturn)
-        {
-            var name = GetMethodName(pType, pName);
-            if (!_methods.ContainsKey(name))
-            {
-                _methods.Add(name, new List<MethodDefinition>());
-                _counter.Add(name, 0);
-            }
-            _counter[name]++;
-
-            string mangledName = name + "_" + _counter[name];
-            var md = new MethodDefinition(pName, mangledName, pParameters, pReturn);
             _methods[name].Add(md);
             return md;
         }

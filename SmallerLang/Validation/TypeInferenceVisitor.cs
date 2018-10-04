@@ -32,7 +32,7 @@ namespace SmallerLang.Validation
 
             foreach (var s in pNode.Structs)
             {
-                _currentStruct = SmallTypeCache.FromString(s.Name);
+                _currentStruct = s.GetApplicableType();// SmallTypeCache.FromString(s.Name);
                 foreach (var m in s.Methods)
                 {
                     Visit(m);
@@ -65,7 +65,7 @@ namespace SmallerLang.Validation
                             var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
                             pNode.Variables[i].SetType(t);
-                            _locals.DefineVariableInScope(pNode.Variables[i].Value, pNode.Variables[i].Type, default);
+                            _locals.DefineVariableInScope(pNode.Variables[i].Value, pNode.Variables[i].Type);
 
                             if (isTuple && pNode.Value.Type.GetFieldCount() != pNode.Variables.Count)
                             {
@@ -228,7 +228,7 @@ namespace SmallerLang.Validation
                     {
                         if (!_locals.IsVariableDefinedInScope(f.Name))
                         {
-                            _locals.DefineVariableInScope(f.Name, f.Type, default);
+                            _locals.DefineVariableInScope(f.Name, f.Type);
                         }
                     }
                 }
@@ -256,7 +256,7 @@ namespace SmallerLang.Validation
             }
             else
             {
-                _locals.DefineVariableInScope(pNode.Value, pNode.Type, default);
+                _locals.DefineVariableInScope(pNode.Value, pNode.Type);
             }
         }
 

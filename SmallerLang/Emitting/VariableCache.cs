@@ -82,16 +82,16 @@ namespace SmallerLang.Emitting
             _variables[_scopeCount].Add(pName, ld);
         }
 
+        public void DefineVariableInScope(string pName, SmallType pType)
+        {
+            DefineVariableInScope(pName, pType, default);
+        }
+
         public void DefineParameter(string pName, SmallType pType, LLVMValueRef pValue)
         {
             var ld = new LocalDefinition(pName, true, pValue, pType);
             _variables[_scopeCount].Add(pName, ld);
         }
-
-        //public T GetVariable(string pName)
-        //{
-        //    return GetVariable(pName, out bool p);
-        //}
 
         public LocalDefinition GetVariable(string pName)
         {
@@ -100,7 +100,6 @@ namespace SmallerLang.Emitting
             {
                 if (_variables[i].ContainsKey(pName))
                 {
-                    //pParameter = _variables[i][pName].IsParameter;
                     return _variables[i][pName];
                 }
             }

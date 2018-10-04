@@ -193,6 +193,7 @@
     <Compile Include="Emitting\MethodCache.cs" />
     <Compile Include="FieldDefinition.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Lowering\ForRewriter.cs" />
     <Compile Include="Lowering\MethodTraitRewriter.cs" />
     <Compile Include="Syntax\Annotation.cs" />
     <Compile Include="Syntax\SyntaxType.cs" />
@@ -211,7 +212,6 @@
     <Compile Include="Syntax\TypeDefinitionSyntax.cs" />
     <Compile Include="Utils\KeyAnnotations.cs" />
     <Compile Include="Utils\LLVMHelper.cs" />
-    <Compile Include="Lowering\ForRewriter.cs" />
     <Compile Include="Validation\PreTypeValidation.cs" />
     <Compile Include="Lowering\ReturnBlockRewriter.cs" />
     <Compile Include="Lowering\StructInheritanceRewriter.cs" />

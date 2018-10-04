@@ -8,19 +8,19 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Lowering
 {
-    class MethodTraitRewriter : SyntaxNodeRewriter
+    partial class PostTypeRewriter : SyntaxNodeRewriter
     {
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
         readonly IErrorReporter _error;
 
-        public MethodTraitRewriter(IErrorReporter pError)
+        public PostTypeRewriter(IErrorReporter pError)
         {
             _error = pError;
             _methodsToPoly = new Dictionary<string, List<MethodSyntax>>();
             _polydMethods = new Dictionary<string, List<MethodSyntax>>();
         }
-
+    
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             //Find all methods we need to polymorph
@@ -37,6 +37,7 @@ namespace SmallerLang.Lowering
                 }
             }
 
+            var tiv = new Validation.TypeInferenceVisitor(_error);
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
             foreach (var m in pNode.Methods)
             {
@@ -45,9 +46,20 @@ namespace SmallerLang.Lowering
                     methods.Add((MethodSyntax)Visit(m));
                 }       
             }
+
             foreach(var v in _polydMethods.Values)
             {
                 methods.AddRange(v);
+            }
+
+            //Retype check methods in case one was rewritten
+            foreach(var m in methods)
+            {
+                //Poly'd methods are checked in TryPolyMethod
+                if(!_polydMethods.ContainsKey(m.Name))
+                {
+                    tiv.Visit(m);
+                }
             }
 
             return SyntaxFactory.Module(pNode.Name, methods, pNode.Structs, pNode.Enums);
@@ -114,11 +126,9 @@ namespace SmallerLang.Lowering
                 }
 
                 var method = SyntaxFactory.Method(name.ToString(), returnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
-
-                //Infer types for all nodes in the new method
                 var tiv = new Validation.TypeInferenceVisitor(_error);
                 tiv.Visit(method);
-                MethodCache.AddMethod(name.ToString(), method);
+                MethodCache.AddMethod(method.Name, method);
 
                 if (!_polydMethods.ContainsKey(name.ToString())) _polydMethods.Add(name.ToString(), new List<MethodSyntax>());
                 _polydMethods[name.ToString()].Add(method);

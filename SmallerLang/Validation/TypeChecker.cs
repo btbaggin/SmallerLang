@@ -127,19 +127,24 @@ namespace SmallerLang.Validation
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
             var currentType = _store.GetValueOrDefault<SmallType>("CurrentType");
 
-            var methodFound = FindMethod(out MethodDefinition m, pNode.Value, currentType, types);
-            System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
-
-            for(int i = 0; i < m.ArgumentTypes.Count; i++)
+            //Current type can be undefined if we have a method call on a type that isn't defined
+            if(currentType != SmallTypeCache.Undefined)
             {
-                if(!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
+                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, currentType, types);
+                System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
+
+                for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
-                    _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
+                    {
+                        _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    }
                 }
+
+                //Method calls are finally validated, set the mangled method name which we will actually call
+                pNode.SetDefinition(m);
             }
 
-            //Method calls are finally validated, set the mangled method name which we will actually call
-            pNode.SetDefinition(m);
             base.VisitMethodCallSyntax(pNode);
         }
 

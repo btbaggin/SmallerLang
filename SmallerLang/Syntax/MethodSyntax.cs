@@ -103,5 +103,30 @@ namespace SmallerLang.Syntax
 
             return default;
         }
+
+        public override string ToString()
+        {
+            var name = new StringBuilder();
+            name.Append(Name);
+            name.Append("(");
+
+            var parms = Utils.SyntaxHelper.SelectNodeTypes(Parameters);
+            foreach(var p in parms)
+            {
+                name.Append(p.Name);
+                name.Append(",");
+            }
+            if (parms.Length > 0) name = name.Remove(name.Length - 1, 1);
+
+            name.Append(")");
+
+            if (Type != SmallTypeCache.Undefined)
+            {
+                name.Append(" -> ");
+                name.Append(Type.ToString());
+            }
+
+            return name.ToString();
+        }
     }
 }

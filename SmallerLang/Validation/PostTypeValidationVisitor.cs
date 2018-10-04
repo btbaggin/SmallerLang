@@ -18,7 +18,7 @@ namespace SmallerLang.Validation
             foreach(var v in pNode.Variables)
             {
                 Visit((dynamic)v);
-                _locals.DefineVariableInScope(v.Value, v.Type, default);
+                _locals.DefineVariableInScope(v.Value, v.Type);
             }
             Visit((dynamic)pNode.Value);
         }

@@ -39,7 +39,7 @@ namespace SmallerLang.Syntax
         static SmallType _disposeType;
         internal static void BuildCallToDispose(EmittingContext pContext)
         {
-            _disposeType = SmallTypeCache.FromString("Disposable");
+            _disposeType = SmallTypeCache.Disposable;
             if(_disposeType != SmallTypeCache.Undefined)
             {
                 foreach (var v in pContext.Locals.GetVariablesInScope())

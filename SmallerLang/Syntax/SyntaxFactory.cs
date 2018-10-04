@@ -93,7 +93,7 @@ namespace SmallerLang.Syntax
             return new MethodSyntax(pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static TypeDefinitionSyntax TypeDefinition(string pName, string pImplements, DefinitionTypes pType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
+        public static TypeDefinitionSyntax TypeDefinition(string pName, TypeSyntax pImplements, DefinitionTypes pType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
         {
             return new TypeDefinitionSyntax(pName, pImplements, pType, pFields, pMethods, pTypeParameters);
         }

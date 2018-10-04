@@ -47,30 +47,35 @@ namespace SmallerLang
             var stream = lexer.StartTokenStream(source);
             var parser = new SmallerParser(stream, _error);
 
-            var t = parser.Parse();
-            t = new TreeRewriter(_error).VisitModule(t);
+            var tree = parser.Parse();
+
+            //Basic transformations that can be done without type information
+            tree = new TreeRewriter(_error).VisitModule(tree);
+            if (_error.ErrorOccurred) return false;
 
             //Info gathering passes
-            new PreTypeValidation(_error).Visit(t);
+            new PreTypeValidation(_error).Visit(tree);
             if(_error.ErrorOccurred) return false;
 
-            new TypeDiscoveryVisitor(_error).Visit(t);
+            new TypeDiscoveryVisitor(_error).Visit(tree);
+            if (_error.ErrorOccurred) return false;
 
             //Type inference
-            new TypeInferenceVisitor(_error).Visit(t);
+            new TypeInferenceVisitor(_error).Visit(tree);
             if (_error.ErrorOccurred) return false;
 
-            //Method polymorph
-            t = new MethodTraitRewriter(_error).VisitModule(t);
+            //More advanced transformations that require type information
+            tree = new PostTypeRewriter(_error).VisitModule(tree);
+            if (_error.ErrorOccurred) return false;
 
             //Validation passes
-            new TypeChecker(_error).Visit(t);
+            new TypeChecker(_error).Visit(tree);
             if (_error.ErrorOccurred) return false;
 
-            new PostTypeValidationVisitor(_error).Visit(t);
+            new PostTypeValidationVisitor(_error).Visit(tree);
             if (_error.ErrorOccurred) return false;
 
-            LLVMModuleRef module = LLVM.ModuleCreateWithName(t.Name);
+            LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
 
             if(pOptions.Optimizations)
@@ -94,7 +99,7 @@ namespace SmallerLang
 
             using (var c = new EmittingContext(module, passManager))
             {
-                t.Emit(c);
+                tree.Emit(c);
 
                 if (LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message).Value != 0)
                 {

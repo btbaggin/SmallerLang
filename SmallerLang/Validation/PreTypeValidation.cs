@@ -22,7 +22,6 @@ namespace SmallerLang.Validation
                 if (string.IsNullOrEmpty(pNode.Annotation.Value)) _error.WriteError("External methods must be annotated with where to locate the method", pNode.Span);
                 else Utils.KeyAnnotations.ValidateExternalAnnotation(pNode.Annotation, pNode, _error);
             }
-            base.VisitMethodSyntax(pNode);
         }
     }
 }

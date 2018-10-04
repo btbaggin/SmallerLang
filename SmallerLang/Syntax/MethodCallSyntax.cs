@@ -49,9 +49,17 @@ namespace SmallerLang.Syntax
 
                 //Load the location of any pointer calculations
                 //The exceptions to this are structs (arrays are structs) since we pass those as a pointer
-                if (Utils.LlvmHelper.IsPointer(arguments[start + i]) && !Arguments[i].Type.IsStruct && !Arguments[i].Type.IsArray)
+                if (!Arguments[i].Type.IsStruct && !Arguments[i].Type.IsArray)
                 {
-                    arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
+                    Utils.LlvmHelper.LoadIfPointer(ref arguments[start + i], pContext);
+                    //arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
+                }
+
+                if(_definition.MangledName == "print")
+                {
+                    var v = pContext.AllocateVariable("temp_external", Arguments[i].Type);
+                    LLVM.BuildStore(pContext.Builder, arguments[start + i], v);
+                    arguments[start + i] = LLVM.BuildLoad(pContext.Builder, v, "");
                 }
 
                 //Implicitly cast any derived types

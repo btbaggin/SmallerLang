@@ -96,7 +96,6 @@ namespace SmallerLang.Lowering
                 List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
                 foreach (var f in pNode.Fields)
                 {
-                    //TODO I can't poly T[] and this is awful
                     var type = f.TypeNode.Value;
                     if (f.TypeNode.Type.IsArray) type = type.Substring(0, type.IndexOf('['));
 
