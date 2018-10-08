@@ -33,7 +33,7 @@ namespace SmallerLang.Syntax
                 arguments = new LLVMValueRef[Arguments.Count + 1];
 
                 //"consume" the entire access stack to get the object we are calling the method on
-                arguments[0] = MemberAccessStack.BuildGetElementPtr(pContext, null);
+                arguments[0] = AccessStack<MemberAccess>.BuildGetElementPtr(pContext, null);
 
                 pContext.AccessStack.Clear();
                 start = 1;

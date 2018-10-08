@@ -43,6 +43,10 @@ namespace SmallerLang.Validation
                     VisitBooleanLiteralSyntax((BooleanLiteralSyntax)pNode);
                     break;
 
+                case SyntaxType.Break:
+                    VisitBreakSyntax((BreakSyntax)pNode);
+                    break;
+
                 case SyntaxType.Case:
                     VisitCaseSyntax((CaseSyntax)pNode);
                     break;
@@ -180,6 +184,8 @@ namespace SmallerLang.Validation
         }
 
         protected virtual void VisitBooleanLiteralSyntax(BooleanLiteralSyntax pNode) { }
+
+        protected virtual void VisitBreakSyntax(BreakSyntax pNode) { }
 
         protected virtual void VisitCaseSyntax(CaseSyntax pNode)
         {

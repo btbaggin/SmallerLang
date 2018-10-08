@@ -49,6 +49,10 @@ namespace SmallerLang.Lowering
                     node = VisitBooleanLiteralSyntax((BooleanLiteralSyntax)pNode);
                     break;
 
+                case SyntaxType.Break:
+                    node = VisitBreakSyntax((BreakSyntax)pNode);
+                    break;
+
                 case SyntaxType.Case:
                     node = VisitCaseSyntax((CaseSyntax)pNode);
                     break;
@@ -189,6 +193,11 @@ namespace SmallerLang.Lowering
         }
 
         protected virtual SyntaxNode VisitBooleanLiteralSyntax(BooleanLiteralSyntax pNode)
+        {
+            return pNode;
+        }
+
+        protected virtual SyntaxNode VisitBreakSyntax(BreakSyntax pNode)
         {
             return pNode;
         }

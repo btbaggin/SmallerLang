@@ -30,12 +30,16 @@ namespace SmallerLang.Syntax
             var loop = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_loop");
             var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_end");
 
+            pContext.BreakLocations.Push(end);
+
             //Jump to end or loop
             LLVMSharp.LLVM.BuildCondBr(pContext.Builder, cond, loop, end);
 
             //Loop
             LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, loop);
             Body.Emit(pContext);
+
+            pContext.BreakLocations.Pop();
 
             if(!Utils.SyntaxHelper.LastStatementIsReturn(Body))
             {

@@ -46,7 +46,7 @@ namespace SmallerLang.Syntax
             LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, then);
             Body.Emit(pContext);
 
-            if(!Utils.SyntaxHelper.LastStatementIsReturn(Body))
+            if(!Utils.SyntaxHelper.LastStatementIsReturn(Body) && !Utils.SyntaxHelper.LastStatementIsBreak(Body))
             {
                 //Jump to end only if we didn't terminate in the body
                 LLVMSharp.LLVM.BuildBr(pContext.Builder, end);

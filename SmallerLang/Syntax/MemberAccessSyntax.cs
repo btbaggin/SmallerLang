@@ -45,13 +45,13 @@ namespace SmallerLang.Syntax
                 //Store the index we pushed at.
                 //We will later pop only if that index still exists
                 //This allows things like MethodCalls to wipe the stack (because the arguments aren't in the same stack) while still properly popping values
-                var index = pContext.AccessStack.Push(identifier, Identifier.Type);
+                var index = pContext.AccessStack.Push(new MemberAccess(identifier, Identifier.Type));
                     
                 LLVMValueRef value = Value.Emit(pContext);
                 //Terminal nodes are fully emitted in their child most node
                 if(IsTerminalNode(Value))
                 {
-                    value = MemberAccessStack.BuildGetElementPtr(pContext, value);
+                    value = AccessStack<MemberAccess>.BuildGetElementPtr(pContext, value);
                 }
 
                 pContext.AccessStack.PopFrom(index);

@@ -414,6 +414,10 @@ namespace SmallerLang.Parser
                         node = ParseSelect();
                         break;
 
+                    case TokenType.Break:
+                        node = ParseBreak();
+                        break;
+
                     case TokenType.Identifier:
                     case TokenType.It:
                     case TokenType.Self:
@@ -672,6 +676,22 @@ namespace SmallerLang.Parser
                 //Annotations!
                 s.Annotation = ParseAnnotation();
                 return s;
+            }
+        }
+
+        private BreakSyntax ParseBreak()
+        {
+            using (SpanTracker t = _spans.Create())
+            {
+                Expect(TokenType.Break);
+
+                string count = "";
+                if(PeekAndExpect(TokenType.LeftParen))
+                {
+                    Expect(TokenType.Integer, out count);
+                    Expect(TokenType.RightParen);
+                }
+                return SyntaxFactory.Break(count).SetSpan<BreakSyntax>(t);
             }
         }
 

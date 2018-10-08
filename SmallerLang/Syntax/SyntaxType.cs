@@ -14,6 +14,7 @@ namespace SmallerLang.Syntax
         BinaryExpression,
         Block,
         BooleanLiteral,
+        Break,
         Case,
         CastDefinition,
         Cast,

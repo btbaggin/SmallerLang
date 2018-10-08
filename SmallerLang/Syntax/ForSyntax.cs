@@ -67,6 +67,8 @@ namespace SmallerLang.Syntax
             var loop = LLVM.AppendBasicBlock(pContext.CurrentMethod, "for_body");
             var end = LLVM.AppendBasicBlock(pContext.CurrentMethod, "for_end");
 
+            pContext.BreakLocations.Push(end);
+
             //Jump to end or loop
             LLVM.BuildCondBr(pContext.Builder, condv, loop, end);
 
@@ -77,6 +79,8 @@ namespace SmallerLang.Syntax
             {
                 f.Emit(pContext);
             }
+
+            pContext.BreakLocations.Pop();
 
             //Jump back to start
             cond = Condition.Emit(pContext);

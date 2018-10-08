@@ -202,5 +202,10 @@ namespace SmallerLang.Syntax
         {
             return new EnumSyntax(pName, pNames, pValues);
         }
+
+        public static BreakSyntax Break(string pCount)
+        {
+            return new BreakSyntax(pCount);
+        }
     }
 }

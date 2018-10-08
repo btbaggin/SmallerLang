@@ -17,6 +17,12 @@ namespace SmallerLang.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool LastStatementIsBreak(BlockSyntax pBlock)
+        {
+            return pBlock.Statements.Count > 0 && pBlock.Statements[pBlock.Statements.Count - 1].SyntaxType == SyntaxType.Break;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LastStatementIsReturn(ElseSyntax pElse)
         {
             if (pElse.Body == null) return false;

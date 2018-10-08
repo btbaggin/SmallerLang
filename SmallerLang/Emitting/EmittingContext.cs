@@ -19,9 +19,11 @@ namespace SmallerLang.Emitting
 
         public VariableCache Locals { get; private set; }
 
-        internal SmallType CurrentStruct { get; set; }
+        public SmallType CurrentStruct { get; set; }
 
-        internal MemberAccessStack AccessStack { get; set; }
+        public AccessStack<MemberAccess> AccessStack { get; set; } //Used to emit nested member access calls
+
+        public AccessStack<LLVMValueRef> BreakLocations { get; set; } //Used to control which loop to jump from when breaking
 
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
@@ -36,7 +38,8 @@ namespace SmallerLang.Emitting
             _deferredStatements = new Stack<List<Syntax.SyntaxNode>>();
             Builder = LLVM.CreateBuilder();
             Locals = new VariableCache();
-            AccessStack = new MemberAccessStack();
+            AccessStack = new AccessStack<MemberAccess>();
+            BreakLocations = new AccessStack<LLVMValueRef>(1);
         }
 
         #region Method functionality

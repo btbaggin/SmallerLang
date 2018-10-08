@@ -195,5 +195,75 @@ namespace SmallerLang.Validation
             }
             base.VisitNumericLiteralSyntax(pNode);
         }
+
+        int _breakCount;
+        protected override void VisitCaseSyntax(CaseSyntax pNode)
+        {
+            foreach (var c in pNode.Conditions)
+            {
+                Visit((dynamic)c);
+            }
+
+            using (var iw = _store.AddValue("CanBreak", true))
+            {
+                _breakCount++;
+                Visit(pNode.Body);
+                _breakCount--;
+            }
+        }
+
+        protected override void VisitForSyntax(ForSyntax pNode)
+        {
+            if (pNode.Iterator != null)
+            {
+                Visit((dynamic)pNode.Iterator);
+            }
+            else
+            {
+                foreach (var d in pNode.Initializer)
+                {
+                    Visit((dynamic)d);
+                }
+                Visit((dynamic)pNode.Condition);
+
+                foreach (var f in pNode.Finalizer)
+                {
+                    Visit((dynamic)f);
+                }
+            }
+
+            using (var iw = _store.AddValue("CanBreak", true))
+            {
+                _breakCount++;
+                Visit(pNode.Body);
+                _breakCount--;
+            }
+        }
+
+        protected override void VisitWhileSyntax(WhileSyntax pNode)
+        {
+            Visit((dynamic)pNode.Condition);
+            using (var iw = _store.AddValue("CanBreak", true))
+            {
+                _breakCount++;
+                Visit(pNode.Body);
+                _breakCount--;
+            }
+        }
+
+        protected override void VisitBreakSyntax(BreakSyntax pNode)
+        {
+            if(!_store.GetValueOrDefault<bool>("CanBreak"))
+            {
+                _error.WriteError("Break statements can only appear in loops or case statements", pNode.Span);
+            }
+            else
+            {
+                if(pNode.CountAsInt >= _breakCount)
+                {
+                    _error.WriteError($"Invalid break count cannot be larger than {_breakCount - 1}", pNode.Span);
+                }
+            }
+        }
     }
 }

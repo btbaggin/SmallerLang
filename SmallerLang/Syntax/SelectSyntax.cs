@@ -31,6 +31,8 @@ namespace SmallerLang.Syntax
             var endBlock = LLVM.AppendBasicBlock(pContext.CurrentMethod, "endswitch");
             LLVMBasicBlockRef elseBlock;
 
+            pContext.BreakLocations.Push(endBlock);
+
             var builder = pContext.GetTempBuilder();
             //Default case has to be the last one
             if(Cases[Cases.Count - 1].IsDefault)
@@ -64,6 +66,8 @@ namespace SmallerLang.Syntax
                 }
             }
             LLVM.PositionBuilderAtEnd(pContext.Builder, endBlock);
+
+            pContext.BreakLocations.Pop();
 
             //Jump from our else block to the end
             LLVM.BuildBr(builder, endBlock);
