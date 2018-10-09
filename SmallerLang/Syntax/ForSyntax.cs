@@ -14,6 +14,8 @@ namespace SmallerLang.Syntax
 
         public IList<DeclarationSyntax> Initializer { get; private set; }
 
+        public bool Reverse { get; private set; }
+
         public SyntaxNode Condition { get; private set; }
 
         public IList<SyntaxNode> Finalizer { get; private set; }
@@ -24,9 +26,10 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.For;
 
-        internal ForSyntax(IdentifierSyntax pIterator, BlockSyntax pBody)
+        internal ForSyntax(IdentifierSyntax pIterator, bool pBackwards, BlockSyntax pBody)
         {
             Iterator = pIterator;
+            Reverse = pBackwards;
             Body = pBody;
         }
 

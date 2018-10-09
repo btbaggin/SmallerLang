@@ -585,6 +585,7 @@ namespace SmallerLang.Parser
                 Expect(TokenType.For);
                 Expect(TokenType.LeftParen);
 
+                bool backwards = false;
                 IdentifierSyntax iterator = null;
                 List<DeclarationSyntax> initializer = new List<DeclarationSyntax>();
                 SyntaxNode cond = null;
@@ -623,6 +624,11 @@ namespace SmallerLang.Parser
                 else
                 {
                     iterator = ParseArrayAccess();
+                    if(PeekAndExpectOneOf(out TokenType type, TokenType.MinusMinus, TokenType.PlusPlus))
+                    {
+                        backwards = (type == TokenType.MinusMinus);
+                    }
+
                 }
 
                 Expect(TokenType.RightParen);
@@ -638,7 +644,7 @@ namespace SmallerLang.Parser
                     return SyntaxFactory.For(initializer, cond, finalizer, body).SetSpan<ForSyntax>(t);
                 }
 
-                return SyntaxFactory.For(iterator, body).SetSpan<ForSyntax>(t);
+                return SyntaxFactory.For(iterator, backwards, body).SetSpan<ForSyntax>(t);
             }
         }
 

@@ -199,6 +199,7 @@ namespace SmallerLang.Validation
         int _breakCount;
         protected override void VisitCaseSyntax(CaseSyntax pNode)
         {
+            _locals.AddScope();
             foreach (var c in pNode.Conditions)
             {
                 Visit((dynamic)c);
@@ -210,10 +211,12 @@ namespace SmallerLang.Validation
                 Visit(pNode.Body);
                 _breakCount--;
             }
+            _locals.RemoveScope();
         }
 
         protected override void VisitForSyntax(ForSyntax pNode)
         {
+            _locals.AddScope();
             if (pNode.Iterator != null)
             {
                 Visit((dynamic)pNode.Iterator);
@@ -238,10 +241,12 @@ namespace SmallerLang.Validation
                 Visit(pNode.Body);
                 _breakCount--;
             }
+            _locals.RemoveScope();
         }
 
         protected override void VisitWhileSyntax(WhileSyntax pNode)
         {
+            _locals.AddScope();
             Visit((dynamic)pNode.Condition);
             using (var iw = _store.AddValue("CanBreak", true))
             {
@@ -249,6 +254,7 @@ namespace SmallerLang.Validation
                 Visit(pNode.Body);
                 _breakCount--;
             }
+            _locals.RemoveScope();
         }
 
         protected override void VisitBreakSyntax(BreakSyntax pNode)

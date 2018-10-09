@@ -16,22 +16,54 @@ namespace SmallerLang.Lowering
             if (pNode.Iterator != null)
             {
                 var i = SyntaxFactory.Identifier("!i");
-                var decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral("0", NumberTypes.Integer));
-                var finalizer = SyntaxFactory.UnaryExpression(i, UnaryExpressionOperator.PostIncrement);
+
+                var postOp = pNode.Reverse ? UnaryExpressionOperator.PostDecrement : UnaryExpressionOperator.PostIncrement;
+                UnaryExpressionSyntax finalizer = SyntaxFactory.UnaryExpression(i, postOp);
+
                 SyntaxNode end = null;
+                DeclarationSyntax decl = null;
 
                 //Save itvar in case we are looping in a case body
                 var it = _itVar;
 
                 if (pNode.Iterator.Type.IsArray)
                 {
-                    end = SyntaxFactory.UnaryExpression(pNode.Iterator, UnaryExpressionOperator.Length);
+                    //We are iterating over an array
+                    //Reverse loops will start at Array.Length and decrement to 0
+                    //Normal loops will start at 0 and increment to Array.Length
+                    if (pNode.Reverse)
+                    {
+                        var length = SyntaxFactory.UnaryExpression(pNode.Iterator, UnaryExpressionOperator.Length);
+                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
+                        end = SyntaxFactory.NumericLiteral(0);
+                    }
+
+                    else
+                    {
+                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
+                        end = SyntaxFactory.UnaryExpression(pNode.Iterator, UnaryExpressionOperator.Length);
+                    }
+                    
                     _itVar = SyntaxFactory.ArrayAccess(pNode.Iterator, i);
 
                 }
                 else if (pNode.Iterator.Type.IsAssignableFrom(SmallTypeCache.Enumerable))
                 {
-                    end = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.Identifier("Count"));
+                    //We are iterating over an enumerable
+                    //Reverse loops will start at Count and decrement to 0
+                    //Normal loops will start at 0 and increment to Count
+                    if (pNode.Reverse)
+                    {
+                        var count = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.Identifier("Count"));
+                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(count, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
+                        end = SyntaxFactory.NumericLiteral(0);
+                    }
+                    else
+                    {
+                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
+                        end = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.Identifier("Count"));
+                    }
+
                     _itVar = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.MethodCall("ItemAt", new List<SyntaxNode>() { SyntaxFactory.Identifier("!i") }));
                 }
                 else
@@ -40,7 +72,8 @@ namespace SmallerLang.Lowering
                     return base.VisitForSyntax(pNode);
                 }
 
-                var condition = SyntaxFactory.BinaryExpression(i, BinaryExpressionOperator.LessThan, end);
+                var op = pNode.Reverse ? BinaryExpressionOperator.GreaterThanOrEqual : BinaryExpressionOperator.LessThan;
+                var condition = SyntaxFactory.BinaryExpression(i, op, end);
 
                 var body = (BlockSyntax)Visit(pNode.Body);
                 _itVar = it;

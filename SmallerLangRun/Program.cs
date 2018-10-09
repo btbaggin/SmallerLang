@@ -11,9 +11,7 @@ namespace SmallerLangRun
     {
         /*TODO
          * Range 1..10
-         * Backwards iterators
          * Generic traits
-         * Private variables in implements
          * Trait dependencies?
          * Allow returning traits from methods?
          * tree shaking of methods
@@ -48,7 +46,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\test2.sml";
+            var prog = @"C:\Test\SML\Iterator.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

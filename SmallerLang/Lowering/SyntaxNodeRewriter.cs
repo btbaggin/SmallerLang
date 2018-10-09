@@ -273,7 +273,7 @@ namespace SmallerLang.Lowering
         {
             if(pNode.Iterator != null)
             {
-                return SyntaxFactory.For(Visit((dynamic)pNode.Iterator), (BlockSyntax)Visit(pNode.Body));
+                return SyntaxFactory.For(Visit((dynamic)pNode.Iterator), pNode.Reverse, (BlockSyntax)Visit(pNode.Body));
             }
 
             List<DeclarationSyntax> initializer = new List<DeclarationSyntax>(pNode.Initializer.Count);

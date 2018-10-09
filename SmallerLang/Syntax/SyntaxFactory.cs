@@ -28,6 +28,11 @@ namespace SmallerLang.Syntax
             return new NumericLiteralSyntax(pValue, pType);
         }
 
+        public static NumericLiteralSyntax NumericLiteral(int pValue)
+        {
+            return new NumericLiteralSyntax(pValue.ToString(), NumberTypes.Integer);
+        }
+
         public static ArrayLiteralSyntax ArrayLiteral(TypeSyntax pType, string pValue)
         {
             return new ArrayLiteralSyntax(pType, pValue);
@@ -65,9 +70,9 @@ namespace SmallerLang.Syntax
             return new WhileSyntax(pCondition, pBody);
         }
 
-        public static ForSyntax For(IdentifierSyntax pIterator, BlockSyntax pBody)
+        public static ForSyntax For(IdentifierSyntax pIterator, bool pBackwards, BlockSyntax pBody)
         {
-            return new ForSyntax(pIterator, pBody);
+            return new ForSyntax(pIterator, pBackwards, pBody);
         }
 
         public static ForSyntax For(IList<DeclarationSyntax> pInitializer, SyntaxNode pCondition, IList<SyntaxNode> pFinalizer, BlockSyntax pBody)
