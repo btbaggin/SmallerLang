@@ -15,6 +15,8 @@ namespace SmallerLang
 {
     public class SmallCompiler
     {
+        public static string CurrentDirectory { get; private set; }
+
         readonly ConsoleErrorReporter _error;
 
         public SmallCompiler()
@@ -129,6 +131,8 @@ namespace SmallerLang
                 _error.WriteError($"Unable to read file '{pFile}'");
                 return null;
             }
+
+            CurrentDirectory = System.IO.Path.GetDirectoryName(pFile);
             return source;
         }
     }

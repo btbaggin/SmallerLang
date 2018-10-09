@@ -37,11 +37,6 @@ namespace SmallerLang.Parser
 
         private ModuleSyntax ParseModule()
         {
-            //Module name
-            Expect(TokenType.LeftBracket);
-            Expect(TokenType.Identifier, out string name);
-            Expect(TokenType.RightBracket);
-
             //Module content
             List<MethodSyntax> methods = new List<MethodSyntax>();
             List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
@@ -93,7 +88,7 @@ namespace SmallerLang.Parser
                 return null;
             }
 
-            return SyntaxFactory.Module(name, methods, definitions, enums);
+            return SyntaxFactory.Module("module", methods, definitions, enums);
         }
 
         private EnumSyntax ParseEnum()

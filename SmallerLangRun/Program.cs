@@ -10,6 +10,8 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Range 1..10
+         * Backwards iterators
          * Generic traits
          * Private variables in implements
          * Trait dependencies?
@@ -46,7 +48,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\Iterator.sml";
+            var prog = @"C:\Test\SML\test2.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)
