@@ -43,15 +43,22 @@ namespace SmallerLang.Emitting
             _deferredStatements = new Stack<List<Syntax.SyntaxNode>>();
             Builder = LLVM.CreateBuilder();
             _emitDebug = pEmitDebug;
-            if(_emitDebug)
-            {
-                _debugInfo = Utils.LlvmPInvokes.LLVMCreateDIBuilder(CurrentModule);
-                _debugFile = Utils.LlvmPInvokes.LLVMDIBuilderCreateFile(_debugInfo, "test", 4, ".", 1);//TODO change file name
-                _debugLocations = new Stack<LLVMMetadataRef>();
-            }
             Locals = new VariableCache();
             AccessStack = new AccessStack<MemberAccess>();
             BreakLocations = new AccessStack<LLVMValueRef>(1);
+
+            if (_emitDebug)
+            {
+                _debugLocations = new Stack<LLVMMetadataRef>();
+                _debugInfo = Utils.LlvmPInvokes.LLVMCreateDIBuilder(CurrentModule);
+                _debugFile = Utils.LlvmPInvokes.LLVMDIBuilderCreateFile(_debugInfo, "debug", 5, ".", 1);
+
+                //Set debug version
+                var version = LLVM.MDNode(new LLVMValueRef[] { GetInt(1), //Error on mismatch
+                                                               LLVM.MDString("Debug Info Version", 18), //Constant string. Cannot change.
+                                                               GetInt(3) }); //Debug version
+                LLVM.AddNamedMetadataOperand(CurrentModule, "llvm.module.flags", version);
+            }
         }
 
         #region Method functionality

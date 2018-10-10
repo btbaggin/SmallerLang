@@ -45,12 +45,12 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\Select.sml";
+            var prog = @"C:\Test\SML\Iterator.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)
             {
-                OutputBytecode = true,
+                OutputBytecode = false,
                 Optimizations = true,
                 SourceFile = prog,
                 Debug = true

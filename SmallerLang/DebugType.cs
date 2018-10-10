@@ -54,11 +54,12 @@ namespace SmallerLang
                     ulong size;
                     if (pType == SmallTypeCache.Boolean) size = 1;
                     else if (pType == SmallTypeCache.Short) size = 16;
-                    else if (pType == SmallTypeCache.Int) size = 32; 
-                    else if (pType == SmallTypeCache.Long) size = 64; 
+                    else if (pType == SmallTypeCache.Int) size = 32;
+                    else if (pType == SmallTypeCache.Long) size = 64;
                     else if (pType == SmallTypeCache.Float) size = 32;
-                    else if (pType == SmallTypeCache.Double) size = 64; 
+                    else if (pType == SmallTypeCache.Double) size = 64;
                     else if (pType == SmallTypeCache.String) throw new NotImplementedException();
+                    else if (pType.IsEnum) size = 32;
                     else throw new ArgumentException("pType");
 
                     LLVMMetadataRef value = LLVM.DIBuilderCreateBasicType(pBuilder, pType.Name, size, 0, 0);

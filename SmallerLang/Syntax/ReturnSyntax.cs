@@ -38,16 +38,20 @@ namespace SmallerLang.Syntax
         {
             pContext.EmitDebugLocation(this);
 
+            //Emit deferred statements right before return
+            foreach (var s in pContext.GetDeferredStatements())
+            {
+                s.Emit(pContext);
+            }
+
+            //We want to dispose variables after deferred statements because
+            //then variables referenced in deferred statements will still be valid
+            BlockSyntax.BuildCallToDispose(pContext);
+
             LLVMValueRef v;
             if (Values.Count == 1)
             {
                 v = Values[0].Emit(pContext);
-
-                //Emit deferred statements right before return
-                foreach (var s in pContext.GetDeferredStatements())
-                {
-                    s.Emit(pContext);
-                }
                 Utils.LlvmHelper.LoadIfPointer(ref v, pContext);
             }
             else

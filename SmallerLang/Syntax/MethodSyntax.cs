@@ -79,11 +79,12 @@ namespace SmallerLang.Syntax
                     {
                         s.Emit(pContext);
                     }
+
+                    //We want to dispose variables after deferred statements because
+                    //then variables referenced in deferred statements will still be valid
+                    BlockSyntax.BuildCallToDispose(pContext);
                 }
 
-                //We want to dispose variables after deferred statements because
-                //then variables referenced in deferred statements will still be valid
-                BlockSyntax.BuildCallToDispose(pContext);
 
                 if (ReturnValues.Count == 0)
                 {
