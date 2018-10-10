@@ -20,6 +20,8 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.Module;
+
         internal ModuleSyntax(string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
             Name = pName;

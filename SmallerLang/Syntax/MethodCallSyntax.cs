@@ -10,11 +10,13 @@ namespace SmallerLang.Syntax
 {
     public class MethodCallSyntax : IdentifierSyntax
     {
-        public IList<ExpressionSyntax> Arguments { get; private set; }
+        public IList<SyntaxNode> Arguments { get; private set; }
+
+        public override SyntaxType SyntaxType => SyntaxType.MethodCall;
 
         MethodDefinition _definition;
 
-        internal MethodCallSyntax(string pName, IList<ExpressionSyntax> pArguments) : base(pName)
+        internal MethodCallSyntax(string pName, IList<SyntaxNode> pArguments) : base(pName)
         {
             Arguments = pArguments;
         }
@@ -25,19 +27,14 @@ namespace SmallerLang.Syntax
             pContext.EmitDebugLocation(this);
 
             LLVMValueRef[] arguments = null;
-            MemberAccessStack member = null;
             int start = 0;
             //If we are calling an instance method, we need to add the "self" parameter
             if (pContext.AccessStack.Count > 0)
             {
                 arguments = new LLVMValueRef[Arguments.Count + 1];
 
-                //Save the current stack so we can restore it when we are done
-                //We clear this because we are no longer in a member access when emitting the arguments
-                member = pContext.AccessStack.Copy();
-
                 //"consume" the entire access stack to get the object we are calling the method on
-                arguments[0] = MemberAccessStack.BuildGetElementPtr(pContext, null);
+                arguments[0] = AccessStack<MemberAccess>.BuildGetElementPtr(pContext, null);
 
                 pContext.AccessStack.Clear();
                 start = 1;
@@ -53,9 +50,17 @@ namespace SmallerLang.Syntax
 
                 //Load the location of any pointer calculations
                 //The exceptions to this are structs (arrays are structs) since we pass those as a pointer
-                if (Utils.LlvmHelper.IsPointer(arguments[start + i]) && !Arguments[i].Type.IsStruct && !Arguments[i].Type.IsArray)
+                if (!Arguments[i].Type.IsStruct && !Arguments[i].Type.IsArray)
                 {
-                    arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
+                    Utils.LlvmHelper.LoadIfPointer(ref arguments[start + i], pContext);
+                    //arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
+                }
+
+                if(_definition.MangledName == "print")
+                {
+                    var v = pContext.AllocateVariable("temp_external", Arguments[i].Type);
+                    LLVM.BuildStore(pContext.Builder, arguments[start + i], v);
+                    arguments[start + i] = LLVM.BuildLoad(pContext.Builder, v, "");
                 }
 
                 //Implicitly cast any derived types
@@ -66,8 +71,6 @@ namespace SmallerLang.Syntax
                     arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], type, "");
                 }
             }
-
-            if (member != null) pContext.AccessStack = member;
 
             return LLVM.BuildCall(pContext.Builder, pContext.GetMethod(_definition.MangledName), arguments, "");
         }

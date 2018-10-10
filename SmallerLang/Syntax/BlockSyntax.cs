@@ -13,6 +13,8 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.Block;
+
         public BlockSyntax(IList<SyntaxNode> pStatements)
         {
             Statements = pStatements;
@@ -29,9 +31,31 @@ namespace SmallerLang.Syntax
                 else pContext.AddDeferredStatement(s);
             }
 
+            BuildCallToDispose(pContext);
+
             pContext.RemoveDebugScope();
             pContext.Locals.RemoveScope();
             return default;
+        }
+
+        static SmallType _disposeType;
+        internal static void BuildCallToDispose(EmittingContext pContext)
+        {
+            _disposeType = SmallTypeCache.Disposable;
+            if(_disposeType != SmallTypeCache.Undefined)
+            {
+                foreach (var v in pContext.Locals.GetVariablesInScope())
+                {
+                    if (v.Type.IsAssignableFrom(_disposeType))
+                    {
+                        if (MethodCache.FindMethod(out MethodDefinition pDef, v.Type, "Dispose", new SmallType[] { }))
+                        {
+                            var func = pContext.GetMethod(pDef.MangledName);
+                            LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");
+                        }
+                    }
+                }
+            }
         }
     }
 }

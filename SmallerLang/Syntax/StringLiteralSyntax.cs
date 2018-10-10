@@ -12,6 +12,8 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type => SmallTypeCache.String;
 
+        public override SyntaxType SyntaxType => SyntaxType.StringLiteral;
+
         internal StringLiteralSyntax(string pValue) : base(pValue) { }
 
         public override LLVMValueRef Emit(EmittingContext pContext)

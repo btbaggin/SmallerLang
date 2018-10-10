@@ -40,7 +40,9 @@ namespace SmallerLang
 
         public string GetContainingLine(string pSource)
         {
-            var lineStart = Start - Column - 1;
+            var lineStart = Start - Column;
+            if (Start != Column) lineStart--;
+
             var lineEnd = pSource.IndexOf('\n', End);
             if (lineEnd == -1) lineEnd = pSource.Length;
             return pSource.Substring(lineStart, lineEnd - lineStart);

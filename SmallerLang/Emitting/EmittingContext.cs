@@ -17,11 +17,13 @@ namespace SmallerLang.Emitting
         public LLVMValueRef CurrentMethod { get; private set; }
         public LLVMBuilderRef Builder { get; private set; }
 
-        public VariableCache<LLVMValueRef> Locals { get; private set; }
+        public VariableCache Locals { get; private set; }
 
-        internal SmallType CurrentStruct { get; set; }
+        public SmallType CurrentStruct { get; set; }
 
-        internal MemberAccessStack AccessStack { get; set; }
+        public AccessStack<MemberAccess> AccessStack { get; set; } //Used to emit nested member access calls
+
+        public AccessStack<LLVMValueRef> BreakLocations { get; set; } //Used to control which loop to jump from when breaking
 
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
@@ -40,9 +42,6 @@ namespace SmallerLang.Emitting
             _context = LLVM.GetGlobalContext();
             _deferredStatements = new Stack<List<Syntax.SyntaxNode>>();
             Builder = LLVM.CreateBuilder();
-            Locals = new VariableCache<LLVMValueRef>();
-            AccessStack = new MemberAccessStack();
-
             _emitDebug = pEmitDebug;
             if(_emitDebug)
             {
@@ -50,6 +49,9 @@ namespace SmallerLang.Emitting
                 _debugFile = Utils.LlvmPInvokes.LLVMDIBuilderCreateFile(_debugInfo, "test", 4, ".", 1);//TODO change file name
                 _debugLocations = new Stack<LLVMMetadataRef>();
             }
+            Locals = new VariableCache();
+            AccessStack = new AccessStack<MemberAccess>();
+            BreakLocations = new AccessStack<LLVMValueRef>(1);
         }
 
         #region Method functionality
@@ -89,7 +91,7 @@ namespace SmallerLang.Emitting
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
                 parmTypes[start + i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type);
-                if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[i] = LLVMTypeRef.PointerType(parmTypes[i], 0);
+                if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
                 originalTypes[i] = pMethod.Parameters[i].Type;
             }
 
@@ -136,7 +138,7 @@ namespace SmallerLang.Emitting
                 start = 1;
                 LLVMValueRef p = LLVM.GetParam(func, 0);
                 LLVM.SetValueName(p, "self");
-                Locals.DefineParameter("self", p);
+                Locals.DefineParameter("self", CurrentStruct, p);
                 EmitDebugParameter("self", CurrentStruct, pNode.Span.Line, 0);
             }
 
@@ -149,7 +151,7 @@ namespace SmallerLang.Emitting
                 EmitDebugParameter(name, pNode.Parameters[i].Type, pNode.Span.Line, i + start);
 
                 Debug.Assert(!Locals.IsVariableDefinedInScope(name), $"Parameter {name} already defined");
-                Locals.DefineParameter(name, parm);
+                Locals.DefineParameter(name, pNode.Parameters[i].Type, parm);
             }
 
             EmitFunctionDebugInfo(pNode, func);

@@ -10,13 +10,15 @@ namespace SmallerLang.Syntax
 {
     public class SelectSyntax : SyntaxNode
     {
-        public ExpressionSyntax Condition { get; private set; }
+        public SyntaxNode Condition { get; private set; }
 
         public IList<CaseSyntax> Cases { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal SelectSyntax(ExpressionSyntax pCondition, IList<CaseSyntax> pCases)
+        public override SyntaxType SyntaxType => SyntaxType.Select;
+
+        internal SelectSyntax(SyntaxNode pCondition, IList<CaseSyntax> pCases)
         {
             Condition = pCondition;
             Cases = pCases;
@@ -30,6 +32,8 @@ namespace SmallerLang.Syntax
 
             var endBlock = LLVM.AppendBasicBlock(pContext.CurrentMethod, "endswitch");
             LLVMBasicBlockRef elseBlock;
+
+            pContext.BreakLocations.Push(endBlock);
 
             var builder = pContext.GetTempBuilder();
             //Default case has to be the last one
@@ -64,6 +68,8 @@ namespace SmallerLang.Syntax
                 }
             }
             LLVM.PositionBuilderAtEnd(pContext.Builder, endBlock);
+
+            pContext.BreakLocations.Pop();
 
             //Jump from our else block to the end
             LLVM.BuildBr(builder, endBlock);

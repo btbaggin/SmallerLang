@@ -10,11 +10,14 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Mulitple declarations with struct initializer, not properly initializing memory
-         * Multiple assignment of member/array access
-         * Poly methods taking traits
+         * Range 1..10
+         * Generic traits
+         * Trait dependencies?
+         * Zero out array allocations
+         * Allow returning traits from methods?
+         * tree shaking of methods
+         * control flow analysis?
          * Do struct poly after type inference?
-         * Set multiple variables from single assignment?
          * imports
          * strings
         */
@@ -42,7 +45,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\Poly.sml";
+            var prog = @"C:\Test\SML\Select.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

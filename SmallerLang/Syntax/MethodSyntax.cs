@@ -33,6 +33,8 @@ namespace SmallerLang.Syntax
             }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.Method;
+
         string _name;
         internal MethodSyntax(string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {
@@ -79,6 +81,10 @@ namespace SmallerLang.Syntax
                     }
                 }
 
+                //We want to dispose variables after deferred statements because
+                //then variables referenced in deferred statements will still be valid
+                BlockSyntax.BuildCallToDispose(pContext);
+
                 if (ReturnValues.Count == 0)
                 {
                     LLVM.BuildRetVoid(pContext.Builder);
@@ -99,6 +105,31 @@ namespace SmallerLang.Syntax
             }
 
             return default;
+        }
+
+        public override string ToString()
+        {
+            var name = new StringBuilder();
+            name.Append(Name);
+            name.Append("(");
+
+            var parms = Utils.SyntaxHelper.SelectNodeTypes(Parameters);
+            foreach(var p in parms)
+            {
+                name.Append(p.Name);
+                name.Append(",");
+            }
+            if (parms.Length > 0) name = name.Remove(name.Length - 1, 1);
+
+            name.Append(")");
+
+            if (Type != SmallTypeCache.Undefined)
+            {
+                name.Append(" -> ");
+                name.Append(Type.ToString());
+            }
+
+            return name.ToString();
         }
     }
 }

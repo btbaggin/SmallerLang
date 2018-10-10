@@ -12,13 +12,13 @@ namespace SmallerLang.Validation
     {
         SmallType _currentType;
         SmallType _currentStruct;
-        VariableCache<SmallType> _locals;
+        VariableCache _locals;
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
 
         public TypeInferenceVisitor(IErrorReporter pError)
         {
-            _locals = new VariableCache<SmallType>();
+            _locals = new VariableCache();
             _error = pError;
         }
 
@@ -32,7 +32,7 @@ namespace SmallerLang.Validation
 
             foreach (var s in pNode.Structs)
             {
-                _currentStruct = SmallTypeCache.FromString(s.Name);
+                _currentStruct = s.GetApplicableType();// SmallTypeCache.FromString(s.Name);
                 foreach (var m in s.Methods)
                 {
                     Visit(m);
@@ -222,7 +222,7 @@ namespace SmallerLang.Validation
                 if(pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
                 else
                 {
-                    _locals = new VariableCache<SmallType>();
+                    _locals = new VariableCache();
                     _locals.AddScope();
                     foreach (var f in _currentType.GetFields())
                     {
@@ -383,10 +383,8 @@ namespace SmallerLang.Validation
 
         private void ForceCastLiteral(SmallType pType, SyntaxNode pRight)
         {
-            if (pRight.GetType() == typeof(NumericLiteralSyntax))
+            if (pRight is NumericLiteralSyntax n)
             {
-                var n = (NumericLiteralSyntax)pRight;
-
                 if (pType == SmallTypeCache.Float)
                 {
                     n.NumberType = NumberTypes.Float;
@@ -412,13 +410,9 @@ namespace SmallerLang.Validation
 
         private void TrySetImplicitCastType(SyntaxNode pNode, SmallType pType)
         {
-            if(pNode.GetType() == typeof(CastSyntax))
+            if(pNode is CastSyntax c && c.Type == SmallTypeCache.Undefined)
             {
-                var c = (CastSyntax)pNode;
-                if(c.Type == SmallTypeCache.Undefined)
-                {
-                    c.SetType(pType);
-                }
+                c.SetType(pType);
             }
         }
 
@@ -443,7 +437,7 @@ namespace SmallerLang.Validation
                 return false;
             }
 
-            pType = _locals.GetVariable(pName);
+            pType = _locals.GetVariable(pName).Type;
             return true;
         }
 

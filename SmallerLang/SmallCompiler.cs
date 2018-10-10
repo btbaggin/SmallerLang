@@ -15,6 +15,15 @@ namespace SmallerLang
 {
     public class SmallCompiler
     {
+        public static string CurrentDirectory { get; private set; }
+
+        readonly ConsoleErrorReporter _error;
+
+        public SmallCompiler()
+        {
+            _error = new ConsoleErrorReporter();
+        }
+
         public bool Compile(CompilerOptions pOptions)
         {
             if(Compile(pOptions, out LLVMModuleRef? m) && !string.IsNullOrEmpty(pOptions.OutputFile))
@@ -30,34 +39,46 @@ namespace SmallerLang
 
         public bool Compile(CompilerOptions pOptions, out LLVMModuleRef? pModule)
         {
-            string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : System.IO.File.ReadAllText(pOptions.SourceFile);
-
-            IErrorReporter reporter = new ConsoleErrorReporter(source);
-            var lexer = new SmallerLexer(reporter);
-            var stream = lexer.StartTokenStream(source);
-            var parser = new SmallerParser(stream, reporter);
-
             pModule = null;
-            var t = parser.Parse();
-            t = (ModuleSyntax)new TreeRewriter(reporter).Visit(t);
+            string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : ReadSourceFile(pOptions.SourceFile);
+            if (source == null) return false;
 
-            new PreTypeValidation(reporter).Visit(t);
-            if(reporter.ErrorOccurred) return false;
+            _error.SetSource(source);
 
-            new TypeDiscoveryVisitor(reporter).Visit(t);
+            var lexer = new SmallerLexer(_error);
+            var stream = lexer.StartTokenStream(source);
+            var parser = new SmallerParser(stream, _error);
+
+            var tree = parser.Parse();
+
+            //Basic transformations that can be done without type information
+            tree = new TreeRewriter(_error).VisitModule(tree);
+            if (_error.ErrorOccurred) return false;
+
             //Info gathering passes
-            new TypeInferenceVisitor(reporter).Visit(t);
-            if (reporter.ErrorOccurred) return false;
+            new PreTypeValidation(_error).Visit(tree);
+            if(_error.ErrorOccurred) return false;
+
+            new TypeDiscoveryVisitor(_error).Visit(tree);
+            if (_error.ErrorOccurred) return false;
+
+            //Type inference
+            new TypeInferenceVisitor(_error).Visit(tree);
+            if (_error.ErrorOccurred) return false;
+
+            //More advanced transformations that require type information
+            tree = new PostTypeRewriter(_error).VisitModule(tree);
+            if (_error.ErrorOccurred) return false;
 
             //Validation passes
-            new TypeChecker(reporter).Visit(t);
-            if (reporter.ErrorOccurred) return false;
+            new TypeChecker(_error).Visit(tree);
+            if (_error.ErrorOccurred) return false;
 
-            new PostTypeValidationVisitor(reporter).Visit(t);
-            if (reporter.ErrorOccurred) return false;
+            new PostTypeValidationVisitor(_error).Visit(tree);
+            if (_error.ErrorOccurred) return false;
 
-            LLVMModuleRef m = LLVM.ModuleCreateWithName(t.Name);
-            LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(m);
+            LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
+            LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
 
             if(pOptions.Optimizations)
             {
@@ -78,22 +99,41 @@ namespace SmallerLang
             }
             LLVM.InitializeFunctionPassManager(passManager);
 
-            using (var c = new EmittingContext(m, passManager, pOptions.Debug))
+            using (var c = new EmittingContext(module, passManager, pOptions.Debug))
             {
-                t.Emit(c);
+                tree.Emit(c);
 
-                if (LLVM.VerifyModule(m, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message).Value != 0)
+                if (LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message).Value != 0)
                 {
-                    LLVM.DumpModule(m);
+                    LLVM.DumpModule(module);
                     LLVM.DisposePassManager(passManager);
                     pModule = null;
                     return false;
                 }
             }
                 
-            pModule = m;
+            pModule = module;
             LLVM.DisposePassManager(passManager);
             return true;
+        }
+
+        private string ReadSourceFile(string pFile)
+        {
+            if(!System.IO.File.Exists(pFile)) _error.WriteError($"File '{pFile}' not found");
+
+            string source;
+            try
+            {
+                source = System.IO.File.ReadAllText(pFile);
+            }
+            catch (Exception)
+            {
+                _error.WriteError($"Unable to read file '{pFile}'");
+                return null;
+            }
+
+            CurrentDirectory = System.IO.Path.GetDirectoryName(pFile);
+            return source;
         }
     }
 }

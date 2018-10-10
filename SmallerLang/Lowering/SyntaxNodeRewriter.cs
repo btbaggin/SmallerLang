@@ -9,139 +9,148 @@ namespace SmallerLang.Lowering
 {
     public abstract class SyntaxNodeRewriter
     {
+        public ModuleSyntax VisitModule(ModuleSyntax pNode)
+        {
+            return (ModuleSyntax)Visit(pNode);
+        }
+
         public SyntaxNode Visit(SyntaxNode pNode)
         {
             if (pNode == null) return null;
 
             SyntaxNode node;
-            switch (pNode)
+            switch (pNode.SyntaxType)
             {
-                case ItSyntax i:
-                    node = VisitItSyntax(i);
+                case SyntaxType.It:
+                    node = VisitItSyntax((ItSyntax)pNode);
                     break;
 
-                case ArrayLiteralSyntax a:
-                    node = VisitArrayLiteralSyntax(a);
+                case SyntaxType.ArrayLiteral:
+                    node = VisitArrayLiteralSyntax((ArrayLiteralSyntax)pNode);
                     break;
 
-                case ArrayAccessSyntax a:
-                    node = VisitArrayAccessSyntax(a);
+                case SyntaxType.ArrayAccess:
+                    node = VisitArrayAccessSyntax((ArrayAccessSyntax)pNode);
                     break;
 
-                case AssignmentSyntax a:
-                    node = VisitAssignmentSyntax(a);
+                case SyntaxType.Assignment:
+                    node = VisitAssignmentSyntax((AssignmentSyntax)pNode);
                     break;
 
-                case BinaryExpressionSyntax b:
-                    node = VisitBinaryExpressionSyntax(b);
+                case SyntaxType.BinaryExpression:
+                    node = VisitBinaryExpressionSyntax((BinaryExpressionSyntax)pNode);
                     break;
 
-                case BlockSyntax b:
-                    node = VisitBlockSyntax(b);
+                case SyntaxType.Block:
+                    node = VisitBlockSyntax((BlockSyntax)pNode);
                     break;
 
-                case BooleanLiteralSyntax b:
-                    node = VisitBooleanLiteralSyntax(b);
+                case SyntaxType.BooleanLiteral:
+                    node = VisitBooleanLiteralSyntax((BooleanLiteralSyntax)pNode);
                     break;
 
-                case CaseSyntax c:
-                    node = VisitCaseSyntax(c);
+                case SyntaxType.Break:
+                    node = VisitBreakSyntax((BreakSyntax)pNode);
                     break;
 
-                case CastDefinitionSyntax c:
-                    node = VisitCastDefinitionSyntax(c);
+                case SyntaxType.Case:
+                    node = VisitCaseSyntax((CaseSyntax)pNode);
                     break;
 
-                case CastSyntax c:
-                    node = VisitCastSyntax(c);
+                case SyntaxType.CastDefinition:
+                    node = VisitCastDefinitionSyntax((CastDefinitionSyntax)pNode);
                     break;
 
-                case DiscardSyntax d:
-                    node = VisitDiscardSyntax(d);
+                case SyntaxType.Cast:
+                    node = VisitCastSyntax((CastSyntax)pNode);
                     break;
 
-                case NumericLiteralSyntax n:
-                    node = VisitNumericLiteralSyntax(n);
+                case SyntaxType.Discard:
+                    node = VisitDiscardSyntax((DiscardSyntax)pNode);
                     break;
 
-                case StringLiteralSyntax s:
-                    node = VisitStringLiteralSyntax(s);
+                case SyntaxType.NumericLiteral:
+                    node = VisitNumericLiteralSyntax((NumericLiteralSyntax)pNode);
                     break;
 
-                case SelfSyntax s:
-                    node = VisitSelfSyntax(s);
+                case SyntaxType.StringLiteral:
+                    node = VisitStringLiteralSyntax((StringLiteralSyntax)pNode);
                     break;
 
-                case DeclarationSyntax d:
-                    node = VisitDeclarationSyntax(d);
+                case SyntaxType.Self:
+                    node = VisitSelfSyntax((SelfSyntax)pNode);
                     break;
 
-                case TypeDefinitionSyntax d:
-                    node = VisitTypeDefinitionSyntax(d);
+                case SyntaxType.Declaration:
+                    node = VisitDeclarationSyntax((DeclarationSyntax)pNode);
                     break;
 
-                case ElseSyntax e:
-                    node = VisitElseSyntax(e);
+                case SyntaxType.TypeDefinition:
+                    node = VisitTypeDefinitionSyntax((TypeDefinitionSyntax)pNode);
                     break;
 
-                case EnumSyntax e:
-                    node = VisitEnumSyntax(e);
+                case SyntaxType.Else:
+                    node = VisitElseSyntax((ElseSyntax)pNode);
                     break;
 
-                case ForSyntax f:
-                    node = VisitForSyntax(f);
+                case SyntaxType.Enum:
+                    node = VisitEnumSyntax((EnumSyntax)pNode);
                     break;
 
-                case MethodCallSyntax m:
-                    node = VisitMethodCallSyntax(m);
+                case SyntaxType.For:
+                    node = VisitForSyntax((ForSyntax)pNode);
                     break;
 
-                case MemberAccessSyntax m:
-                    node = VisitMemberAccessSyntax(m);
+                case SyntaxType.MethodCall:
+                    node = VisitMethodCallSyntax((MethodCallSyntax)pNode);
                     break;
 
-                case IdentifierSyntax i:
-                    node = VisitIdentifierSyntax(i);
+                case SyntaxType.MemberAccess:
+                    node = VisitMemberAccessSyntax((MemberAccessSyntax)pNode);
                     break;
 
-                case IfSyntax i:
-                    node = VisitIfSyntax(i);
+                case SyntaxType.Identifier:
+                    node = VisitIdentifierSyntax((IdentifierSyntax)pNode);
                     break;
 
-                case MethodSyntax m:
-                    node = VisitMethodSyntax(m);
+                case SyntaxType.If:
+                    node = VisitIfSyntax((IfSyntax)pNode);
                     break;
 
-                case ModuleSyntax m:
-                    node = VisitModuleSyntax(m);
+                case SyntaxType.Method:
+                    node = VisitMethodSyntax((MethodSyntax)pNode);
                     break;
 
-                case TypedIdentifierSyntax p:
-                    node = VisitTypedIdentifierSyntax(p);
+                case SyntaxType.Module:
+                    node = VisitModuleSyntax((ModuleSyntax)pNode);
                     break;
 
-                case ReturnSyntax r:
-                    node = VisitReturnSyntax(r);
+                case SyntaxType.TypedIdentifier:
+                    node = VisitTypedIdentifierSyntax((TypedIdentifierSyntax)pNode);
                     break;
 
-                case SelectSyntax s:
-                    node = VisitSelectSyntax(s);
+                case SyntaxType.Return:
+                    node = VisitReturnSyntax((ReturnSyntax)pNode);
                     break;
 
-                case StructInitializerSyntax s:
-                    node = VisitStructInitializerSyntax(s);
+                case SyntaxType.Select:
+                    node = VisitSelectSyntax((SelectSyntax)pNode);
                     break;
 
-                case TypeSyntax t:
-                    node = VisitTypeSyntax(t);
+                case SyntaxType.StructInitializer:
+                    node = VisitStructInitializerSyntax((StructInitializerSyntax)pNode);
                     break;
 
-                case UnaryExpressionSyntax u:
-                    node = VisitUnaryExpressionSyntax(u);
+                case SyntaxType.Type:
+                    node = VisitTypeSyntax((TypeSyntax)pNode);
                     break;
 
-                case WhileSyntax w:
-                    node = VisitWhileSyntax(w);
+                case SyntaxType.UnaryExpression:
+                    node = VisitUnaryExpressionSyntax((UnaryExpressionSyntax)pNode);
+                    break;
+
+                case SyntaxType.While:
+                    node = VisitWhileSyntax((WhileSyntax)pNode);
                     break;
 
                 default:
@@ -188,9 +197,14 @@ namespace SmallerLang.Lowering
             return pNode;
         }
 
+        protected virtual SyntaxNode VisitBreakSyntax(BreakSyntax pNode)
+        {
+            return pNode;
+        }
+
         protected virtual SyntaxNode VisitCaseSyntax(CaseSyntax pNode)
         {
-            List<ExpressionSyntax> conditions = new List<ExpressionSyntax>(pNode.Conditions.Count);
+            List<SyntaxNode> conditions = new List<SyntaxNode>(pNode.Conditions.Count);
             foreach(var c in pNode.Conditions)
             {
                 conditions.Add(Visit((dynamic)c));
@@ -259,7 +273,7 @@ namespace SmallerLang.Lowering
         {
             if(pNode.Iterator != null)
             {
-                return SyntaxFactory.For(Visit((dynamic)pNode.Iterator), (BlockSyntax)Visit(pNode.Body));
+                return SyntaxFactory.For(Visit((dynamic)pNode.Iterator), pNode.Reverse, (BlockSyntax)Visit(pNode.Body));
             }
 
             List<DeclarationSyntax> initializer = new List<DeclarationSyntax>(pNode.Initializer.Count);
@@ -269,7 +283,7 @@ namespace SmallerLang.Lowering
             }
             Visit((dynamic)pNode.Condition);
 
-            List<ExpressionSyntax> finalizer = new List<ExpressionSyntax>(pNode.Finalizer.Count);
+            List<SyntaxNode> finalizer = new List<SyntaxNode>(pNode.Finalizer.Count);
             foreach (var f in pNode.Finalizer)
             {
                 finalizer.Add(Visit((dynamic)f));
@@ -316,7 +330,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
-            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pNode.Arguments.Count);
+            List<SyntaxNode> arguments = new List<SyntaxNode>(pNode.Arguments.Count);
             foreach (var a in pNode.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));
@@ -363,7 +377,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitReturnSyntax(ReturnSyntax pNode)
         {
-            List<ExpressionSyntax> values = new List<ExpressionSyntax>(pNode.Values.Count);
+            List<SyntaxNode> values = new List<SyntaxNode>(pNode.Values.Count);
             foreach(var v in pNode.Values)
             {
                 values.Add(Visit((dynamic)v));
@@ -398,7 +412,7 @@ namespace SmallerLang.Lowering
 
             var t = (TypeSyntax)Visit(pNode.Struct);
 
-            List<ExpressionSyntax> arguments = new List<ExpressionSyntax>(pNode.Arguments.Count);
+            List<SyntaxNode> arguments = new List<SyntaxNode>(pNode.Arguments.Count);
             foreach(var a in pNode.Arguments)
             {
                 arguments.Add(Visit((dynamic)a));

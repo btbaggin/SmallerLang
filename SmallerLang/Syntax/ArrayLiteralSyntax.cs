@@ -17,6 +17,8 @@ namespace SmallerLang.Syntax
             get { return TypeNode.Type.MakeArrayType(); }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.ArrayLiteral;
+
         public uint Size
         {
             get

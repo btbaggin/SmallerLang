@@ -10,85 +10,70 @@ namespace SmallerLang.Validation
 {
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
-        string _runMethod;
-        SmallType _currentStruct;
-        SmallType _currentType;
-        VariableCache<(bool Used, TextSpan Span)> _locals; //Used to find unused variables
+        VisitorStore _store = new VisitorStore();
+        VariableCache _locals; //Used to find unused variables
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
             foreach(var v in pNode.Variables)
             {
                 Visit((dynamic)v);
-                _locals.DefineVariableInScope(v.Value, (false, v.Span));
+                _locals.DefineVariableInScope(v.Value, v.Type);
             }
             Visit((dynamic)pNode.Value);
         }
 
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            _locals.SetVariableValue(pNode.Value, (true, default));
-            if(_currentType != null)
+            _locals.SetVariableReferenced(pNode.Value);
+            var currentStruct = _store.GetValueOrDefault<SmallType>("CurrentStruct");
+
+            if(_store.GetValueOrDefault("CurrentType", out SmallType currentType))
             {
-                var definition = _currentType.GetField(pNode.Value);
-                if (definition.Visibility == FieldVisibility.Hidden && _currentStruct != _currentType)
+                var definition = currentType.GetField(pNode.Value);
+                if (definition.Visibility == FieldVisibility.Hidden && currentStruct != currentType)
                 {
                     _error.WriteError("Cannot access hidden struct member outside of the struct", pNode.Span);
                 }
+            }
+
+            if(currentStruct != null && 
+               _store.GetValueOrDefault<bool>("InConstructor") && 
+               _store.GetValueOrDefault<bool>("InAssignment"))
+            {
+                _usedFields.Add(pNode.Value);
             }
             base.VisitIdentifierSyntax(pNode);
         }
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _locals = new VariableCache<(bool, TextSpan)>();
-            base.VisitModuleSyntax(pNode);
-
-            if(_runMethod == null)
+            _locals = new VariableCache();
+            using (var v = _store.AddValue<string>("RunMethod", null))
             {
-                _error.WriteError("No run method found!", pNode.Span);
+                base.VisitModuleSyntax(pNode);
+
+                if (v.Value == null)
+                {
+                    _error.WriteError("No run method found!", pNode.Span);
+                }
             }
         }
 
         protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            _currentStruct = SmallTypeCache.FromString(pNode.Name);
-            base.VisitTypeDefinitionSyntax(pNode);
+            using (var s = _store.AddValue("CurrentStruct", SmallTypeCache.FromString(pNode.Name)))
+            {
+                base.VisitTypeDefinitionSyntax(pNode);
+            }
         }
 
         protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
             //Save current type so we can validate member visibility
-            var l = _currentType;
-            _currentType = pNode.Identifier.Type;
-
-            base.VisitMemberAccessSyntax(pNode);
-
-            _currentType = l;
-        }
-
-        private void ValidateRun(MethodSyntax pNode)
-        {
-            //Validate that one and only 1 method is annotated with "run"
-            //This method must contain no parameters and return no values
-            if (pNode.Annotation.Value == Utils.KeyAnnotations.RunMethod)
+            using (var t = _store.AddValue("CurrentType", pNode.Identifier.Type))
             {
-                if (_runMethod != null)
-                {
-                    _error.WriteError($"Two run methods found: {_runMethod} and {pNode.Name}", pNode.Span);
-                    return;
-                }
-
-                _runMethod = pNode.Name;
-                if (pNode.Parameters.Count != 0)
-                {
-                    _error.WriteError("Run method must have no parameters", pNode.Span);
-                }
-
-                if (pNode.ReturnValues.Count != 0)
-                {
-                    _error.WriteError("Run method must not return a value", pNode.Span);
-                }
+                base.VisitMemberAccessSyntax(pNode);
             }
         }
 
@@ -104,11 +89,11 @@ namespace SmallerLang.Validation
             //Report any unused variables
             _locals.AddScope();
             base.VisitBlockSyntax(pNode);
-            foreach (var (Variable, Value) in _locals.GetVariablesInScope())
+            foreach (var ld in _locals.GetVariablesInScope())
             {
-                if (!Value.Used)
+                if (!ld.IsReferenced)
                 {
-                    _error.WriteWarning($"Variable {Variable} is defined but never used", Value.Span);
+                    _error.WriteWarning($"Variable {ld.Name} is defined but never used"); //TODO span
                 }
             }
             _locals.RemoveScope();
@@ -209,6 +194,82 @@ namespace SmallerLang.Validation
                     break;
             }
             base.VisitNumericLiteralSyntax(pNode);
+        }
+
+        int _breakCount;
+        protected override void VisitCaseSyntax(CaseSyntax pNode)
+        {
+            _locals.AddScope();
+            foreach (var c in pNode.Conditions)
+            {
+                Visit((dynamic)c);
+            }
+
+            using (var iw = _store.AddValue("CanBreak", true))
+            {
+                _breakCount++;
+                Visit(pNode.Body);
+                _breakCount--;
+            }
+            _locals.RemoveScope();
+        }
+
+        protected override void VisitForSyntax(ForSyntax pNode)
+        {
+            _locals.AddScope();
+            if (pNode.Iterator != null)
+            {
+                Visit((dynamic)pNode.Iterator);
+            }
+            else
+            {
+                foreach (var d in pNode.Initializer)
+                {
+                    Visit((dynamic)d);
+                }
+                Visit((dynamic)pNode.Condition);
+
+                foreach (var f in pNode.Finalizer)
+                {
+                    Visit((dynamic)f);
+                }
+            }
+
+            using (var iw = _store.AddValue("CanBreak", true))
+            {
+                _breakCount++;
+                Visit(pNode.Body);
+                _breakCount--;
+            }
+            _locals.RemoveScope();
+        }
+
+        protected override void VisitWhileSyntax(WhileSyntax pNode)
+        {
+            _locals.AddScope();
+            Visit((dynamic)pNode.Condition);
+            using (var iw = _store.AddValue("CanBreak", true))
+            {
+                _breakCount++;
+                Visit(pNode.Body);
+                _breakCount--;
+            }
+            _locals.RemoveScope();
+        }
+
+        protected override void VisitBreakSyntax(BreakSyntax pNode)
+        {
+            if(!_store.GetValueOrDefault<bool>("CanBreak"))
+            {
+                _error.WriteError("Break statements can only appear in loops or case statements", pNode.Span);
+            }
+            else
+            {
+                if(pNode.CountAsInt >= _breakCount)
+                {
+                    _error.WriteError($"Invalid break count cannot be larger than {_breakCount - 1}", pNode.Span);
+                }
+            }
         }
     }
 }

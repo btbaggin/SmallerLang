@@ -21,6 +21,9 @@ namespace SmallerLang
         internal static SmallType String { get; private set; } = AddType("string", LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0));
         internal static SmallType Boolean { get; private set; } = AddType("bool", LLVMTypeRef.Int1Type());
 
+        internal static SmallType Disposable => FromString("Disposable");
+        internal static SmallType Enumerable => FromString("Enumerable");
+
         public static SmallType FromString(string pType)
         {
             if (pType == null) return null;

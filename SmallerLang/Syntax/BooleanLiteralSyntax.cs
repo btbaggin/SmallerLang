@@ -12,6 +12,8 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type => SmallTypeCache.Boolean;
 
+        public override SyntaxType SyntaxType => SyntaxType.BooleanLiteral;
+
         internal BooleanLiteralSyntax(string pValue) : base(pValue) { }
 
         public override LLVMValueRef Emit(EmittingContext pContext)

@@ -37,11 +37,6 @@ namespace SmallerLang.Parser
 
         private ModuleSyntax ParseModule()
         {
-            //Module name
-            Expect(TokenType.LeftBracket);
-            Expect(TokenType.Identifier, out string name);
-            Expect(TokenType.RightBracket);
-
             //Module content
             List<MethodSyntax> methods = new List<MethodSyntax>();
             List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
@@ -93,7 +88,7 @@ namespace SmallerLang.Parser
                 return null;
             }
 
-            return SyntaxFactory.Module(name, methods, definitions, enums);
+            return SyntaxFactory.Module("module", methods, definitions, enums);
         }
 
         private EnumSyntax ParseEnum()
@@ -166,11 +161,11 @@ namespace SmallerLang.Parser
                     Expect(TokenType.GreaterThan);
                 }
 
-                string implementOn = null;
+                TypeSyntax implementOn = null;
                 if (type == DefinitionTypes.Implement)
                 {
                     Expect(TokenType.On);
-                    Expect(TokenType.Identifier, out implementOn);
+                    implementOn = ParseType();
                 }
 
                 Ignore(TokenType.Newline);
@@ -264,7 +259,7 @@ namespace SmallerLang.Parser
                 Ignore(TokenType.Newline);
 
                 //Method body
-                var body = ParseBlock();
+                var body = ParseBlock(false);
                 return SyntaxFactory.CastDefinition(p, body, r).SetSpan<CastDefinitionSyntax>(t);
             }
         }
@@ -306,7 +301,7 @@ namespace SmallerLang.Parser
                 {
                     //Method body
                     Ignore(TokenType.Newline);
-                    body = ParseBlock();
+                    body = ParseBlock(false);
                 }
                 
                 var m = SyntaxFactory.Method(name, returns, parameters, body).SetSpan<MethodSyntax>(t);
@@ -352,10 +347,15 @@ namespace SmallerLang.Parser
             }
         }
 
-        private BlockSyntax ParseBlock()
+        private BlockSyntax ParseBlock(bool pAllowSingle)
         {
             using (SpanTracker t = _spans.Create())
             {
+                if (pAllowSingle && !Peek(TokenType.LeftBrace))
+                {
+                    return SyntaxFactory.SingleBlock(ParseStatement()).SetSpan<BlockSyntax>(t);
+                }
+
                 Expect(TokenType.LeftBrace);
                 IgnoreNewlines();
 
@@ -398,7 +398,7 @@ namespace SmallerLang.Parser
                         break;
 
                     case TokenType.LeftBrace:
-                        node = ParseBlock();
+                        node = ParseBlock(false);
                         break;
 
                     case TokenType.Return:
@@ -407,6 +407,10 @@ namespace SmallerLang.Parser
 
                     case TokenType.Select:
                         node = ParseSelect();
+                        break;
+
+                    case TokenType.Break:
+                        node = ParseBreak();
                         break;
 
                     case TokenType.Identifier:
@@ -437,7 +441,7 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 Expect(TokenType.Return);
-                List<ExpressionSyntax> values = new List<ExpressionSyntax>();
+                List<SyntaxNode> values = new List<SyntaxNode>();
                 do
                 {
                     values.Add(ParseExpression());
@@ -463,7 +467,7 @@ namespace SmallerLang.Parser
                 Expect(TokenType.Equals);
 
                 //new only allowed in assignment and declaration statements
-                ExpressionSyntax right = ParseExpression();
+                SyntaxNode right = ParseExpression();
                 var newStruct = ParseStructInitializer(variables);
                 if (newStruct != null) right = newStruct;
 
@@ -495,7 +499,7 @@ namespace SmallerLang.Parser
                 {
                     var type = ParseType();
                     Expect(TokenType.LeftParen);
-                    List<ExpressionSyntax> arguments = new List<ExpressionSyntax>();
+                    List<SyntaxNode> arguments = new List<SyntaxNode>();
                     if(!Peek(TokenType.RightParen))
                     {
                         do
@@ -523,9 +527,7 @@ namespace SmallerLang.Parser
 
                 //If body
                 Ignore(TokenType.Newline);
-                BlockSyntax body = null;
-                if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                else body = SyntaxFactory.SingleBlock(ParseStatement());
+                BlockSyntax body = ParseBlock(true);
                 Ignore(TokenType.Newline);
 
                 //Else
@@ -549,8 +551,7 @@ namespace SmallerLang.Parser
                 else
                 {
                     Ignore(TokenType.Newline);
-                    if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                    else body = SyntaxFactory.SingleBlock(ParseStatement());
+                    body = ParseBlock(true);
                 }
 
                 return SyntaxFactory.Else(i, body).SetSpan<ElseSyntax>(t);
@@ -570,9 +571,7 @@ namespace SmallerLang.Parser
                 Ignore(TokenType.Newline);
 
                 //While body
-                BlockSyntax body = null;
-                if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                else body = SyntaxFactory.SingleBlock(ParseStatement());
+                BlockSyntax body = ParseBlock(true);
 
                 return SyntaxFactory.While(condition, body).SetSpan<WhileSyntax>(t);
             }
@@ -586,10 +585,11 @@ namespace SmallerLang.Parser
                 Expect(TokenType.For);
                 Expect(TokenType.LeftParen);
 
+                bool backwards = false;
                 IdentifierSyntax iterator = null;
                 List<DeclarationSyntax> initializer = new List<DeclarationSyntax>();
-                ExpressionSyntax cond = null;
-                List<ExpressionSyntax> finalizer = new List<ExpressionSyntax>();
+                SyntaxNode cond = null;
+                List<SyntaxNode> finalizer = new List<SyntaxNode>();
 
                 //For loop can either have the initializer, condition, finalize
                 //Or just an iterator variable
@@ -624,6 +624,11 @@ namespace SmallerLang.Parser
                 else
                 {
                     iterator = ParseArrayAccess();
+                    if(PeekAndExpectOneOf(out TokenType type, TokenType.MinusMinus, TokenType.PlusPlus))
+                    {
+                        backwards = (type == TokenType.MinusMinus);
+                    }
+
                 }
 
                 Expect(TokenType.RightParen);
@@ -631,9 +636,7 @@ namespace SmallerLang.Parser
 
                 //For body
                 _allowIt = isIterator;
-                BlockSyntax body = null;
-                if (Peek(TokenType.LeftBrace)) body = ParseBlock();
-                else body = SyntaxFactory.SingleBlock(ParseStatement());
+                BlockSyntax body = ParseBlock(true);
                 _allowIt = false;
 
                 if(!isIterator)
@@ -641,7 +644,7 @@ namespace SmallerLang.Parser
                     return SyntaxFactory.For(initializer, cond, finalizer, body).SetSpan<ForSyntax>(t);
                 }
 
-                return SyntaxFactory.For(iterator, body);
+                return SyntaxFactory.For(iterator, backwards, body).SetSpan<ForSyntax>(t);
             }
         }
 
@@ -677,6 +680,22 @@ namespace SmallerLang.Parser
             }
         }
 
+        private BreakSyntax ParseBreak()
+        {
+            using (SpanTracker t = _spans.Create())
+            {
+                Expect(TokenType.Break);
+
+                string count = "";
+                if(PeekAndExpect(TokenType.LeftParen))
+                {
+                    Expect(TokenType.Integer, out count);
+                    Expect(TokenType.RightParen);
+                }
+                return SyntaxFactory.Break(count).SetSpan<BreakSyntax>(t);
+            }
+        }
+
         private CaseSyntax ParseCase()
         {
             using (SpanTracker t = _spans.Create())
@@ -684,7 +703,7 @@ namespace SmallerLang.Parser
                 //Case and expression, we can use "it" to reference the select variable
                 _allowIt = true;
                 Expect(TokenType.Case);
-                List<ExpressionSyntax> conditions = new List<ExpressionSyntax>();
+                List<SyntaxNode> conditions = new List<SyntaxNode>();
                 do
                 {
                     Ignore(TokenType.Newline);
@@ -725,28 +744,28 @@ namespace SmallerLang.Parser
                 }
                 _allowIt = false;
 
-                return SyntaxFactory.Case(new List<ExpressionSyntax>(), SyntaxFactory.Block(statements)).SetSpan<CaseSyntax>(t);
+                return SyntaxFactory.Case(new List<SyntaxNode>(), SyntaxFactory.Block(statements)).SetSpan<CaseSyntax>(t);
             }
         }
 
         #region Expression Parsing
-        private ExpressionSyntax ParseExpression()
+        private SyntaxNode ParseExpression()
         {
             return ParseAssignment();
         }
 
-        private ExpressionSyntax ParseExpressionWithFullAssignment()
+        private SyntaxNode ParseExpressionWithFullAssignment()
         {
             return ParseFullAssignment();
         }
 
-        private ExpressionSyntax ParseFullAssignment()
+        private SyntaxNode ParseFullAssignment()
         {
             using (SpanTracker t = _spans.Create())
             {
                 //Full assignments allow for multiple variables on the left hand side and also use of the _ token
                 //Full assignments are only allowed as separate statements, not in other expressions
-                ExpressionSyntax e = ParseAndOr();
+                SyntaxNode e = ParseAndOr();
                 List<IdentifierSyntax> variables = new List<IdentifierSyntax>();
                 if (e is IdentifierSyntax i) variables.Add(i);
 
@@ -768,7 +787,7 @@ namespace SmallerLang.Parser
                     IgnoreNewlines();
 
                     //new only allowed in assignment and declaration statements
-                    ExpressionSyntax right = ParseExpressionWithFullAssignment();
+                    SyntaxNode right = ParseExpressionWithFullAssignment();
                     var newStruct = ParseStructInitializer(variables);
                     if (newStruct != null) right = newStruct;
 
@@ -780,16 +799,16 @@ namespace SmallerLang.Parser
                     e = SyntaxFactory.Assignment(variables, tt.ToAssignmentOperator(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseAssignment()
+        private SyntaxNode ParseAssignment()
         {
             using (SpanTracker t = _spans.Create())
             {
                 //Normal assignment only allows one variable
-                ExpressionSyntax e = ParseAndOr();
+                SyntaxNode e = ParseAndOr();
 
                 while (PeekAndExpectOneOf(out TokenType tt, TokenType.Equals, TokenType.PlusEquals,
                                                            TokenType.MinusEquals, TokenType.StarEquals,
@@ -798,7 +817,7 @@ namespace SmallerLang.Parser
                     IgnoreNewlines();
 
                     //new only allowed in assignment and declaration statements
-                    ExpressionSyntax right = ParseExpression();
+                    SyntaxNode right = ParseExpression();
                     if (!(e is IdentifierSyntax i)) throw ReportError("Only identifiers can be the subject of assignment", e.Span);
 
                     var newStruct = ParseStructInitializer(new List<IdentifierSyntax>() { i });
@@ -813,101 +832,101 @@ namespace SmallerLang.Parser
                     e = SyntaxFactory.Assignment(new List<IdentifierSyntax>() { i }, tt.ToAssignmentOperator(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseAndOr()
+        private SyntaxNode ParseAndOr()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = ParseEquality();
+                SyntaxNode e = ParseEquality();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
                                           TokenType.And, TokenType.Or))
                 {
                     IgnoreNewlines();
-                    ExpressionSyntax right = ParseEquality();
+                    SyntaxNode right = ParseEquality();
                     e = SyntaxFactory.BinaryExpression(e, tt.ToBinaryExpression(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseEquality()
+        private SyntaxNode ParseEquality()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = ParseComparison();
+                SyntaxNode e = ParseComparison();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
                                           TokenType.EqualsEquals, TokenType.NotEquals))
                 {
                     IgnoreNewlines();
-                    ExpressionSyntax right = ParseComparison();
+                    SyntaxNode right = ParseComparison();
                     e = SyntaxFactory.BinaryExpression(e, tt.ToBinaryExpression(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseComparison()
+        private SyntaxNode ParseComparison()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = ParseAddition();
+                SyntaxNode e = ParseAddition();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
                                  TokenType.LessThan, TokenType.LessThanOrEqual, TokenType.GreaterThan, TokenType.GreaterThanOrEqual))
                 {
                     IgnoreNewlines();
-                    ExpressionSyntax right = ParseAddition();
+                    SyntaxNode right = ParseAddition();
                     e = SyntaxFactory.BinaryExpression(e, tt.ToBinaryExpression(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseAddition()
+        private SyntaxNode ParseAddition()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = ParseTerm();
+                SyntaxNode e = ParseTerm();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
                                  TokenType.Plus, TokenType.Minus, TokenType.Concatenate))
                 {
                     IgnoreNewlines();
-                    ExpressionSyntax right = ParseTerm();
+                    SyntaxNode right = ParseTerm();
                     e = SyntaxFactory.BinaryExpression(e, tt.ToBinaryExpression(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseTerm()
+        private SyntaxNode ParseTerm()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = ParseUnary();
+                SyntaxNode e = ParseUnary();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
                                  TokenType.Star, TokenType.Division, TokenType.Percent))
                 {
                     IgnoreNewlines();
-                    ExpressionSyntax right = ParseUnary();
+                    SyntaxNode right = ParseUnary();
                     e = SyntaxFactory.BinaryExpression(e, tt.ToBinaryExpression(), right);
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseUnary()
+        private SyntaxNode ParseUnary()
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -915,13 +934,13 @@ namespace SmallerLang.Parser
                 if (PeekAndExpectOneOf(out TokenType tt, TokenType.Bang, TokenType.Minus, 
                                                          TokenType.PlusPlus, TokenType.MinusMinus, TokenType.LengthOf))
                 {
-                    ExpressionSyntax right = ParseUnary();
-                    return SyntaxFactory.UnaryExpression(right, tt.ToUnaryExpression(true)).SetSpan<ExpressionSyntax>(t);
+                    SyntaxNode right = ParseUnary();
+                    return SyntaxFactory.UnaryExpression(right, tt.ToUnaryExpression(true)).SetSpan<SyntaxNode>(t);
                 }
                 else if(PeekAndExpect(TokenType.StarStar))
                 {
-                    ExpressionSyntax right = ParseUnary();
-                    return SyntaxFactory.Cast(right).SetSpan<ExpressionSyntax>(t);
+                    SyntaxNode right = ParseUnary();
+                    return SyntaxFactory.Cast(right).SetSpan<SyntaxNode>(t);
                 }
                 else if(PeekAndExpect(TokenType.Cast))
                 {
@@ -929,26 +948,26 @@ namespace SmallerLang.Parser
                     var type = ParseType();
                     Expect(TokenType.RightParen);
 
-                    ExpressionSyntax value = ParseUnary();
-                    return SyntaxFactory.Cast(value, type).SetSpan<ExpressionSyntax>(t);
+                    SyntaxNode value = ParseUnary();
+                    return SyntaxFactory.Cast(value, type).SetSpan<SyntaxNode>(t);
                 }
 
-                ExpressionSyntax left = ParseParen();
+                SyntaxNode left = ParseParen();
                 //Post unary operators
                 if(PeekAndExpectOneOf(out tt, TokenType.PlusPlus, TokenType.MinusMinus))
                 {
-                    return SyntaxFactory.UnaryExpression(left, tt.ToUnaryExpression(false)).SetSpan<ExpressionSyntax>(t);
+                    return SyntaxFactory.UnaryExpression(left, tt.ToUnaryExpression(false)).SetSpan<SyntaxNode>(t);
                 }
 
-                return left?.SetSpan<ExpressionSyntax>(t);
+                return left?.SetSpan<SyntaxNode>(t);
             }
         }
 
-        private ExpressionSyntax ParseParen()
+        private SyntaxNode ParseParen()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = null;
+                SyntaxNode e = null;
                 if (PeekAndExpect(TokenType.LeftParen))
                 {
                     e = ParseExpression();
@@ -959,7 +978,7 @@ namespace SmallerLang.Parser
                     e = ParseOperand();
                 }
 
-                return e?.SetSpan<ExpressionSyntax>(t);
+                return e?.SetSpan<SyntaxNode>(t);
             }
         }
 
@@ -980,11 +999,11 @@ namespace SmallerLang.Parser
             }
         }
 
-        private ExpressionSyntax ParseLiteral()
+        private SyntaxNode ParseLiteral()
         {
             using (SpanTracker t = _spans.Create())
             {
-                ExpressionSyntax e = null;
+                SyntaxNode e = null;
                 if (PeekAndExpect(TokenType.Integer, out string v)) e = SyntaxFactory.NumericLiteral(v, NumberTypes.Integer);
                 else if (PeekAndExpect(TokenType.Short, out v)) e = SyntaxFactory.NumericLiteral(v, NumberTypes.Short);
                 else if (PeekAndExpect(TokenType.Long, out v)) e = SyntaxFactory.NumericLiteral(v, NumberTypes.Long);
@@ -993,7 +1012,7 @@ namespace SmallerLang.Parser
                 else if (PeekAndExpect(TokenType.String, out v)) e = SyntaxFactory.StringLiteral(v);
                 else if (PeekAndExpect(TokenType.True, out v)) e = SyntaxFactory.BooleanLiteral(v);
                 else if (PeekAndExpect(TokenType.False, out v)) e = SyntaxFactory.BooleanLiteral(v);
-                else if (_allowIt && PeekAndExpect(TokenType.It)) e = SyntaxFactory.It(); //It only allowed in certain situations
+                //else if (_allowIt && PeekAndExpect(TokenType.It)) e = SyntaxFactory.It(); //It only allowed in certain situations
                 else if (PeekAndExpect(TokenType.LeftBracket))
                 {
                     var type = ParseType();
@@ -1004,7 +1023,7 @@ namespace SmallerLang.Parser
                 }
                 else return null;
 
-                return e.SetSpan<ExpressionSyntax>(t);
+                return e.SetSpan<SyntaxNode>(t);
             }
         }
 
@@ -1062,6 +1081,10 @@ namespace SmallerLang.Parser
                         ReportError("Self only allowed within structs", t);
                     e = SyntaxFactory.Self();
                 }
+                else if(_allowIt && PeekAndExpect(TokenType.It))
+                {
+                    e = SyntaxFactory.It();
+                }
                 else if (_stream.Peek(1, out Token tok))
                 {
                     switch (tok.Type)
@@ -1095,7 +1118,7 @@ namespace SmallerLang.Parser
             {
                 Expect(TokenType.Identifier, out string pName);
                 Expect(TokenType.LeftParen);
-                List<ExpressionSyntax> arguments = new List<ExpressionSyntax>();
+                List<SyntaxNode> arguments = new List<SyntaxNode>();
                 if (!Peek(TokenType.RightParen))
                 {
                     do
@@ -1224,7 +1247,6 @@ namespace SmallerLang.Parser
 
         private void Synchronize()
         {
-            _stream.MoveNext();
             while (!Peek(TokenType.EndOfFile))
             {
                 switch (_stream.Current.Type)

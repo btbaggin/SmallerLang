@@ -26,13 +26,13 @@ namespace SmallerLang.Syntax
         Or
     }
 
-    public class BinaryExpressionSyntax : ExpressionSyntax
+    public class BinaryExpressionSyntax : SyntaxNode
     {
-        public ExpressionSyntax Left { get; private set; }
+        public SyntaxNode Left { get; private set; }
 
         public BinaryExpressionOperator Operator { get; private set; }
 
-        public ExpressionSyntax Right { get; private set; }
+        public SyntaxNode Right { get; private set; }
 
         private SmallType _type;
         public override SmallType Type
@@ -40,7 +40,9 @@ namespace SmallerLang.Syntax
             get { return _type; }
         }
 
-        internal BinaryExpressionSyntax(ExpressionSyntax pLeft, BinaryExpressionOperator pOperator, ExpressionSyntax pRight)
+        public override SyntaxType SyntaxType => SyntaxType.BinaryExpression;
+
+        internal BinaryExpressionSyntax(SyntaxNode pLeft, BinaryExpressionOperator pOperator, SyntaxNode pRight)
         {
             Left = pLeft;
             Operator = pOperator;

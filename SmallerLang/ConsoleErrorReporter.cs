@@ -18,11 +18,15 @@ namespace SmallerLang
 
         public ConsoleColor SpanColor { get; set; } = ConsoleColor.Cyan;
 
-        readonly string _source;
-        public ConsoleErrorReporter(string pSource)
+        string _source;
+        public ConsoleErrorReporter()
+        {
+            ErrorOccurred = false;
+        }
+
+        public void SetSource(string pSource)
         {
             _source = pSource;
-            ErrorOccurred = false;
         }
 
         public void WriteError(string pError)
@@ -73,14 +77,18 @@ namespace SmallerLang
 
         private void WriteSpanLine(TextSpan pSpan)
         {
+
+            var spanStart = pSpan.Column;
+            if (pSpan.Start != pSpan.Column) spanStart++;
+
             string line = pSpan.GetContainingLine(_source);
-            Console.Write(line.Substring(0, pSpan.Column + 1).TrimStart());
+            Console.Write(line.Substring(0, spanStart).TrimStart());
 
             Console.ForegroundColor = SpanColor;
-            Console.Write(line.Substring(pSpan.Column + 1, pSpan.Length));
+            Console.Write(line.Substring(spanStart, pSpan.Length));
             Console.ForegroundColor = TextColor;
 
-            Console.WriteLine(line.Substring(pSpan.Column + pSpan.Length + 1).TrimEnd());
+            Console.WriteLine(line.Substring(spanStart + pSpan.Length).TrimEnd());
         }
     }
 }

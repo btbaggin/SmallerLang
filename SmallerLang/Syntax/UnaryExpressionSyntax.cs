@@ -20,9 +20,9 @@ namespace SmallerLang.Syntax
         PostDecrement,
     }
 
-    public class UnaryExpressionSyntax : ExpressionSyntax
+    public class UnaryExpressionSyntax : SyntaxNode
     {
-        public ExpressionSyntax Value { get; private set; }
+        public SyntaxNode Value { get; private set; }
 
         public UnaryExpressionOperator Operator { get; private set; }
 
@@ -32,7 +32,9 @@ namespace SmallerLang.Syntax
             get { return _type; }
         }
 
-        internal UnaryExpressionSyntax(ExpressionSyntax pValue, UnaryExpressionOperator pOperator)
+        public override SyntaxType SyntaxType => SyntaxType.UnaryExpression;
+
+        internal UnaryExpressionSyntax(SyntaxNode pValue, UnaryExpressionOperator pOperator)
         {
             Value = pValue;
             Operator = pOperator;
@@ -59,9 +61,8 @@ namespace SmallerLang.Syntax
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.PostDecrement:
                     var variable = (IdentifierSyntax)Value;
-                    LLVMValueRef v = pContext.Locals.GetVariable(variable.Value);
-
-                    if (variable.IsMemberAccess) v = variable.Emit(pContext);
+                    variable.DoNotLoad = true;
+                    LLVMValueRef v = variable.Emit(pContext);
 
                     BinaryExpressionOperator op = BinaryExpressionOperator.Equals;
                     switch (Operator)
@@ -89,13 +90,13 @@ namespace SmallerLang.Syntax
 
                         //Increment the variable
                         Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
-                        if (Value.GetType() == typeof(IdentifierSyntax) || Value.GetType() == typeof(MemberAccessSyntax))  LLVM.BuildStore(pContext.Builder, value, v);
+                        if (Value.SyntaxType == SyntaxType.Identifier || Value.SyntaxType == SyntaxType.MemberAccess)  LLVM.BuildStore(pContext.Builder, value, v);
 
                         return temp;
                     }
 
                     //If it isn't a variable we cane save we need to return the addition
-                    if (Value.GetType() == typeof(IdentifierSyntax) || Value.GetType() == typeof(MemberAccessSyntax)) LLVM.BuildStore(pContext.Builder, value, v);
+                    if (Value.SyntaxType == SyntaxType.Identifier || Value.SyntaxType == SyntaxType.MemberAccess) LLVM.BuildStore(pContext.Builder, value, v);
                     return value;
 
                 default:

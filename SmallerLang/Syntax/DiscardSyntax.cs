@@ -10,6 +10,8 @@ namespace SmallerLang.Syntax
 {
     public class DiscardSyntax : IdentifierSyntax
     {
+        public override SyntaxType SyntaxType => SyntaxType.Discard;
+
         internal DiscardSyntax() : base("") { }
 
         public override LLVMValueRef Emit(EmittingContext pContext)

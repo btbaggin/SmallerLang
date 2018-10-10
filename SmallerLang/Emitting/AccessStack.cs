@@ -4,12 +4,12 @@ using LLVMSharp;
 
 namespace SmallerLang.Emitting
 {
-    struct MemberAccessItem
+    public struct MemberAccess
     {
         public LLVMValueRef Value { get; }
         public SmallType Type { get; }
 
-        public MemberAccessItem(LLVMValueRef pValue, SmallType pType)
+        public MemberAccess(LLVMValueRef pValue, SmallType pType)
         {
             Value = pValue;
             Type = pType;
@@ -17,45 +17,55 @@ namespace SmallerLang.Emitting
     }
 
     //Special stack that allows arbitrary index access
-    class MemberAccessStack
+    public class AccessStack<T>
     {
         public int Count { get; private set; }
 
-        MemberAccessItem[] _items;
-        public MemberAccessStack()
+        T[] _items;
+        public AccessStack()
         {
-            _items = new MemberAccessItem[8];
+            _items = new T[8];
         }
 
-        public void Push(LLVMValueRef pValue, SmallType pType)
+        public AccessStack(int pCapacity)
+        {
+            _items = new T[pCapacity];
+        }
+
+        public int Push(T pValue)
         {
             if(Count >= _items.Length)
             {
                 Array.Resize(ref _items, _items.Length + 4);
             }
-            _items[Count] = new MemberAccessItem(pValue, pType);
-            Count++;
+            _items[Count] = pValue;
+            return Count++;
         }
 
-        public MemberAccessItem Pop()
+        public void PopFrom(int pIndex)
         {
-            return _items[--Count];
+            if(pIndex < Count) Count--;
         }
 
-        public MemberAccessItem Peek()
+        public void Pop()
+        {
+            Count--;
+        }
+
+        public T Peek()
         {
             return _items[Count - 1];
         }
 
-        public MemberAccessItem PeekAt(int pIndex)
+        public T PeekAt(int pIndex)
         {
             if (pIndex >= Count) throw new ArgumentException("pIndex must be greater than 0 and less than Count");
             return _items[pIndex];
         }
 
-        public MemberAccessStack Copy()
+        public AccessStack<T> Copy()
         {
-            var copy = new MemberAccessStack
+            var copy = new AccessStack<T>
             {
                 _items = _items,
                 Count = Count

@@ -29,8 +29,8 @@ namespace SmallerLang.Validation
         {
             //////
             ////// Discover enums
+            ////// Add enums first since they can't reference anything, but things can reference enums
             //////
-            //Add enums first since they can't reference anything, but things can reference enums
             foreach (var e in pNode.Enums)
             {
                 string[] fields = new string[e.Names.Count];
@@ -49,8 +49,9 @@ namespace SmallerLang.Validation
                 var s = pNode.Structs[i];
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    if (!_implements.ContainsKey(s.AppliesTo)) _implements.Add(s.AppliesTo, new List<TypeDefinitionSyntax>());
-                    _implements[s.AppliesTo].Add(s);
+                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
+                    _implements[applies].Add(s);
                 }
                 else
                 {
@@ -79,18 +80,29 @@ namespace SmallerLang.Validation
                 foreach(var s in i.Value)
                 {
                     //Mark any traits for types
-                    var structApplies = s.AppliesTo;
-                    if (!_structIndex.ContainsKey(structApplies))
+                    bool validateTrait = true;
+                    if (!SmallTypeCache.IsTypeDefined(s.Name))
                     {
-                        _error.WriteError($"Use of undeclared type {structApplies}", s.Span);
+                        _error.WriteError($"Use of undeclared type {s.Name}", s.Span);
+                        validateTrait = false;
                     }
 
-                    var traitType = SmallTypeCache.FromString(s.Name);
-                    SmallTypeCache.FromString(structApplies).AddTrait(traitType);
+                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    if (!SmallTypeCache.IsTypeDefined(applies))
+                    {
+                        _error.WriteError($"Use of undeclared type {applies}", s.Span);
+                        validateTrait = false;
+                    }
+                    
+                    if(validateTrait)
+                    {
+                        var traitType = SmallTypeCache.FromString(s.Name);
+                        s.AppliesTo.Type.AddTrait(traitType);
 
-                    //Validate implementation
-                    var trait = _structs[_structIndex[s.Name]].Node;
-                    ValidateImplementation(trait, s);
+                        //Validate implementation
+                        var trait = _structs[_structIndex[s.Name]].Node;
+                        ValidateImplementation(trait, s);
+                    }
                 }
             }
 
@@ -103,20 +115,18 @@ namespace SmallerLang.Validation
             //Add struct methods to MethodCache
             foreach (var s in pNode.Structs)
             {
-                if(s.DefinitionType != DefinitionTypes.Implement)
-                {
-                    var type = SmallTypeCache.FromString(s.Name);
-                    for (int j = 0; j < s.Methods.Count; j++)
-                    {
-                        if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
-                            s.Methods[j].Annotation.Value == Utils.KeyAnnotations.Constructor)
-                        {
-                            type.SetConstructor(m);
-                        }
-                    }
+                SmallType type = s.GetApplicableType();
 
-                    if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
+                for (int j = 0; j < s.Methods.Count; j++)
+                {
+                    if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
+                        s.Methods[j].Annotation.Value == Utils.KeyAnnotations.Constructor)
+                    {
+                        type.SetConstructor(m);
+                    }
                 }
+
+                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
             }
         }
 
@@ -186,7 +196,7 @@ namespace SmallerLang.Validation
                 {
                     foreach (var f in trait.Fields)
                     {
-                        if(!fieldNames.Add(f.Value))
+                        if(fieldNames.Add(f.Value))
                         {
                             FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
                             fields.Add(new FieldDefinition(f.Type, f.Value, visibility));
@@ -205,7 +215,7 @@ namespace SmallerLang.Validation
 
             if (found)
             {
-                _error.WriteError($"Redeclaration of method signature {pMethod.Name}", pMethod.Span);
+                _error.WriteError($"Redeclaration of method signature {pMethod}", pMethod.Span);
                 pDefinition = default;
                 return false;
             }

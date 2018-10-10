@@ -7,9 +7,14 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class TypeSyntax : ExpressionSyntax
+    public class TypeSyntax : SyntaxNode
     {
-        public override SmallType Type => SmallTypeCache.FromString(Value);
+        public override SmallType Type
+        {
+            get { return SmallTypeCache.FromString(GetFullTypeName(this)); } 
+        }
+
+        public override SyntaxType SyntaxType => SyntaxType.Type;
 
         public IList<TypeSyntax> GenericArguments { get; private set; }
 
@@ -25,6 +30,21 @@ namespace SmallerLang.Syntax
         {
             //No generation for type syntax
             throw new NotImplementedException();
+        }
+
+        public static string GetFullTypeName(TypeSyntax pNode)
+        {
+            if (pNode.GenericArguments.Count == 0) return pNode.Value;
+
+            var structName = new StringBuilder(pNode.Value);
+            structName.Append("<");
+            for (int i = 0; i < pNode.GenericArguments.Count; i++)
+            {
+                structName.Append(pNode.GenericArguments[i].Value + ",");
+            }
+            structName = structName.Remove(structName.Length - 1, 1);
+            structName.Append(">");
+            return structName.ToString();
         }
     }
 }
