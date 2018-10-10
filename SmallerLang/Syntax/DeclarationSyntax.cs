@@ -54,22 +54,42 @@ namespace SmallerLang.Syntax
                 {
                     //Create our temp tuple value
                     var t = SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(Variables));
-                    LLVMValueRef tuple = pContext.AllocateVariable("<temp>tuple", t);
-
-                    //Load the value into our temp variable
+                    LLVMValueRef tuple = pContext.AllocateVariable("<temp_tuple>", t);
                     Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
-                    LLVM.BuildStore(pContext.Builder, value, tuple);
+
+                    //If our value is not a tuple we need to allocate the tuple fields manually
+                    if (!Value.Type.IsTuple)
+                    {
+                        for (int i = 0; i < t.GetFieldCount(); i++)
+                        {
+                            var tv = LLVM.BuildInBoundsGEP(pContext.Builder, tuple, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
+                            LLVM.BuildStore(pContext.Builder, value, tv);
+
+                            //Certain things must be reallocated every time 
+                            //otherwise value would just be pointing at the same memory location, causing assignments to affect multiple variables
+                            if (Utils.SyntaxHelper.MustReallocateOnDeclaration(Value))
+                            {
+                                value = Value.Emit(pContext);
+                                Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //Load the value into our temp variable
+                        LLVM.BuildStore(pContext.Builder, value, tuple);
+                    }            
 
                     //Access each of the tuples fields, assigning them to our variables
                     for (int i = 0; i < Variables.Count; i++)
                     {
                         if (!Utils.SyntaxHelper.IsDiscard(Variables[i]))
                         {
-                            var g = LLVM.BuildInBoundsGEP(pContext.Builder, tuple, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
-                            g = LLVM.BuildLoad(pContext.Builder, g, "");
+                            var indexAccess = LLVM.BuildInBoundsGEP(pContext.Builder, tuple, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
+                            indexAccess = LLVM.BuildLoad(pContext.Builder, indexAccess, "");
 
                             var variable = pContext.Locals.GetVariable(Variables[i].Value);
-                            LLVM.BuildStore(pContext.Builder, g, variable.Value);
+                            LLVM.BuildStore(pContext.Builder, indexAccess, variable.Value);
                         }
                     }
                 }

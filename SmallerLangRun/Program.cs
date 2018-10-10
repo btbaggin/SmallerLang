@@ -13,12 +13,11 @@ namespace SmallerLangRun
          * Range 1..10
          * Generic traits
          * Trait dependencies?
+         * Zero out array allocations
          * Allow returning traits from methods?
          * tree shaking of methods
          * control flow analysis?
-         * Multiple assignment of member/array access
          * Do struct poly after type inference?
-         * Set multiple variables from single assignment?
          * imports
          * strings
         */
@@ -46,7 +45,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\Iterator.sml";
+            var prog = @"C:\Test\SML\Select.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

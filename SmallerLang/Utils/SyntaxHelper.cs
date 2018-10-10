@@ -79,5 +79,10 @@ namespace SmallerLang.Utils
             return pNode.SyntaxType == SyntaxType.MemberAccess || pNode.SyntaxType == SyntaxType.ArrayAccess;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool MustReallocateOnDeclaration(SyntaxNode pNode)
+        {
+            return pNode.SyntaxType == SyntaxType.ArrayLiteral;
+        }
     }
 }
