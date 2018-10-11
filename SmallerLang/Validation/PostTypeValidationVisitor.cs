@@ -31,9 +31,16 @@ namespace SmallerLang.Validation
             if(_store.GetValueOrDefault("CurrentType", out SmallType currentType))
             {
                 var definition = currentType.GetField(pNode.Value);
+
+                //Only the defining struct can access hidden fields
                 if (definition.Visibility == FieldVisibility.Hidden && currentStruct != currentType)
                 {
-                    _error.WriteError("Cannot access hidden struct member outside of the struct", pNode.Span);
+                    //Check if the struct is a trait that implements the current type
+                    //This will allow implementing traits to access the struct's private fields
+                    if (currentStruct == null || !currentStruct.IsTrait || !currentType.IsAssignableFrom(currentStruct))
+                    {
+                        _error.WriteError("Cannot access hidden struct member outside of the struct", pNode.Span);
+                    }
                 }
             }
 
