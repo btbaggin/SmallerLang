@@ -14,11 +14,13 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => base.Type.GetElementType();
 
+        public override SyntaxType SyntaxType => SyntaxType.ArrayAccess;
+
         public IdentifierSyntax Identifier { get; private set; }
 
-        public ExpressionSyntax Index { get; private set; }
+        public SyntaxNode Index { get; private set; }
 
-        public ArrayAccessSyntax(IdentifierSyntax pVariable, ExpressionSyntax pIndex) : base(null)
+        public ArrayAccessSyntax(IdentifierSyntax pVariable, SyntaxNode pIndex) : base(null)
         {
             Identifier = pVariable;
             Index = pIndex;
@@ -26,6 +28,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //We are in a member access, just push the index of this field onto the stack
             LLVMValueRef variable = Identifier.Emit(pContext);
             var index = Index.Emit(pContext);

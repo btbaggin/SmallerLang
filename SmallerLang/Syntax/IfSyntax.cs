@@ -9,7 +9,7 @@ namespace SmallerLang.Syntax
 {
     public class IfSyntax : SyntaxNode
     {
-        public ExpressionSyntax Condition { get; private set; }
+        public SyntaxNode Condition { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
@@ -17,7 +17,9 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal IfSyntax(ExpressionSyntax pCondition, BlockSyntax pBody, ElseSyntax  pElse)
+        public override SyntaxType SyntaxType => SyntaxType.If;
+
+        internal IfSyntax(SyntaxNode pCondition, BlockSyntax pBody, ElseSyntax  pElse)
         {
             Condition = pCondition;
             Body = pBody;
@@ -26,6 +28,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             var cond = Condition.Emit(pContext);
             Utils.LlvmHelper.LoadIfPointer(ref cond, pContext);
             var then = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_then");
@@ -44,7 +48,7 @@ namespace SmallerLang.Syntax
             LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, then);
             Body.Emit(pContext);
 
-            if(!Utils.SyntaxHelper.LastStatementIsReturn(Body))
+            if(!Utils.SyntaxHelper.LastStatementIsReturn(Body) && !Utils.SyntaxHelper.LastStatementIsBreak(Body))
             {
                 //Jump to end only if we didn't terminate in the body
                 LLVMSharp.LLVM.BuildBr(pContext.Builder, end);

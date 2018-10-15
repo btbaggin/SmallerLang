@@ -18,6 +18,8 @@ namespace SmallerLang.Syntax
             get { return TypeNode.Type; }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.TypedIdentifier;
+
         internal TypedIdentifierSyntax(TypeSyntax pType, string pValue)
         {
             Value = pValue;

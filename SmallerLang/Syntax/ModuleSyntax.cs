@@ -20,6 +20,8 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.Module;
+
         internal ModuleSyntax(string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
             Name = pName;
@@ -65,7 +67,19 @@ namespace SmallerLang.Syntax
                 Methods[i].Emit(pContext);
             }
 
-            return _main;
+            //Emit our function that the runtime will call. 
+            //This will just call the method marked with "@run"
+            //The reason we do this is so we have a static method name we can call
+            var main = pContext.EmitMethodHeader("_main", LLVMTypeRef.Int32Type(), new LLVMTypeRef[] { });
+            var mainB = main.AppendBasicBlock("");
+            LLVM.PositionBuilderAtEnd(pContext.Builder, mainB);
+            LLVM.BuildCall(pContext.Builder, _main, new LLVMValueRef[] { }, "");
+            LLVM.BuildRet(pContext.Builder, pContext.GetInt(0));
+            pContext.ValidateMethod(main);
+
+            pContext.FinishDebug();
+
+            return main;
         }
     }
 }

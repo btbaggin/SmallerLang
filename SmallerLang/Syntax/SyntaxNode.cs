@@ -10,11 +10,6 @@ namespace SmallerLang.Syntax
 {
     public abstract class SyntaxNode
     {
-        public bool IsMemberAccess
-        {
-            get { return GetType() == typeof(MemberAccessSyntax) || GetType() == typeof(ArrayAccessSyntax); }
-        }
-
         public bool Deferred { get; internal set; }
 
         public TextSpan Span { get; private set; }
@@ -22,6 +17,8 @@ namespace SmallerLang.Syntax
         public Annotation Annotation { get; internal set; }
 
         public abstract SmallType Type { get; }
+
+        public abstract SyntaxType SyntaxType { get; }
 
         public T SetSpan<T>(TextSpan pSpan) where T : SyntaxNode
         {

@@ -12,10 +12,14 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type => SmallTypeCache.Boolean;
 
+        public override SyntaxType SyntaxType => SyntaxType.BooleanLiteral;
+
         internal BooleanLiteralSyntax(string pValue) : base(pValue) { }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             ulong v = bool.Parse(Value) ? 1ul : 0ul;
             return LLVM.ConstInt(LLVM.Int1Type(), v, EmittingContext.False);
         }

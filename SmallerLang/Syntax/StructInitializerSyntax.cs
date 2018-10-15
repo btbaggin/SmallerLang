@@ -8,17 +8,19 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class StructInitializerSyntax : ExpressionSyntax
+    public class StructInitializerSyntax : SyntaxNode
     {
         public IList<IdentifierSyntax> Values { get; private set; }
 
         public TypeSyntax Struct { get; private set; }
 
-        public IList<ExpressionSyntax> Arguments { get; private set; }
+        public IList<SyntaxNode> Arguments { get; private set; }
 
         public override SmallType Type => Struct.Type;
 
-        internal StructInitializerSyntax(IList<IdentifierSyntax> pValue, TypeSyntax pStruct, IList<ExpressionSyntax> pArguments)
+        public override SyntaxType SyntaxType => SyntaxType.StructInitializer;
+
+        internal StructInitializerSyntax(IList<IdentifierSyntax> pValue, TypeSyntax pStruct, IList<SyntaxNode> pArguments)
         {
             Values = pValue;
             Struct = pStruct;
@@ -27,6 +29,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
             var m = Type.GetConstructor();
 

@@ -42,6 +42,8 @@ namespace SmallerLang.Syntax
             }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.NumericLiteral;
+
         internal NumericLiteralSyntax(string pValue, NumberTypes pType) : base(pValue)
         {
             NumberType = pType;
@@ -49,6 +51,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             switch(NumberType)
             {
                 case NumberTypes.Integer:

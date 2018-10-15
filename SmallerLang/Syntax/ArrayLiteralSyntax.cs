@@ -17,6 +17,8 @@ namespace SmallerLang.Syntax
             get { return TypeNode.Type.MakeArrayType(); }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.ArrayLiteral;
+
         public uint Size
         {
             get
@@ -33,7 +35,9 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            var variable = pContext.AllocateVariable("array_temp", Type);
+            pContext.EmitDebugLocation(this);
+
+            var variable = pContext.AllocateVariable("array_temp", this);
 
             var length = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
             LLVM.BuildStore(pContext.Builder, pContext.GetInt(int.Parse(Value)), length);

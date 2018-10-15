@@ -15,6 +15,8 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
+        public override SyntaxType SyntaxType => SyntaxType.Else;
+
         public ElseSyntax(BlockSyntax pBody, IfSyntax pIf)
         {
             Body = pBody;
@@ -23,6 +25,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             If?.Emit(pContext);
             Body?.Emit(pContext);
             return default;

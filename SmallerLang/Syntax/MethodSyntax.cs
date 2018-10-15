@@ -33,6 +33,8 @@ namespace SmallerLang.Syntax
             }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.Method;
+
         string _name;
         internal MethodSyntax(string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {
@@ -51,12 +53,15 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             if (!External)
             {
                 System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(_name), "Method name cannot be blank");
                 var func = pContext.StartMethod(_name, this);
                 pContext.AddDeferredStatementExecution();
                 pContext.Locals.AddScope();
+                pContext.AddDebugScope(Span);
 
                 //Method bodies are slightly special because we want all variables to be declared in their scope
                 //Don't call Body.Emit because that starts a new scope and all our variables will be not declared for deferred statements
@@ -74,7 +79,12 @@ namespace SmallerLang.Syntax
                     {
                         s.Emit(pContext);
                     }
+
+                    //We want to dispose variables after deferred statements because
+                    //then variables referenced in deferred statements will still be valid
+                    BlockSyntax.BuildCallToDispose(pContext);
                 }
+
 
                 if (ReturnValues.Count == 0)
                 {
@@ -89,12 +99,38 @@ namespace SmallerLang.Syntax
 
                 //End method
                 pContext.RemoveDeferredStatementExecution();
+                pContext.RemoveDebugScope();
                 pContext.Locals.RemoveScope();
                 pContext.FinishMethod(func);
                 return func;
             }
 
             return default;
+        }
+
+        public override string ToString()
+        {
+            var name = new StringBuilder();
+            name.Append(Name);
+            name.Append("(");
+
+            var parms = Utils.SyntaxHelper.SelectNodeTypes(Parameters);
+            foreach(var p in parms)
+            {
+                name.Append(p.Name);
+                name.Append(",");
+            }
+            if (parms.Length > 0) name = name.Remove(name.Length - 1, 1);
+
+            name.Append(")");
+
+            if (Type != SmallTypeCache.Undefined)
+            {
+                name.Append(" -> ");
+                name.Append(Type.ToString());
+            }
+
+            return name.ToString();
         }
     }
 }

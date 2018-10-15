@@ -14,21 +14,26 @@ namespace SmallerLang.Syntax
 
         public IList<DeclarationSyntax> Initializer { get; private set; }
 
-        public ExpressionSyntax Condition { get; private set; }
+        public bool Reverse { get; private set; }
 
-        public IList<ExpressionSyntax> Finalizer { get; private set; }
+        public SyntaxNode Condition { get; private set; }
+
+        public IList<SyntaxNode> Finalizer { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal ForSyntax(IdentifierSyntax pIterator, BlockSyntax pBody)
+        public override SyntaxType SyntaxType => SyntaxType.For;
+
+        internal ForSyntax(IdentifierSyntax pIterator, bool pBackwards, BlockSyntax pBody)
         {
             Iterator = pIterator;
+            Reverse = pBackwards;
             Body = pBody;
         }
 
-        internal ForSyntax(IList<DeclarationSyntax> pInitializer, ExpressionSyntax pCondition, IList<ExpressionSyntax> pFinalizer, BlockSyntax pBody)
+        internal ForSyntax(IList<DeclarationSyntax> pInitializer, SyntaxNode pCondition, IList<SyntaxNode> pFinalizer, BlockSyntax pBody)
         {
             Initializer = pInitializer;
             Condition = pCondition;
@@ -41,7 +46,10 @@ namespace SmallerLang.Syntax
             //Iterator should have been rewritten to normal for loop
             System.Diagnostics.Debug.Assert(Iterator == null);
 
+            pContext.EmitDebugLocation(this);
+
             pContext.Locals.AddScope();
+            pContext.AddDebugScope(Span);
 
             foreach (var d in Initializer)
             {
@@ -65,6 +73,8 @@ namespace SmallerLang.Syntax
             var loop = LLVM.AppendBasicBlock(pContext.CurrentMethod, "for_body");
             var end = LLVM.AppendBasicBlock(pContext.CurrentMethod, "for_end");
 
+            pContext.BreakLocations.Push(end);
+
             //Jump to end or loop
             LLVM.BuildCondBr(pContext.Builder, condv, loop, end);
 
@@ -76,6 +86,8 @@ namespace SmallerLang.Syntax
                 f.Emit(pContext);
             }
 
+            pContext.BreakLocations.Pop();
+
             //Jump back to start
             cond = Condition.Emit(pContext);
             condv = LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntNE, cond, cmp, "for_cond");
@@ -83,7 +95,8 @@ namespace SmallerLang.Syntax
 
             //End
             LLVM.PositionBuilderAtEnd(pContext.Builder, end);
-            
+
+            pContext.RemoveDebugScope();
             pContext.Locals.RemoveScope();
 
             return default;

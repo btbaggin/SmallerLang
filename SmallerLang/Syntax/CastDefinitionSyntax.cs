@@ -10,6 +10,8 @@ namespace SmallerLang.Syntax
 {
     public class CastDefinitionSyntax : MethodSyntax
     {
+        public override SyntaxType SyntaxType => SyntaxType.CastDefinition;
+
         internal CastDefinitionSyntax(TypedIdentifierSyntax pFromType, BlockSyntax pBody, TypeSyntax pToType) 
             : base("", new List<TypeSyntax>() { pToType }, new List<TypedIdentifierSyntax>() { pFromType }, pBody, false)
         {

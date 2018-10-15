@@ -10,7 +10,7 @@ namespace SmallerLang.Syntax
 {
     public class CaseSyntax : SyntaxNode
     {
-        public IList<ExpressionSyntax> Conditions { get; private set; }
+        public IList<SyntaxNode> Conditions { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
@@ -18,7 +18,9 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        internal CaseSyntax(IList<ExpressionSyntax> pConditions, BlockSyntax pBody)
+        public override SyntaxType SyntaxType => SyntaxType.Case;
+
+        internal CaseSyntax(IList<SyntaxNode> pConditions, BlockSyntax pBody)
         {
             Conditions = pConditions;
             Body = pBody;
@@ -26,6 +28,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //Most of the code for case is generated in SelectSyntax
             var b = LLVM.AppendBasicBlock(pContext.CurrentMethod, "case");
             LLVM.PositionBuilderAtEnd(pContext.Builder, b);

@@ -13,134 +13,138 @@ namespace SmallerLang.Validation
         {
             if (pNode == null) return;
 
-            switch(pNode)
+            switch(pNode.SyntaxType)
             {
-                case ItSyntax i:
-                    VisitItSyntax(i);
+                case SyntaxType.It:
+                    VisitItSyntax((ItSyntax)pNode);
                     break;
 
-                case ArrayLiteralSyntax a:
-                    VisitArrayLiteralSyntax(a);
+                case SyntaxType.ArrayLiteral:
+                    VisitArrayLiteralSyntax((ArrayLiteralSyntax)pNode);
                     break;
 
-                case ArrayAccessSyntax a:
-                    VisitArrayAccessSyntax(a);
+                case SyntaxType.ArrayAccess:
+                    VisitArrayAccessSyntax((ArrayAccessSyntax)pNode);
                     break;
 
-                case AssignmentSyntax a:
-                    VisitAssignmentSyntax(a);
+                case SyntaxType.Assignment:
+                    VisitAssignmentSyntax((AssignmentSyntax)pNode);
                     break;
 
-                case BinaryExpressionSyntax b:
-                    VisitBinaryExpressionSyntax(b);
+                case SyntaxType.BinaryExpression:
+                    VisitBinaryExpressionSyntax((BinaryExpressionSyntax)pNode);
                     break;
 
-                case BlockSyntax b:
-                    VisitBlockSyntax(b);
+                case SyntaxType.Block:
+                    VisitBlockSyntax((BlockSyntax)pNode);
                     break;
 
-                case BooleanLiteralSyntax b:
-                    VisitBooleanLiteralSyntax(b);
+                case SyntaxType.BooleanLiteral:
+                    VisitBooleanLiteralSyntax((BooleanLiteralSyntax)pNode);
                     break;
 
-                case CaseSyntax c:
-                    VisitCaseSyntax(c);
+                case SyntaxType.Break:
+                    VisitBreakSyntax((BreakSyntax)pNode);
                     break;
 
-                case CastDefinitionSyntax c:
-                    VisitCastDefinitionSyntax(c);
+                case SyntaxType.Case:
+                    VisitCaseSyntax((CaseSyntax)pNode);
                     break;
 
-                case CastSyntax c:
-                    VisitCastSyntax(c);
+                case SyntaxType.CastDefinition:
+                    VisitCastDefinitionSyntax((CastDefinitionSyntax)pNode);
                     break;
 
-                case DiscardSyntax d:
-                    VisitDiscardSyntax(d);
+                case SyntaxType.Cast:
+                    VisitCastSyntax((CastSyntax)pNode);
                     break;
 
-                case NumericLiteralSyntax n:
-                    VisitNumericLiteralSyntax(n);
+                case SyntaxType.Discard:
+                    VisitDiscardSyntax((DiscardSyntax)pNode);
                     break;
 
-                case StringLiteralSyntax s:
-                    VisitStringLiteralSyntax(s);
+                case SyntaxType.NumericLiteral:
+                    VisitNumericLiteralSyntax((NumericLiteralSyntax)pNode);
                     break;
 
-                case SelfSyntax s:
-                    VisitSelfSyntax(s);
+                case SyntaxType.StringLiteral:
+                    VisitStringLiteralSyntax((StringLiteralSyntax)pNode);
                     break;
 
-                case DeclarationSyntax d:
-                    VisitDeclarationSyntax(d);
+                case SyntaxType.Self:
+                    VisitSelfSyntax((SelfSyntax)pNode);
                     break;
 
-                case TypeDefinitionSyntax d:
-                    VisitTypeDefinitionSyntax(d);
+                case SyntaxType.Declaration:
+                    VisitDeclarationSyntax((DeclarationSyntax)pNode);
                     break;
 
-                case ElseSyntax e:
-                    VisitElseSyntax(e);
+                case SyntaxType.TypeDefinition:
+                    VisitTypeDefinitionSyntax((TypeDefinitionSyntax)pNode);
                     break;
 
-                case EnumSyntax e:
-                    VisitEnumSyntax(e);
+                case SyntaxType.Else:
+                    VisitElseSyntax((ElseSyntax)pNode);
                     break;
 
-                case ForSyntax f:
-                    VisitForSyntax(f);
+                case SyntaxType.Enum:
+                    VisitEnumSyntax((EnumSyntax)pNode);
                     break;
 
-                case MethodCallSyntax m:
-                    VisitMethodCallSyntax(m);
+                case SyntaxType.For:
+                    VisitForSyntax((ForSyntax)pNode);
                     break;
 
-                case MemberAccessSyntax m:
-                    VisitMemberAccessSyntax(m);
+                case SyntaxType.MethodCall:
+                    VisitMethodCallSyntax((MethodCallSyntax)pNode);
                     break;
 
-                case IdentifierSyntax i:
-                    VisitIdentifierSyntax(i);
+                case SyntaxType.MemberAccess:
+                    VisitMemberAccessSyntax((MemberAccessSyntax)pNode);
                     break;
 
-                case IfSyntax i:
-                    VisitIfSyntax(i);
+                case SyntaxType.Identifier:
+                    VisitIdentifierSyntax((IdentifierSyntax)pNode);
                     break;
 
-                case MethodSyntax m:
-                    VisitMethodSyntax(m);
+                case SyntaxType.If:
+                    VisitIfSyntax((IfSyntax)pNode);
                     break;
 
-                case ModuleSyntax m:
-                    VisitModuleSyntax(m);
+                case SyntaxType.Method:
+                    VisitMethodSyntax((MethodSyntax)pNode);
                     break;
 
-                case TypedIdentifierSyntax p:
-                    VisitTypedIdentifierSyntax(p);
+                case SyntaxType.Module:
+                    VisitModuleSyntax((ModuleSyntax)pNode);
                     break;
 
-                case ReturnSyntax r:
-                    VisitReturnSyntax(r);
+                case SyntaxType.TypedIdentifier:
+                    VisitTypedIdentifierSyntax((TypedIdentifierSyntax)pNode);
                     break;
 
-                case SelectSyntax s:
-                    VisitSelectSyntax(s);
+                case SyntaxType.Return:
+                    VisitReturnSyntax((ReturnSyntax)pNode);
                     break;
 
-                case StructInitializerSyntax s:
-                    VisitStructInitializerSyntax(s);
+                case SyntaxType.Select:
+                    VisitSelectSyntax((SelectSyntax)pNode);
                     break;
 
-                case TypeSyntax t:
-                    VisitTypeSyntax(t);
+                case SyntaxType.StructInitializer:
+                    VisitStructInitializerSyntax((StructInitializerSyntax)pNode);
                     break;
 
-                case UnaryExpressionSyntax u:
-                    VisitUnaryExpressionSyntax(u);
+                case SyntaxType.Type:
+                    VisitTypeSyntax((TypeSyntax)pNode);
                     break;
 
-                case WhileSyntax w:
-                    VisitWhileSyntax(w);
+                case SyntaxType.UnaryExpression:
+                    VisitUnaryExpressionSyntax((UnaryExpressionSyntax)pNode);
+                    break;
+
+                case SyntaxType.While:
+                    VisitWhileSyntax((WhileSyntax)pNode);
                     break;
 
                 case WorkspaceSyntax w:
@@ -184,6 +188,8 @@ namespace SmallerLang.Validation
         }
 
         protected virtual void VisitBooleanLiteralSyntax(BooleanLiteralSyntax pNode) { }
+
+        protected virtual void VisitBreakSyntax(BreakSyntax pNode) { }
 
         protected virtual void VisitCaseSyntax(CaseSyntax pNode)
         {

@@ -10,11 +10,14 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Mulitple declarations with struct initializer, not properly initializing memory
-         * Multiple assignment of member/array access
-         * Poly methods taking traits
+         * Range 1..10
+         * Generic traits
+         * Trait dependencies?
+         * Zero out array allocations
+         * Allow returning traits from methods?
+         * tree shaking of methods
+         * control flow analysis?
          * Do struct poly after type inference?
-         * Set multiple variables from single assignment?
          * imports
          * strings
         */
@@ -49,7 +52,8 @@ namespace SmallerLangRun
             {
                 OutputBytecode = false,
                 Optimizations = true,
-                SourceFile = prog
+                SourceFile = prog,
+                Debug = false
             };
 
             if (c.Compile(o))

@@ -8,9 +8,9 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class ReturnSyntax : ExpressionSyntax
+    public class ReturnSyntax : SyntaxNode
     {
-        public IList<ExpressionSyntax> Values { get; private set; }
+        public IList<SyntaxNode> Values { get; private set; }
 
         public override SmallType Type
         {
@@ -27,23 +27,31 @@ namespace SmallerLang.Syntax
             }
         }
 
-        internal ReturnSyntax(IList<ExpressionSyntax> pValues)
+        public override SyntaxType SyntaxType => SyntaxType.Return;
+
+        internal ReturnSyntax(IList<SyntaxNode> pValues)
         {
             Values = pValues;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
+            //Emit deferred statements right before return
+            foreach (var s in pContext.GetDeferredStatements())
+            {
+                s.Emit(pContext);
+            }
+
+            //We want to dispose variables after deferred statements because
+            //then variables referenced in deferred statements will still be valid
+            BlockSyntax.BuildCallToDispose(pContext);
+
             LLVMValueRef v;
-            if(Values.Count == 1)
+            if (Values.Count == 1)
             {
                 v = Values[0].Emit(pContext);
-
-                //Emit deferred statements right before return
-                foreach (var s in pContext.GetDeferredStatements())
-                {
-                    s.Emit(pContext);
-                }
                 Utils.LlvmHelper.LoadIfPointer(ref v, pContext);
             }
             else

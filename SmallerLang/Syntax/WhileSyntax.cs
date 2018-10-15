@@ -9,13 +9,15 @@ namespace SmallerLang.Syntax
 {
     public class WhileSyntax : SyntaxNode
     {
-        public ExpressionSyntax Condition { get; private set; }
+        public SyntaxNode Condition { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
-        public WhileSyntax(ExpressionSyntax pCondition, BlockSyntax pBody)
+        public override SyntaxType SyntaxType => SyntaxType.While;
+
+        public WhileSyntax(SyntaxNode pCondition, BlockSyntax pBody)
         {
             Condition = pCondition;
             Body = pBody;
@@ -23,10 +25,14 @@ namespace SmallerLang.Syntax
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             //If condition
             var cond = Condition.Emit(pContext);
             var loop = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_loop");
             var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "while_end");
+
+            pContext.BreakLocations.Push(end);
 
             //Jump to end or loop
             LLVMSharp.LLVM.BuildCondBr(pContext.Builder, cond, loop, end);
@@ -34,6 +40,8 @@ namespace SmallerLang.Syntax
             //Loop
             LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, loop);
             Body.Emit(pContext);
+
+            pContext.BreakLocations.Pop();
 
             if(!Utils.SyntaxHelper.LastStatementIsReturn(Body))
             {

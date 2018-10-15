@@ -21,12 +21,14 @@ namespace SmallerLang.Syntax
             }
         }
 
+        public override SyntaxType SyntaxType => SyntaxType.Cast;
+
         public TypeSyntax TypeNode { get; private set; }
 
         MethodDefinition _method;
-        internal CastSyntax(ExpressionSyntax pValue) : this(pValue, null) { }
+        internal CastSyntax(SyntaxNode pValue) : this(pValue, null) { }
 
-        internal CastSyntax(ExpressionSyntax pValue, TypeSyntax pType) : base(pValue, UnaryExpressionOperator.Cast)
+        internal CastSyntax(SyntaxNode pValue, TypeSyntax pType) : base(pValue, UnaryExpressionOperator.Cast)
         {
             TypeNode = pType;
             if (TypeNode == null) SetType(SmallTypeCache.Undefined);
@@ -34,6 +36,8 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.EmitDebugLocation(this);
+
             var val = Value.Emit(pContext);
             if (FromType == Type) return val;
 

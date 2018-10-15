@@ -10,14 +10,14 @@ namespace SmallerLang.Validation
 {
     class TypeChecker : SyntaxNodeVisitor
     {
+        readonly VisitorStore _store;
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
-        SmallType _casetype;
-        SmallType _currentType;
 
         public TypeChecker(IErrorReporter pError)
         {
             _error = pError;
+            _store = new VisitorStore();
         }
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
@@ -26,7 +26,7 @@ namespace SmallerLang.Validation
             {
                 _error.WriteError($"Type of {pNode.Index.Type.ToString()} cannot be converted to {SmallTypeCache.Int.ToString()}", pNode.Index.Span);
             }
-            if(!pNode.BaseType.IsArray)
+            if(!pNode.Identifier.Type.IsArray)
             {
                 _error.WriteError($"Array access can only be on array types", pNode.Span);
             }
@@ -65,6 +65,8 @@ namespace SmallerLang.Validation
                     break;
 
                 default:
+                    //Types can be undefined if the type was not found.
+                    //These errors will be reported when the type is first found
                     if (pNode.Left.Type != SmallTypeCache.Undefined && 
                         pNode.Right.Type != SmallTypeCache.Undefined &&
                         BinaryExpressionSyntax.GetResultType(pNode.Left.Type, pNode.Operator, pNode.Right.Type) == SmallTypeCache.Undefined)
@@ -111,30 +113,38 @@ namespace SmallerLang.Validation
 
         protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
-            var t = _currentType;
-            _currentType = pNode.Identifier.Type;
+            Visit((dynamic)pNode.Identifier);
 
-            base.VisitMemberAccessSyntax(pNode);
-            _currentType = t;
+            //Set current type for proper method resolution
+            using (var t = _store.AddValue("CurrentType", pNode.Identifier.Type))
+            {
+                Visit((dynamic)pNode.Value);
+            }
         }
 
         protected override void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
+            var currentType = _store.GetValueOrDefault<SmallType>("CurrentType");
 
-            var methodFound = FindMethod(out MethodDefinition m, pNode.Value, _currentType, types);
-            System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
-
-            for(int i = 0; i < m.ArgumentTypes.Count; i++)
+            //Current type can be undefined if we have a method call on a type that isn't defined
+            if(currentType != SmallTypeCache.Undefined)
             {
-                if(!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
+                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, currentType, types);
+                System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
+
+                for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
-                    _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
+                    {
+                        _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                    }
                 }
+
+                //Method calls are finally validated, set the mangled method name which we will actually call
+                pNode.SetDefinition(m);
             }
 
-            //Method calls are finally validated, set the mangled method name which we will actually call
-            pNode.SetDefinition(m);
             base.VisitMethodCallSyntax(pNode);
         }
 
@@ -161,6 +171,10 @@ namespace SmallerLang.Validation
             if(pNode.Struct.Type == SmallTypeCache.Undefined)
             {
                 _error.WriteError($"Use of undeclared type {pNode.Struct.Value}", pNode.Span);
+            }
+            else if(pNode.Struct.Type.IsTrait)
+            {
+                _error.WriteError("Traits cannot be directly initialized", pNode.Span);
             }
             else if(pNode.Struct.Type.HasDefinedConstructor())
             {
@@ -238,17 +252,20 @@ namespace SmallerLang.Validation
 
         protected override void VisitSelectSyntax(SelectSyntax pNode)
         {
-            _casetype = pNode.Condition.Type;
-            base.VisitSelectSyntax(pNode);
+            using (var c = _store.AddValue("CaseType", pNode.Condition.Type))
+            {
+                base.VisitSelectSyntax(pNode);
+            }
         }
 
         protected override void VisitCaseSyntax(CaseSyntax pNode)
         {
+            var caseType = _store.GetValue<SmallType>("CaseType");
             foreach(var c in pNode.Conditions)
             {
-                if(!CanCast(_casetype, c.Type))
+                if(!CanCast(caseType, c.Type))
                 {
-                    _error.WriteError($"Type of {c.Type.ToString()} cannot be converted to {_casetype.ToString()}", pNode.Span);
+                    _error.WriteError($"Type of {c.Type.ToString()} cannot be converted to {caseType.ToString()}", pNode.Span);
                 }
             }
             base.VisitCaseSyntax(pNode);
@@ -265,6 +282,8 @@ namespace SmallerLang.Validation
 
         private bool CanCast(SmallType pFrom, SmallType pTo)
         {
+            //Undefined types are caused by non-existent types
+            //These errors will be caught when the type is first encountered
             return pFrom == SmallTypeCache.Undefined || pTo == SmallTypeCache.Undefined || pFrom.IsAssignableFrom(pTo);
         }
     }

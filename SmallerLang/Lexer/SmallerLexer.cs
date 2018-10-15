@@ -61,6 +61,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("self", TokenType.Self);
             _keywords.Insert("lengthof", TokenType.LengthOf);
             _keywords.Insert("import", TokenType.Import);
+            _keywords.Insert("break", TokenType.Break);
 
             //Types
             _keywords.Insert("float", TokenType.TypeFloat);

@@ -28,6 +28,7 @@ namespace SmallerLang
         Trait,
         Implement,
         On,
+        Break,
         Import,
 
         //Struct queries

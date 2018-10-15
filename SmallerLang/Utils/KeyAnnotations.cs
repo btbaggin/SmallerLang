@@ -29,10 +29,12 @@ namespace SmallerLang.Utils
             try
             {
                 //Try to retrieve assembly
-                Assembly assembly = Assembly.Load(parts[0] + ".dll");
+                Assembly assembly = TryResolveAssembly(parts[0]);
+                if (assembly == null) throw new NullReferenceException($"Unable to locate assembly {parts[0]}");
 
                 //Try to retrieve type
                 Type type = assembly.GetType(parts[1]);
+                if (type == null) throw new NullReferenceException($"Unable to type {parts[1]} within {parts[0]}");
 
                 //Convert SmallTypes to System.Type
                 Type[] types = new Type[pMethod.Parameters.Count];
@@ -78,7 +80,7 @@ namespace SmallerLang.Utils
         public static MethodInfo ParseExternalAnnotation(string pAnnotation, LLVMValueRef pFunction)
         {
             var parts = pAnnotation.Split(',');
-            Assembly assembly = Assembly.Load(parts[0] + ".dll");
+            Assembly assembly = TryResolveAssembly(parts[0]);
 
             Type type = assembly.GetType(parts[1]);
 
@@ -97,6 +99,45 @@ namespace SmallerLang.Utils
                 else throw new InvalidCastException("Unknown type " + t.ToString());
             }
             return type.GetMethod(parts[2], types);
+        }
+
+        private static Assembly TryResolveAssembly(string pAssembly)
+        {
+            pAssembly = pAssembly + ".dll";
+            //Try just straight load
+            Assembly assembly = null;
+            try
+            {
+                assembly = Assembly.Load(pAssembly);
+            }
+            catch(System.IO.FileNotFoundException)
+            {
+                //Try loading from the .Net directory
+                AssemblyName name;
+                string path;
+                try
+                {
+                    path = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
+                    name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));
+                    assembly = Assembly.Load(name);
+                }
+                catch(System.IO.FileNotFoundException)
+                {
+                    //Try loading from compilation directory
+                    try
+                    {
+                        path = SmallCompiler.CurrentDirectory;
+                        if(!string.IsNullOrEmpty(path))
+                        {
+                            name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));
+                            assembly = Assembly.Load(name);
+                        }
+                    }
+                    catch(Exception) { }
+                }
+            }
+
+            return assembly;
         }
     }
 }

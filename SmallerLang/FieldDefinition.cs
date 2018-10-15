@@ -38,5 +38,10 @@ namespace SmallerLang
             Value = pValue;
             Visibility = pVisibility;
         }
+
+        public override string ToString()
+        {
+            return Type.ToString() + ": " + Name;
+        }
     }
 }

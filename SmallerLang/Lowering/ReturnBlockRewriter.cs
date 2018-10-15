@@ -26,7 +26,7 @@ namespace SmallerLang.Lowering
                 if (!returnFound) statements.Add(Visit((dynamic)pNode.Statements[i]));
                 else _error.WriteWarning("Unreachable code detected", pNode.Statements[i].Span);
 
-                if (pNode.Statements[i].GetType() == typeof(ReturnSyntax))
+                if (pNode.Statements[i].SyntaxType == SyntaxType.Return)
                 {
                     returnFound = true;
                 }
