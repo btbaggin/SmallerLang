@@ -10,14 +10,12 @@ namespace SmallerLang.Validation
 {
     class TypeChecker : SyntaxNodeVisitor
     {
-        readonly VisitorStore _store;
         readonly IErrorReporter _error;
         SmallType[] _methodReturns;
 
         public TypeChecker(IErrorReporter pError)
         {
             _error = pError;
-            _store = new VisitorStore();
         }
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
@@ -111,26 +109,14 @@ namespace SmallerLang.Validation
             base.VisitUnaryExpressionSyntax(pNode);
         }
 
-        protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
-        {
-            Visit((dynamic)pNode.Identifier);
-
-            //Set current type for proper method resolution
-            using (var t = _store.AddValue("CurrentType", pNode.Identifier.Type))
-            {
-                Visit((dynamic)pNode.Value);
-            }
-        }
-
         protected override void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
-            var currentType = _store.GetValueOrDefault<SmallType>("CurrentType");
 
             //Current type can be undefined if we have a method call on a type that isn't defined
-            if(currentType != SmallTypeCache.Undefined)
+            if(Type != SmallTypeCache.Undefined)
             {
-                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, currentType, types);
+                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, Namespace, Type, types);
                 System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
 
                 for (int i = 0; i < m.ArgumentTypes.Count; i++)
@@ -148,16 +134,20 @@ namespace SmallerLang.Validation
             base.VisitMethodCallSyntax(pNode);
         }
 
-        private bool FindMethod(out MethodDefinition pDef, string pName, SmallType pType, params SmallType[] pArguments)
+        private bool FindMethod(out MethodDefinition pDef, string pName, string pNamespace, SmallType pType, params SmallType[] pArguments)
         {
-            MethodCache.FindMethod(out pDef, pType, pName, pArguments);
+            MethodCache.FindMethod(out pDef, pNamespace, pType, pName, pArguments);
             if (pDef.Name == null)
             {
-                foreach (var trait in pType.Implements)
+                if (pType != null)
                 {
-                    MethodCache.FindMethod(out pDef, trait, pName, pArguments);
-                    if (pDef.Name != null) return true;
+                    foreach (var trait in pType.Implements)
+                    {
+                        MethodCache.FindMethod(out pDef, pNamespace, trait, pName, pArguments);
+                        if (pDef.Name != null) return true;
+                    }
                 }
+                
                 return false;
             }
 
@@ -179,7 +169,7 @@ namespace SmallerLang.Validation
             else if(pNode.Struct.Type.HasDefinedConstructor())
             {
                 var ctor = pNode.Struct.Type.GetConstructor().Name;
-                MethodCache.FindMethod(out MethodDefinition m, pNode.Struct.Type, ctor, types);
+                MethodCache.FindMethod(out MethodDefinition m, Namespace, pNode.Struct.Type, ctor, types); //TODO
                 for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
                     if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
@@ -252,7 +242,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitSelectSyntax(SelectSyntax pNode)
         {
-            using (var c = _store.AddValue("CaseType", pNode.Condition.Type))
+            using (var c = Store.AddValue("CaseType", pNode.Condition.Type))
             {
                 base.VisitSelectSyntax(pNode);
             }
@@ -260,7 +250,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitCaseSyntax(CaseSyntax pNode)
         {
-            var caseType = _store.GetValue<SmallType>("CaseType");
+            var caseType = Store.GetValue<SmallType>("CaseType");
             foreach(var c in pNode.Conditions)
             {
                 if(!CanCast(caseType, c.Type))

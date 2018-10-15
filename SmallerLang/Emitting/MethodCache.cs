@@ -61,38 +61,38 @@ namespace SmallerLang.Emitting
         readonly static Dictionary<string, int> _counter = new Dictionary<string, int>();
         internal const string CAST_METHOD = "<cast>"; //Use a normally invalid method name so we don't get collisions
 
-        public static MethodDefinition AddMethod(string pName, MethodSyntax pNode)
+        public static MethodDefinition AddMethod(string pNamespace, string pName, MethodSyntax pNode)
         {
-            return AddMethod(null, pName, pNode);
+            return AddMethod(pNamespace, null, pName, pNode);
         }
 
-        public static MethodDefinition AddMethod(SmallType pType, string pName, MethodSyntax pNode)
+        public static MethodDefinition AddMethod(string pNamespace, SmallType pType, string pName, MethodSyntax pNode)
         {
-            var name = GetMethodName(pType, pName);
+            var name = GetMethodName(pNamespace, pType, pName);
             if (!_methods.ContainsKey(name))
             {
                 _methods.Add(name, new List<MethodDefinition>());
                 _counter.Add(name, 0);
             }
             _counter[name]++;
-            var md = GetDefinition(pNode, _counter[name], pType);
+            var md = GetDefinition(pNode, _counter[name], name);
             _methods[name].Add(md);
             return md;
         }
 
-        public static bool MethodExists(string pName, MethodSyntax pNode)
+        public static bool MethodExists(string pNamespace, string pName, MethodSyntax pNode)
         {
-            return MethodExists(null, pName, pNode);
+            return MethodExists(pNamespace, null, pName, pNode);
         }
 
-        public static bool MethodExists(SmallType pType, string pName, MethodSyntax pNode)
+        public static bool MethodExists(string pNamespace, SmallType pType, string pName, MethodSyntax pNode)
         {
-            var name = GetMethodName(pType, pName);
+            var name = GetMethodName(pNamespace, pType, pName);
 
             if (_methods.ContainsKey(name))
             {
                 SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Parameters);
-                return FindMethod(out MethodDefinition m, name, types);
+                return FindMethod(out MethodDefinition m, pNamespace, name, types);
             }
 
             return false;
@@ -143,14 +143,14 @@ namespace SmallerLang.Emitting
             return 0;
         }
 
-        public static bool FindMethod(out MethodDefinition pMethod, string pName, params SmallType[] pArguments)
+        public static bool FindMethod(out MethodDefinition pMethod, string pNamespace, string pName, params SmallType[] pArguments)
         {
-            return FindMethod(out pMethod, null, pName, pArguments);
+            return FindMethod(out pMethod, pNamespace, null, pName, pArguments);
         }
 
-        public static bool FindMethod(out MethodDefinition pMethod, SmallType pType, string pName, params SmallType[] pArguments)
+        public static bool FindMethod(out MethodDefinition pMethod, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
         {
-            var name = GetMethodName(pType, pName);
+            var name = GetMethodName(pNamespace, pType, pName);
             if (!_methods.ContainsKey(name))
             {
                 pMethod = default;
@@ -226,22 +226,22 @@ namespace SmallerLang.Emitting
             return retval;
         }
 
-        public static string GetMangledName(string pName, SmallType pType, params SmallType[] pArguments)
+        public static string GetMangledName(string pName, string pNamespace, SmallType pType, params SmallType[] pArguments)
         {
-            System.Diagnostics.Debug.Assert(FindMethod(out MethodDefinition m, pType, pName, pArguments));
+            System.Diagnostics.Debug.Assert(FindMethod(out MethodDefinition m, pNamespace, pType, pName, pArguments));
             return m.MangledName;
         }
 
-        private static string GetMethodName(SmallType pType, string pMethod)
+        private static string GetMethodName(string pNamespace, SmallType pType, string pMethod)
         {
-            if (pType == null) return pMethod;
-            return pType.Name + "___" + pMethod;
+            string type = null;
+            if (pNamespace != null) type += pNamespace + "___";
+            if (pType != null) type += pType.Name + "___";
+            return type + pMethod;
         }
 
-        private static MethodDefinition GetDefinition(Syntax.MethodSyntax pMethod, int pCounter, SmallType pInstanceType)
+        private static MethodDefinition GetDefinition(MethodSyntax pMethod, int pCounter, string pName)
         {
-            string name = GetMethodName(pInstanceType, pMethod.Name);
-
             List<SmallType> arguments = new List<SmallType>();
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
@@ -249,7 +249,7 @@ namespace SmallerLang.Emitting
             }
 
             SmallType ret = pMethod.Type;
-            string mangledName = pMethod.External ? name : name + "_" + pCounter;
+            string mangledName = pMethod.External ? pName : pName + "_" + pCounter;
             return new MethodDefinition(pMethod.Name, mangledName, arguments, ret);
         }
     }

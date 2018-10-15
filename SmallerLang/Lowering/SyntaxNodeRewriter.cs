@@ -125,6 +125,10 @@ namespace SmallerLang.Lowering
                     node = VisitModuleSyntax((ModuleSyntax)pNode);
                     break;
 
+                case SyntaxType.Namespace:
+                    node = VisitNamespaceSyntax((NamespaceSyntax)pNode);
+                    break;
+
                 case SyntaxType.TypedIdentifier:
                     node = VisitTypedIdentifierSyntax((TypedIdentifierSyntax)pNode);
                     break;
@@ -153,8 +157,8 @@ namespace SmallerLang.Lowering
                     node = VisitWhileSyntax((WhileSyntax)pNode);
                     break;
 
-                case WorkspaceSyntax w:
-                    node = VisitWorkspaceSyntax(w);
+                case SyntaxType.Workspace:
+                    node = VisitWorkspaceSyntax((WorkspaceSyntax)pNode);
                     break;
 
                 default:
@@ -369,6 +373,11 @@ namespace SmallerLang.Lowering
             return SyntaxFactory.Module(pNode.Name, methods, definitions, enums);
         }
 
+        protected virtual SyntaxNode VisitNamespaceSyntax(NamespaceSyntax pNode)
+        {
+            return SyntaxFactory.Namespace(pNode.Value);
+        }
+
         protected virtual SyntaxNode VisitNumericLiteralSyntax(NumericLiteralSyntax pNode)
         {
             return pNode;
@@ -446,12 +455,13 @@ namespace SmallerLang.Lowering
         
         protected virtual SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            List<ModuleSyntax> modules = new List<ModuleSyntax>(pNode.Modules.Count);
-            foreach(var m in pNode.Modules)
+            Dictionary<string, ModuleSyntax> imports = new Dictionary<string, ModuleSyntax>(pNode.Imports.Count);
+            foreach(var m in pNode.Imports)
             {
-                modules.Add((ModuleSyntax)Visit(m));
+                imports.Add(m.Key, (ModuleSyntax)Visit(m.Value));
             }
-            return SyntaxFactory.Workspace(pNode.Name, modules);
+
+            return SyntaxFactory.Workspace(pNode.Name, (ModuleSyntax)Visit(pNode.Module), imports);
         }
     }
 }

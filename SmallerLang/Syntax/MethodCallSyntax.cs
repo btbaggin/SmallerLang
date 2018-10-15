@@ -53,7 +53,6 @@ namespace SmallerLang.Syntax
                 if (!Arguments[i].Type.IsStruct && !Arguments[i].Type.IsArray)
                 {
                     Utils.LlvmHelper.LoadIfPointer(ref arguments[start + i], pContext);
-                    //arguments[start + i] = LLVM.BuildLoad(pContext.Builder, arguments[start + i], "arg_" + i.ToString());
                 }
 
                 if(_definition.MangledName == "print")

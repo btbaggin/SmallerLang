@@ -52,7 +52,7 @@ namespace SmallerLang
             var tree = parser.Parse();
 
             //Basic transformations that can be done without type information
-            tree = new TreeRewriter(_error).VisitModule(tree);
+            tree = (WorkspaceSyntax)new TreeRewriter(_error).Visit(tree);
             if (_error.ErrorOccurred) return false;
 
             //Info gathering passes
@@ -67,7 +67,7 @@ namespace SmallerLang
             if (_error.ErrorOccurred) return false;
 
             //More advanced transformations that require type information
-            tree = new PostTypeRewriter(_error).VisitModule(tree);
+            tree = (WorkspaceSyntax)new PostTypeRewriter(_error).Visit(tree);
             if (_error.ErrorOccurred) return false;
 
             //Validation passes

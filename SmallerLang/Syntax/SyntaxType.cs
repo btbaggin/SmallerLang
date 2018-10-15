@@ -30,6 +30,7 @@ namespace SmallerLang.Syntax
         MethodCall,
         Method,
         Module,
+        Namespace,
         NumericLiteral,
         Return,
         Select,
@@ -41,6 +42,7 @@ namespace SmallerLang.Syntax
         Type,
         UnaryExpression,
         While,
+        Workspace,
 
         None
     }

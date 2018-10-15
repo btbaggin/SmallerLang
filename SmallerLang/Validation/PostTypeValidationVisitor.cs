@@ -10,8 +10,8 @@ namespace SmallerLang.Validation
 {
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
-        VisitorStore _store = new VisitorStore();
         VariableCache _locals; //Used to find unused variables
+        ModuleSyntax _mainModule;
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
@@ -26,9 +26,10 @@ namespace SmallerLang.Validation
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
             _locals.SetVariableReferenced(pNode.Value);
-            var currentStruct = _store.GetValueOrDefault<SmallType>("CurrentStruct");
+            var currentStruct = Struct;
+            var currentType = Type;
 
-            if(_store.GetValueOrDefault("CurrentType", out SmallType currentType))
+            if(currentType != null)
             {
                 var definition = currentType.GetField(pNode.Value);
 
@@ -45,49 +46,31 @@ namespace SmallerLang.Validation
             }
 
             if(currentStruct != null && 
-               _store.GetValueOrDefault<bool>("InConstructor") && 
-               _store.GetValueOrDefault<bool>("InAssignment"))
+               Store.GetValueOrDefault<bool>("InConstructor") && 
+               Store.GetValueOrDefault<bool>("InAssignment"))
             {
                 _usedFields.Add(pNode.Value);
             }
             base.VisitIdentifierSyntax(pNode);
         }
 
-        ModuleSyntax _mainModule;
         protected override void VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            _mainModule = pNode.GetMainModule();
+            _mainModule = pNode.Module;
             base.VisitWorkspaceSyntax(pNode);
         }
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
             _locals = new VariableCache();
-            using (var v = _store.AddValue<string>("RunMethod", null))
+            using (var v = Store.AddValue<string>("RunMethod", null))
             {
                 base.VisitModuleSyntax(pNode);
 
-                if (v.Value == null)
+                if (pNode == _mainModule && v.Value == null)
                 {
                     _error.WriteError("No run method found!", pNode.Span);
                 }
-            }
-        }
-
-        protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
-        {
-            using (var s = _store.AddValue("CurrentStruct", SmallTypeCache.FromString(pNode.Name)))
-            {
-                base.VisitTypeDefinitionSyntax(pNode);
-            }
-        }
-
-        protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
-        {
-            //Save current type so we can validate member visibility
-            using (var t = _store.AddValue("CurrentType", pNode.Identifier.Type))
-            {
-                base.VisitMemberAccessSyntax(pNode);
             }
         }
 
@@ -219,7 +202,7 @@ namespace SmallerLang.Validation
                 Visit((dynamic)c);
             }
 
-            using (var iw = _store.AddValue("CanBreak", true))
+            using (var iw = Store.AddValue("CanBreak", true))
             {
                 _breakCount++;
                 Visit(pNode.Body);
@@ -249,7 +232,7 @@ namespace SmallerLang.Validation
                 }
             }
 
-            using (var iw = _store.AddValue("CanBreak", true))
+            using (var iw = Store.AddValue("CanBreak", true))
             {
                 _breakCount++;
                 Visit(pNode.Body);
@@ -262,7 +245,7 @@ namespace SmallerLang.Validation
         {
             _locals.AddScope();
             Visit((dynamic)pNode.Condition);
-            using (var iw = _store.AddValue("CanBreak", true))
+            using (var iw = Store.AddValue("CanBreak", true))
             {
                 _breakCount++;
                 Visit(pNode.Body);
@@ -273,7 +256,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitBreakSyntax(BreakSyntax pNode)
         {
-            if(!_store.GetValueOrDefault<bool>("CanBreak"))
+            if(!Store.GetValueOrDefault<bool>("CanBreak"))
             {
                 _error.WriteError("Break statements can only appear in loops or case statements", pNode.Span);
             }

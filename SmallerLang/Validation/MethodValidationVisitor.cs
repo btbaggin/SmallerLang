@@ -24,13 +24,13 @@ namespace SmallerLang.Validation
             //This method must contain no parameters and return no values
             if (pNode.Annotation.Value == Utils.KeyAnnotations.RunMethod)
             {
-                if (_store.GetValue<string>("RunMethod") != null)
+                if (Store.GetValue<string>("RunMethod") != null)
                 {
-                    _error.WriteError($"Two run methods found: {_store.GetValue<string>("RunMethod")} and {pNode.Name}", pNode.Span);
+                    _error.WriteError($"Two run methods found: {Store.GetValue<string>("RunMethod")} and {pNode.Name}", pNode.Span);
                     return;
                 }
 
-                _store.SetValue("RunMethod", pNode.Name);
+                Store.SetValue("RunMethod", pNode.Name);
                 if (pNode.Parameters.Count != 0)
                 {
                     _error.WriteError("Run method must have no parameters", pNode.Span);
@@ -42,11 +42,11 @@ namespace SmallerLang.Validation
                 }
             }
 
-            using (var ic = _store.AddValue("InConstructor", pNode.Annotation.Value == Utils.KeyAnnotations.Constructor))
+            using (var ic = Store.AddValue("InConstructor", pNode.Annotation.Value == Utils.KeyAnnotations.Constructor))
             {
-                using (var rf = _store.AddValue("ReturnFound", false))
+                using (var rf = Store.AddValue("ReturnFound", false))
                 {
-                    using (var rvc = _store.AddValue("ReturnValueCount", pNode.ReturnValues.Count))
+                    using (var rvc = Store.AddValue("ReturnValueCount", pNode.ReturnValues.Count))
                     {
                         _usedFields = new HashSet<string>();
                         base.VisitMethodSyntax(pNode);
@@ -68,7 +68,8 @@ namespace SmallerLang.Validation
 
                 if (ic.Value)
                 {
-                    if(_store.GetValueOrDefault("CurrentStruct", out SmallType s))
+                    SmallType s = Struct;
+                    if(s != null)
                     {
                         foreach (var f in s.GetFields())
                         {
@@ -84,7 +85,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitAssignmentSyntax(AssignmentSyntax pNode)
         {
-            using (var ia = _store.AddValue("InAssignment", true))
+            using (var ia = Store.AddValue("InAssignment", true))
             {
                 base.VisitAssignmentSyntax(pNode);
             }
@@ -110,9 +111,9 @@ namespace SmallerLang.Validation
 
         protected override void VisitCastDefinitionSyntax(CastDefinitionSyntax pNode)
         {
-            using (var rf = _store.AddValue("ReturnFound", false))
+            using (var rf = Store.AddValue("ReturnFound", false))
             {
-                using (var rvc = _store.AddValue("ReturnValueCount", pNode.ReturnValues.Count))
+                using (var rvc = Store.AddValue("ReturnValueCount", pNode.ReturnValues.Count))
                 {
                     base.VisitCastDefinitionSyntax(pNode);
 
@@ -140,20 +141,20 @@ namespace SmallerLang.Validation
 
             if(pNode.Else != null)
             {
-                var found = _store.GetValue<bool>("ReturnFound");
-                _store.SetValue("ReturnFound", false);
+                var found = Store.GetValue<bool>("ReturnFound");
+                Store.SetValue("ReturnFound", false);
 
                 Visit(pNode.Else);
 
                 //Returns must be found in ALL else blocks
-                _store.SetValue("ReturnFound", found && _store.GetValue<bool>("ReturnFound"));
+                Store.SetValue("ReturnFound", found && Store.GetValue<bool>("ReturnFound"));
             }
         }
 
         protected override void VisitReturnSyntax(ReturnSyntax pNode)
         {
-            _store.SetValue("ReturnFound", true);
-            var count = _store.GetValue<int>("ReturnValueCount");
+            Store.SetValue("ReturnFound", true);
+            var count = Store.GetValue<int>("ReturnValueCount");
             if(pNode.Values.Count != count)
             {
                 _error.WriteError($"Method must return {count} values", pNode.Span);

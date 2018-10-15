@@ -213,9 +213,14 @@ namespace SmallerLang.Syntax
             return new BreakSyntax(pCount);
         }
 
-        public static WorkspaceSyntax Workspace(string pName, IList<ModuleSyntax> pModules)
+        public static WorkspaceSyntax Workspace(string pName, ModuleSyntax pModule, IDictionary<string, ModuleSyntax> pImports)
         {
-            return new WorkspaceSyntax(pName, pModules);
+            return new WorkspaceSyntax(pName, pModule, pImports);
+        }
+
+        public static NamespaceSyntax Namespace(string pAlias)
+        {
+            return new NamespaceSyntax(pAlias);
         }
     }
 }

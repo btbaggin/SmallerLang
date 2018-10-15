@@ -10,6 +10,8 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Namespace types
+         * 
          * Range 1..10
          * Generic traits
          * Trait dependencies?
@@ -45,7 +47,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\select.sml";
+            var prog = @"C:\Test\SML\module.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

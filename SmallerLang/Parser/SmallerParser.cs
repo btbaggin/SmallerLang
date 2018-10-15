@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using SmallerLang.Lexer;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
+using System.IO;
 
 namespace SmallerLang.Parser
 {
@@ -16,7 +17,8 @@ namespace SmallerLang.Parser
         private Token Current { get { return _stream.Current; } }
 
         readonly IErrorReporter _error;
-        readonly ITokenStream _stream;
+        ITokenStream _stream;
+
         ReadOnlyMemory<char> _source;
         readonly SpanManager _spans;
         private bool _allowIt;
@@ -37,33 +39,46 @@ namespace SmallerLang.Parser
 
         private WorkspaceSyntax ParseWorkspace()
         {
-            //Module name
-            string name = "CHANGE ME"; //TODO
-            IgnoreNewlines();
-
-            List<ModuleSyntax> modules = new List<ModuleSyntax>();
-            if(PeekAndExpect(TokenType.Import))
+            using (SpanTracker t = _spans.Create())
             {
-                do
+                //Module name
+                IgnoreNewlines();
+
+                ITokenStream currentStream = _stream;
+                ReadOnlyMemory<char> currentSource = _source;
+
+                Dictionary<string, ModuleSyntax> imports = new Dictionary<string, ModuleSyntax>();
+                if (PeekAndExpect(TokenType.Import))
                 {
-                    Expect(TokenType.String, out string path);
-                    IgnoreNewlines();
+                    do
+                    {
+                        Expect(TokenType.String, out string path);
+                        Expect(TokenType.Identifier, out string alias);
+                        IgnoreNewlines();
 
-                    string source = System.IO.File.ReadAllText(path);
+                        string source = GetImportReference(path);
 
-                    IErrorReporter reporter = new ConsoleErrorReporter(source);
-                    var lexer = new SmallerLexer(reporter);
-                    var stream = lexer.StartTokenStream(source);
-                    var p = new SmallerParser(stream, reporter);
+                        ConsoleErrorReporter reporter = new ConsoleErrorReporter();
+                        reporter.SetSource(source);
+                        var lexer = new SmallerLexer(reporter);
+                        var stream = lexer.StartTokenStream(source);
 
-                    modules.AddRange(p.Parse().Modules);
+                        _stream = stream;
+                        _source = source.AsMemory();
 
-                } while (PeekAndExpect(TokenType.Import));
+                        if(imports.ContainsKey(alias)) _error.WriteError($"Module with alias {alias} has already been imported");
+                        else imports.Add(alias, ParseModule());
+
+                    } while (PeekAndExpect(TokenType.Import));
+                }
+
+                _stream = currentStream;
+                _source = currentSource;
+
+                var module = ParseModule();
+
+                return SyntaxFactory.Workspace("module", module, imports).SetSpan<WorkspaceSyntax>(t);
             }
-
-            modules.Add(ParseModule());
-
-            return SyntaxFactory.Workspace(name, modules);
         }
 
         private ModuleSyntax ParseModule()
@@ -121,7 +136,8 @@ namespace SmallerLang.Parser
                     return null;
                 }
 
-            return SyntaxFactory.Module("module", methods, definitions, enums);
+                return SyntaxFactory.Module("module", methods, definitions, enums).SetSpan<ModuleSyntax>(t);
+            }
         }
 
         private EnumSyntax ParseEnum()
@@ -1302,5 +1318,24 @@ namespace SmallerLang.Parser
             }
         }
         #endregion  
+
+        private string GetImportReference(string pFile)
+        {
+            var fullPath = Path.Combine(SmallCompiler.CurrentDirectory, pFile);
+            if (!File.Exists(fullPath)) _error.WriteError($"File '{pFile}' not found");
+
+            string source;
+            try
+            {
+                source = File.ReadAllText(fullPath);
+            }
+            catch (Exception)
+            {
+                _error.WriteError($"Unable to read file '{pFile}'");
+                return null;
+            }
+
+            return source;
+        }
     }
 }

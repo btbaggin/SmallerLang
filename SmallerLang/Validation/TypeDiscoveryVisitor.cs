@@ -25,6 +25,19 @@ namespace SmallerLang.Validation
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
 
+        string _currentNamespace;
+        protected override void VisitWorkspaceSyntax(WorkspaceSyntax pNode)
+        {
+            foreach(var i in pNode.Imports)
+            {
+                _currentNamespace = i.Key;
+                Visit(i.Value);
+            }
+
+            _currentNamespace = null;
+            Visit(pNode.Module);
+        }
+
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
             //////
@@ -211,7 +224,7 @@ namespace SmallerLang.Validation
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
         {
-            bool found = MethodCache.MethodExists(pType, pMethod.Name, pMethod);
+            bool found = MethodCache.MethodExists(_currentNamespace, pType, pMethod.Name, pMethod);
 
             if (found)
             {
@@ -227,7 +240,7 @@ namespace SmallerLang.Validation
                     SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
 
-                pDefinition = MethodCache.AddMethod(pType, pMethod.Name, pMethod);
+                pDefinition = MethodCache.AddMethod(_currentNamespace, pType, pMethod.Name, pMethod);
                 return true;
             }
         }

@@ -38,17 +38,15 @@ namespace SmallerLang.Syntax
             return default;
         }
 
-        static SmallType _disposeType;
         internal static void BuildCallToDispose(EmittingContext pContext)
         {
-            _disposeType = SmallTypeCache.Disposable;
-            if(_disposeType != SmallTypeCache.Undefined)
+            if(SmallTypeCache.Disposable != SmallTypeCache.Undefined)
             {
                 foreach (var v in pContext.Locals.GetVariablesInScope())
                 {
-                    if (v.Type.IsAssignableFrom(_disposeType))
+                    if (v.Type.IsAssignableFrom(SmallTypeCache.Disposable))
                     {
-                        if (MethodCache.FindMethod(out MethodDefinition pDef, v.Type, "Dispose", new SmallType[] { }))
+                        if (MethodCache.FindMethod(out MethodDefinition pDef, pContext.CurrentNamespace, v.Type, "Dispose", new SmallType[] { }))
                         {
                             var func = pContext.GetMethod(pDef.MangledName);
                             LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");

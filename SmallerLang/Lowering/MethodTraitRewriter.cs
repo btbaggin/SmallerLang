@@ -128,7 +128,7 @@ namespace SmallerLang.Lowering
                 var method = SyntaxFactory.Method(name.ToString(), returnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
                 var tiv = new Validation.TypeInferenceVisitor(_error);
                 tiv.Visit(method);
-                MethodCache.AddMethod(method.Name, method);
+                MethodCache.AddMethod(null, method.Name, method);//TODO namespace
 
                 if (!_polydMethods.ContainsKey(name.ToString())) _polydMethods.Add(name.ToString(), new List<MethodSyntax>());
                 _polydMethods[name.ToString()].Add(method);

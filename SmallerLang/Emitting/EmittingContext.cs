@@ -20,6 +20,7 @@ namespace SmallerLang.Emitting
         public VariableCache Locals { get; private set; }
 
         public SmallType CurrentStruct { get; set; }
+        public string CurrentNamespace { get; set; }
 
         public AccessStack<MemberAccess> AccessStack { get; set; } //Used to emit nested member access calls
 
@@ -103,7 +104,7 @@ namespace SmallerLang.Emitting
             }
 
             //Do not mangle external calls so they are properly exported
-            pNewName = pMethod.External ? pName : MethodCache.GetMangledName(pName, CurrentStruct, originalTypes);
+            pNewName = MethodCache.GetMangledName(pName, CurrentNamespace, CurrentStruct, originalTypes);
 
             //Method header
             var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));

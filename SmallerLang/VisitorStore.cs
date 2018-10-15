@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SmallerLang
 {
-    struct VisitorValue<T> : IDisposable
+    public struct VisitorValue<T> : IDisposable
     {
         readonly VisitorStore _store;
         readonly string _name;
@@ -27,7 +27,7 @@ namespace SmallerLang
         }
     }
 
-    class VisitorStore
+    public class VisitorStore
     {
         readonly Dictionary<string, Stack<object>> _values;
 

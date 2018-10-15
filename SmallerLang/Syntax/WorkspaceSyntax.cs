@@ -14,23 +14,29 @@ namespace SmallerLang.Syntax
 
         public string Name { get; private set; }
 
-        public IList<ModuleSyntax> Modules { get; private set; }
+        public IDictionary<string, ModuleSyntax> Imports { get; private set; }
 
-        internal WorkspaceSyntax(string pName, IList<ModuleSyntax> pModules)
+        public ModuleSyntax Module { get; private set; }
+
+        public override SyntaxType SyntaxType => SyntaxType.Workspace;
+
+        internal WorkspaceSyntax(string pName, ModuleSyntax pModule, IDictionary<string, ModuleSyntax> pImports)
         {
             Name = pName;
-            Modules = pModules;
+            Module = pModule;
+            Imports = pImports;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            for(int i = 0; i < Modules.Count - 1; i++)
+            foreach(var i in Imports)
             {
-                Modules[i].Emit(pContext);
+                pContext.CurrentNamespace = i.Key;
+                i.Value.Emit(pContext);
             }
 
-            LLVMValueRef _main = GetMainModule().Emit(pContext);
-
+            pContext.CurrentNamespace = null;
+            LLVMValueRef _main = Module.Emit(pContext);
 
             //Emit our function that the runtime will call. 
             //This will just call the method marked with "@run"
@@ -42,16 +48,6 @@ namespace SmallerLang.Syntax
             LLVM.BuildRet(pContext.Builder, pContext.GetInt(0));
             pContext.ValidateMethod(main);
             return default;
-        }
-
-        public ModuleSyntax GetMainModule()
-        {
-            return Modules[Modules.Count - 1];
-        }
-
-        public LLVMModuleRef CreateModule()
-        {
-            return LLVM.ModuleCreateWithName(Name);
         }
     }
 }
