@@ -13,6 +13,7 @@ namespace SmallerLang.Validation
         readonly IErrorReporter _error;
         readonly Dictionary<string, int> _structIndex;
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
+        MethodCache _methods;
         int _order;
 
         readonly List<(TypeDefinitionSyntax Node, bool Permanent, bool Temporary)> _structs;
@@ -25,16 +26,13 @@ namespace SmallerLang.Validation
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
 
-        string _currentNamespace;
         protected override void VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
             foreach(var i in pNode.Imports)
             {
-                _currentNamespace = i.Key;
                 Visit(i.Value);
             }
 
-            _currentNamespace = null;
             Visit(pNode.Module);
         }
 
@@ -44,6 +42,8 @@ namespace SmallerLang.Validation
             ////// Discover enums
             ////// Add enums first since they can't reference anything, but things can reference enums
             //////
+
+            _methods = MethodCache.CreateNamespace(pNode.Namespace);
             foreach (var e in pNode.Enums)
             {
                 string[] fields = new string[e.Names.Count];
@@ -224,10 +224,14 @@ namespace SmallerLang.Validation
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
         {
-            bool found = MethodCache.MethodExists(_currentNamespace, pType, pMethod.Name, pMethod);
+            bool found = false;
+            if (pMethod.SyntaxType == SyntaxType.Method) found = _methods.MethodExists(pType, pMethod.Name, pMethod);
+            else if (pMethod.SyntaxType == SyntaxType.CastDefinition) found = MethodCache.CastExists(pType, pMethod.Type);
+            else throw new InvalidOperationException("Unknown method type " + pMethod.SyntaxType.ToString());
 
             if (found)
             {
+                //TODO better text for casts?
                 _error.WriteError($"Redeclaration of method signature {pMethod}", pMethod.Span);
                 pDefinition = default;
                 return false;
@@ -240,7 +244,7 @@ namespace SmallerLang.Validation
                     SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
 
-                pDefinition = MethodCache.AddMethod(_currentNamespace, pType, pMethod.Name, pMethod);
+                pDefinition = _methods.AddMethod(pType, pMethod.Name, pMethod);
                 return true;
             }
         }

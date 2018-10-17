@@ -98,7 +98,7 @@ namespace SmallerLang.Validation
             if(!pNode.FromType.IsAssignableFrom(pNode.Type) &&
                (!IsStandard(pNode.FromType) || !IsStandard(pNode.Type)))
             {
-                if (MethodCache.CastExists(pNode.FromType, pNode.Type, out MethodDefinition d))
+                if (MethodCache.FindCast(pNode.FromType, pNode.Type, out MethodDefinition d))
                 {
                     pNode.SetMethod(d);
                 }
@@ -126,11 +126,6 @@ namespace SmallerLang.Validation
                         _error.WriteError("Method has no return value, so no return statement must be present", pNode.Span);
                     }
                 }
-            }
-
-            if (MethodCache.CastCount(pNode.Parameters[0].Type, pNode.Type) > 1)
-            {
-                _error.WriteError($"Multiple definitions for cast definition from type {pNode.Parameters[0].Type.ToString()} to {pNode.Type.ToString()} found");
             }
         }
 

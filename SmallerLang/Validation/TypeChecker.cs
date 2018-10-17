@@ -18,6 +18,11 @@ namespace SmallerLang.Validation
             _error = pError;
         }
 
+        protected override void VisitModuleSyntax(ModuleSyntax pNode)
+        {
+            base.VisitModuleSyntax(pNode);
+        }
+
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
             if(!CanCast(pNode.Index.Type, SmallTypeCache.Int))
@@ -116,7 +121,7 @@ namespace SmallerLang.Validation
             //Current type can be undefined if we have a method call on a type that isn't defined
             if(Type != SmallTypeCache.Undefined)
             {
-                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, Namespace, Type, types);
+                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, Type, types);
                 System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
 
                 for (int i = 0; i < m.ArgumentTypes.Count; i++)
@@ -134,16 +139,16 @@ namespace SmallerLang.Validation
             base.VisitMethodCallSyntax(pNode);
         }
 
-        private bool FindMethod(out MethodDefinition pDef, string pName, string pNamespace, SmallType pType, params SmallType[] pArguments)
+        private bool FindMethod(out MethodDefinition pDef, string pName,  SmallType pType, params SmallType[] pArguments)
         {
-            MethodCache.FindMethod(out pDef, pNamespace, pType, pName, pArguments);
-            if (pDef.Name == null)
+            MethodCache.FindMethod(out pDef, out bool pExact, Namespace, pType, pName, pArguments);
+            if (!pExact)
             {
                 if (pType != null)
                 {
                     foreach (var trait in pType.Implements)
                     {
-                        MethodCache.FindMethod(out pDef, pNamespace, trait, pName, pArguments);
+                        MethodCache.FindMethod(out pDef, Namespace, trait, pName, pArguments);
                         if (pDef.Name != null) return true;
                     }
                 }
@@ -169,7 +174,7 @@ namespace SmallerLang.Validation
             else if(pNode.Struct.Type.HasDefinedConstructor())
             {
                 var ctor = pNode.Struct.Type.GetConstructor().Name;
-                MethodCache.FindMethod(out MethodDefinition m, Namespace, pNode.Struct.Type, ctor, types); //TODO
+                MethodCache.FindMethod(out MethodDefinition m, Namespace, pNode.Struct.Type, ctor, types);
                 for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
                     if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))

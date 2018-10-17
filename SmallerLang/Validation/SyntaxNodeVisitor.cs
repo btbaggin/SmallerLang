@@ -25,6 +25,7 @@ namespace SmallerLang.Validation
         protected SyntaxNodeVisitor()
         {
             Store = new VisitorStore();
+            Namespace = "";
         }
 
         public void Visit(SyntaxNode pNode)
@@ -325,7 +326,7 @@ namespace SmallerLang.Validation
         protected virtual void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             var n = Namespace;
-            Namespace = null;
+            Namespace = "";
 
             using (var t = Store.AddValue<SmallType>("__Type", null))
             {
@@ -346,7 +347,7 @@ namespace SmallerLang.Validation
                 Visit((dynamic)pNode.Value);
             }
 
-            Namespace = null;
+            Namespace = "";
         }
 
         protected virtual void VisitModuleSyntax(ModuleSyntax pNode)

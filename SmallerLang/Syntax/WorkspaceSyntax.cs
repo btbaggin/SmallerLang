@@ -29,13 +29,11 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            foreach(var i in Imports)
+            foreach(var i in Imports.Values)
             {
-                pContext.CurrentNamespace = i.Key;
-                i.Value.Emit(pContext);
+                i.Emit(pContext);
             }
 
-            pContext.CurrentNamespace = null;
             LLVMValueRef _main = Module.Emit(pContext);
 
             //Emit our function that the runtime will call. 

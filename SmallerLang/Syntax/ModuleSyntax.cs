@@ -35,8 +35,10 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
+            pContext.CurrentNamespace = Namespace;
+
             //Emit types. Need to do it in order of dependencies so all types resolve
-            foreach(var i in Structs.OrderBy((pS) => pS.EmitOrder))
+            foreach (var i in Structs.OrderBy((pS) => pS.EmitOrder))
             {
                 i.Emit(pContext);
             }

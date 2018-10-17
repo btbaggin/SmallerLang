@@ -104,7 +104,7 @@ namespace SmallerLang.Emitting
             }
 
             //Do not mangle external calls so they are properly exported
-            pNewName = MethodCache.GetMangledName(pName, CurrentNamespace, CurrentStruct, originalTypes);
+            pNewName = MethodCache.GetMangledName(CurrentNamespace, CurrentStruct, pName, originalTypes);
 
             //Method header
             var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));

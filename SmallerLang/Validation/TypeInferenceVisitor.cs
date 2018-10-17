@@ -238,7 +238,7 @@ namespace SmallerLang.Validation
             }
 
             //Restore local definitions
-            Namespace = null;
+            Namespace = "";
             _locals = l;
         }
 
@@ -311,7 +311,8 @@ namespace SmallerLang.Validation
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
             if (Utils.SyntaxHelper.HasUndefinedCastAsArg(pNode))
             {
-                IList<MethodDefinition> matches = MethodCache.GetAllMatches(pNode.Value, pNode.Arguments.Count);
+                var methods = MethodCache.CreateNamespace(Namespace);
+                IList<MethodDefinition> matches = methods.GetAllMatches(pNode.Value, pNode.Arguments.Count);
                 if(matches.Count > 1)
                 {
                     //If multiple matches are found the implicit cast could map to either method, so we can't tell
@@ -325,13 +326,14 @@ namespace SmallerLang.Validation
                         if (Utils.SyntaxHelper.IsUndefinedCast(pNode.Arguments[j]))
                         {
                             TrySetImplicitCastType(pNode.Arguments[j], matches[0].ArgumentTypes[j]);
+                            types[j] = pNode.Arguments[j].Type;
                         }
                     }
                 }
             }
 
             //Check to ensure this method exists
-            if (!FindMethod(out MethodDefinition m, pNode.Value, Namespace, Type, types))
+            if (!FindMethod(out MethodDefinition m, pNode.Value, Type, types))
             {
                 if (Struct == null) _error.WriteError("Method definition for " + pNode.Value + " not found", pNode.Span);
                 else _error.WriteError("Type " + Struct.ToString() + " does not contain method '" + pNode.Value + "'", pNode.Span);
@@ -441,16 +443,16 @@ namespace SmallerLang.Validation
             return true;
         }
 
-        private bool FindMethod(out MethodDefinition pDef, string pName, string pNamespace, SmallType pType, params SmallType[] pArguments)
+        private bool FindMethod(out MethodDefinition pDef, string pName, SmallType pType, params SmallType[] pArguments)
         {
-            MethodCache.FindMethod(out pDef, pNamespace, pType, pName, pArguments);
-            if(pDef.Name == null)
+            MethodCache.FindMethod(out pDef, out bool pExact, Namespace, pType, pName, pArguments); 
+            if(!pExact)
             {
                 if(pType != null)
                 {
                     foreach (var trait in pType.Implements)
                     {
-                        MethodCache.FindMethod(out pDef, pNamespace, trait, pName, pArguments);
+                        MethodCache.FindMethod(out pDef, Namespace, trait, pName, pArguments);
                         if (pDef.Name != null) return true;
                     }
                 }

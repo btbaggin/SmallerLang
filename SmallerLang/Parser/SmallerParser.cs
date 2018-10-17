@@ -75,7 +75,7 @@ namespace SmallerLang.Parser
                 _stream = currentStream;
                 _source = currentSource;
 
-                var module = ParseModule(null);
+                var module = ParseModule("");
 
                 return SyntaxFactory.Workspace("module", module, imports).SetSpan<WorkspaceSyntax>(t);
             }
@@ -198,19 +198,6 @@ namespace SmallerLang.Parser
 
                 //TODO validate things don't have namespaces
                 var name = ParseType(true);
-                //Expect(TokenType.Identifier, out string name);
-
-                ////Struct generic type args
-                //List<string> genericTypeParms = new List<string>();
-                //if(PeekAndExpect(TokenType.LessThan))
-                //{
-                //    do
-                //    {
-                //        Expect(TokenType.Identifier, out string parmType);
-                //        genericTypeParms.Add(parmType);
-                //    } while (PeekAndExpect(TokenType.Comma));
-                //    Expect(TokenType.GreaterThan);
-                //}
 
                 TypeSyntax implementOn = null;
                 if (type == DefinitionTypes.Implement)
