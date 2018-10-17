@@ -259,7 +259,7 @@ namespace SmallerLang.Lowering
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            return SyntaxFactory.TypeDefinition(pNode.Name, pNode.AppliesTo, pNode.DefinitionType, methods, fields, pNode.TypeParameters);
+            return SyntaxFactory.TypeDefinition((TypeSyntax)Visit(pNode.DeclaredType), (TypeSyntax)Visit(pNode.AppliesTo), pNode.DefinitionType, methods, fields);
         }
 
         protected virtual SyntaxNode VisitElseSyntax(ElseSyntax pNode)
@@ -370,7 +370,7 @@ namespace SmallerLang.Lowering
             {
                 enums.Add((EnumSyntax)Visit(e));
             }
-            return SyntaxFactory.Module(pNode.Name, methods, definitions, enums);
+            return SyntaxFactory.Module(pNode.Namespace, pNode.Name, methods, definitions, enums);
         }
 
         protected virtual SyntaxNode VisitNamespaceSyntax(NamespaceSyntax pNode)

@@ -8,9 +8,9 @@ namespace SmallerLang.Syntax
 {
     public static class SyntaxFactory
     {
-        public static ModuleSyntax Module(string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        public static ModuleSyntax Module(string pNamespace, string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
-            return new ModuleSyntax(pName, pMethods, pDefinitions, pEnums);
+            return new ModuleSyntax(pNamespace, pName, pMethods, pDefinitions, pEnums);
         }
 
         public static StringLiteralSyntax StringLiteral(string pValue)
@@ -98,9 +98,9 @@ namespace SmallerLang.Syntax
             return new MethodSyntax(pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static TypeDefinitionSyntax TypeDefinition(string pName, TypeSyntax pImplements, DefinitionTypes pType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields, IList<string> pTypeParameters)
+        public static TypeDefinitionSyntax TypeDefinition(TypeSyntax pType, TypeSyntax pImplements, DefinitionTypes pDefinitionType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields)
         {
-            return new TypeDefinitionSyntax(pName, pImplements, pType, pFields, pMethods, pTypeParameters);
+            return new TypeDefinitionSyntax(pType, pImplements, pDefinitionType, pFields, pMethods);
         }
 
         public static StructInitializerSyntax StructInitializer(IList<IdentifierSyntax> pValues, TypeSyntax pStruct, IList<SyntaxNode> pArguments)
@@ -160,12 +160,17 @@ namespace SmallerLang.Syntax
 
         public static TypeSyntax Type(string pValue)
         {
-            return new TypeSyntax(pValue, new List<TypeSyntax>());
+            return Type(null, pValue, new List<TypeSyntax>());
         }
 
         public static TypeSyntax Type(string pValue, IList<TypeSyntax> pGenericArgs)
         {
-            return new TypeSyntax(pValue, pGenericArgs);
+            return Type(null, pValue, pGenericArgs);
+        }
+
+        public static TypeSyntax Type(string pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
+        {
+            return new TypeSyntax(pNamespace, pValue, pGenericArgs);
         }
 
         public static ReturnSyntax Return(IList<SyntaxNode> pValue)

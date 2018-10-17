@@ -12,6 +12,7 @@ namespace SmallerLang.Lowering
     {
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
+        string _currentNamespace;
         readonly IErrorReporter _error;
 
         public PostTypeRewriter(IErrorReporter pError)
@@ -20,9 +21,10 @@ namespace SmallerLang.Lowering
             _methodsToPoly = new Dictionary<string, List<MethodSyntax>>();
             _polydMethods = new Dictionary<string, List<MethodSyntax>>();
         }
-    
+
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
+            _currentNamespace = pNode.Namespace;
             //Find all methods we need to polymorph
             foreach (var m in pNode.Methods)
             {
@@ -62,7 +64,7 @@ namespace SmallerLang.Lowering
                 }
             }
 
-            return SyntaxFactory.Module(pNode.Name, methods, pNode.Structs, pNode.Enums);
+            return SyntaxFactory.Module(pNode.Namespace, pNode.Name, methods, pNode.Structs, pNode.Enums);
         }
 
         protected override SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)
@@ -101,6 +103,7 @@ namespace SmallerLang.Lowering
                 List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>(pMethod.Parameters.Count);
                 for (int i = 0; i < pMethod.Parameters.Count; i++)
                 {
+                    TypedIdentifierSyntax parm;
                     if (pMethod.Parameters[i].Type.IsTrait)
                     {
                         //Ensure the argument implements the proper trait... we haven't done type checking yet
@@ -109,13 +112,13 @@ namespace SmallerLang.Lowering
                             return false;
                         }
 
-                        var ti = SyntaxFactory.TypedIdentifier(SyntaxFactory.Type(pCallSite.Arguments[i].Type.Name), pMethod.Parameters[i].Value);
-                        parameters.Add(ti);
+                        parm = SyntaxFactory.TypedIdentifier(SyntaxFactory.Type(pCallSite.Arguments[i].Type.Name), pMethod.Parameters[i].Value);
                     }
                     else
                     {
-                        parameters.Add((TypedIdentifierSyntax)Visit(pMethod.Parameters[i]));
+                        parm = (TypedIdentifierSyntax)Visit(pMethod.Parameters[i]);
                     }
+                    parameters.Add(parm);
                 }
 
                 //TODO poly me!
@@ -128,7 +131,7 @@ namespace SmallerLang.Lowering
                 var method = SyntaxFactory.Method(name.ToString(), returnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
                 var tiv = new Validation.TypeInferenceVisitor(_error);
                 tiv.Visit(method);
-                MethodCache.AddMethod(null, method.Name, method);//TODO namespace
+                MethodCache.AddMethod(_currentNamespace, method.Name, method);
 
                 if (!_polydMethods.ContainsKey(name.ToString())) _polydMethods.Add(name.ToString(), new List<MethodSyntax>());
                 _polydMethods[name.ToString()].Add(method);

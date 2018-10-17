@@ -209,11 +209,10 @@ namespace SmallerLang.Validation
             //Mark the current type we are on so error messages can be more descriptive
             var l = _locals;
 
-            //Create a new one for the struct fields
             using (var t = Store.AddValue("__Type", pNode.Identifier.Type))
             {
                 //If field doesn't exist or something went wrong, stop checking things to reduce redundant errors
-                if (Type != null && Type != SmallTypeCache.Undefined)
+                if (Type != SmallTypeCache.Undefined)
                 {
                     //For methods and arrays we need to allow existing variables, but member access should only allow the struct's fields
                     if (pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
@@ -221,11 +220,15 @@ namespace SmallerLang.Validation
                     {
                         _locals = new VariableCache();
                         _locals.AddScope();
-                        foreach (var f in Type.GetFields())
+                        //Namespaces return a null type
+                        if(Type != null)
                         {
-                            if (!_locals.IsVariableDefinedInScope(f.Name))
+                            foreach (var f in Type.GetFields())
                             {
-                                _locals.DefineVariableInScope(f.Name, f.Type);
+                                if (!_locals.IsVariableDefinedInScope(f.Name))
+                                {
+                                    _locals.DefineVariableInScope(f.Name, f.Type);
+                                }
                             }
                         }
                     }

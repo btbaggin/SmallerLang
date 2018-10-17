@@ -44,7 +44,7 @@ namespace SmallerLang.Lowering
                 methods.Add((MethodSyntax)Visit(m));
             }
             structs.AddRange(_polydStructs.Values);
-            return SyntaxFactory.Module(pNode.Name, methods, structs, enums);
+            return SyntaxFactory.Module(pNode.Namespace, pNode.Name, methods, structs, enums);
         }
 
         protected override SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)
@@ -139,7 +139,7 @@ namespace SmallerLang.Lowering
                     methods.Add(mNew);
                 }
 
-                var newType = SyntaxFactory.TypeDefinition(structName, pNode.AppliesTo, pNode.DefinitionType, methods, fields, new List<string>()).FromNode(pNode);
+                var newType = SyntaxFactory.TypeDefinition(SyntaxFactory.Type(structName), pNode.AppliesTo, pNode.DefinitionType, methods, fields).FromNode(pNode);
                 _polydStructs.Add(structName, newType);
             }
 

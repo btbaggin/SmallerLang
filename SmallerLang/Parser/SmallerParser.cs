@@ -67,7 +67,7 @@ namespace SmallerLang.Parser
                         _source = source.AsMemory();
 
                         if(imports.ContainsKey(alias)) _error.WriteError($"Module with alias {alias} has already been imported");
-                        else imports.Add(alias, ParseModule());
+                        else imports.Add(alias, ParseModule(alias));
 
                     } while (PeekAndExpect(TokenType.Import));
                 }
@@ -75,13 +75,13 @@ namespace SmallerLang.Parser
                 _stream = currentStream;
                 _source = currentSource;
 
-                var module = ParseModule();
+                var module = ParseModule(null);
 
                 return SyntaxFactory.Workspace("module", module, imports).SetSpan<WorkspaceSyntax>(t);
             }
         }
 
-        private ModuleSyntax ParseModule()
+        private ModuleSyntax ParseModule(string pNamespace)
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -136,7 +136,7 @@ namespace SmallerLang.Parser
                     return null;
                 }
 
-                return SyntaxFactory.Module("module", methods, definitions, enums).SetSpan<ModuleSyntax>(t);
+                return SyntaxFactory.Module(pNamespace, "module", methods, definitions, enums).SetSpan<ModuleSyntax>(t);
             }
         }
 
@@ -196,25 +196,27 @@ namespace SmallerLang.Parser
                         break;
                 }
 
-                Expect(TokenType.Identifier, out string name);
+                //TODO validate things don't have namespaces
+                var name = ParseType(true);
+                //Expect(TokenType.Identifier, out string name);
 
-                //Struct generic type args
-                List<string> genericTypeParms = new List<string>();
-                if(PeekAndExpect(TokenType.LessThan))
-                {
-                    do
-                    {
-                        Expect(TokenType.Identifier, out string parmType);
-                        genericTypeParms.Add(parmType);
-                    } while (PeekAndExpect(TokenType.Comma));
-                    Expect(TokenType.GreaterThan);
-                }
+                ////Struct generic type args
+                //List<string> genericTypeParms = new List<string>();
+                //if(PeekAndExpect(TokenType.LessThan))
+                //{
+                //    do
+                //    {
+                //        Expect(TokenType.Identifier, out string parmType);
+                //        genericTypeParms.Add(parmType);
+                //    } while (PeekAndExpect(TokenType.Comma));
+                //    Expect(TokenType.GreaterThan);
+                //}
 
                 TypeSyntax implementOn = null;
                 if (type == DefinitionTypes.Implement)
                 {
                     Expect(TokenType.On);
-                    implementOn = ParseType();
+                    implementOn = ParseType(true);
                 }
 
                 Ignore(TokenType.Newline);
@@ -247,7 +249,7 @@ namespace SmallerLang.Parser
                     IgnoreNewlines();
                 }
 
-                return SyntaxFactory.TypeDefinition(name, implementOn, type, methods, fields, genericTypeParms).SetSpan<TypeDefinitionSyntax>(t);
+                return SyntaxFactory.TypeDefinition(name, implementOn, type, methods, fields).SetSpan<TypeDefinitionSyntax>(t);
             }
         }
 
@@ -361,27 +363,41 @@ namespace SmallerLang.Parser
             }
         }
 
-        private TypeSyntax ParseType()
+        private TypeSyntax ParseType(bool pGenericParameter = false)
         {
             using (SpanTracker t = _spans.Create())
             {
                 //Check for system types first, then an identifier as a user defined type
-                string type;
-                if (Peek(TokenType.TypeFloat)) Expect(TokenType.TypeFloat, out type);
-                else if (Peek(TokenType.TypeDouble)) Expect(TokenType.TypeDouble, out type);
-                else if (Peek(TokenType.TypeShort)) Expect(TokenType.TypeShort, out type);
-                else if (Peek(TokenType.TypeInt)) Expect(TokenType.TypeInt, out type);
-                else if (Peek(TokenType.TypeLong)) Expect(TokenType.TypeLong, out type);
-                else if (Peek(TokenType.TypeString)) Expect(TokenType.TypeString, out type);
-                else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out type);
-                else Expect(TokenType.Identifier, out type);
+                string part1;
+                string part2 = null;
+                if (Peek(TokenType.TypeFloat)) Expect(TokenType.TypeFloat, out part1);
+                else if (Peek(TokenType.TypeDouble)) Expect(TokenType.TypeDouble, out part1);
+                else if (Peek(TokenType.TypeShort)) Expect(TokenType.TypeShort, out part1);
+                else if (Peek(TokenType.TypeInt)) Expect(TokenType.TypeInt, out part1);
+                else if (Peek(TokenType.TypeLong)) Expect(TokenType.TypeLong, out part1);
+                else if (Peek(TokenType.TypeString)) Expect(TokenType.TypeString, out part1);
+                else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out part1);
+                else
+                {
+                    Expect(TokenType.Identifier, out part1);
+                    if (PeekAndExpect(TokenType.Period))
+                    {
+                        Expect(TokenType.Identifier, out part2);
+                    }
+                }
 
                 List<TypeSyntax> genericArgs = new List<TypeSyntax>();
                 if(PeekAndExpect(TokenType.LessThan))
                 {
                     do
                     {
-                        genericArgs.Add(ParseType());
+                        if (pGenericParameter)
+                        {
+                            Expect(TokenType.Identifier, out string parm);
+                            genericArgs.Add(SyntaxFactory.Type(parm));
+                        }
+                        else genericArgs.Add(ParseType(pGenericParameter));
+
                     } while (PeekAndExpect(TokenType.Comma));
                     Expect(TokenType.GreaterThan);
                 }
@@ -390,9 +406,12 @@ namespace SmallerLang.Parser
                 if (PeekAndExpect(TokenType.LeftBracket))
                 {
                     Expect(TokenType.RightBracket);
-                    type += "[]";
+                    part1 += "[]";
                 }
-                return SyntaxFactory.Type(type, genericArgs).SetSpan<TypeSyntax>(t);
+
+                var ns = part2 != null ? part1 : null;
+                var type = part2 != null ? part2 : part1;
+                return SyntaxFactory.Type(ns, type, genericArgs).SetSpan<TypeSyntax>(t);
             }
         }
 

@@ -20,8 +20,11 @@ namespace SmallerLang.Syntax
 
         public string Value { get; private set; }
 
-        internal TypeSyntax(string pValue, IList<TypeSyntax> pGenericArgs)
+        public string Namespace { get; private set; }
+
+        internal TypeSyntax(string pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
         {
+            Namespace = pNamespace;
             Value = pValue;
             GenericArguments = pGenericArgs;
         }
