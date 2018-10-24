@@ -30,11 +30,11 @@ namespace SmallerLang.Utils
             {
                 //Try to retrieve assembly
                 Assembly assembly = TryResolveAssembly(parts[0]);
-                if (assembly == null) throw new NullReferenceException($"Unable to locate assembly {parts[0]}");
+                if (assembly == null) throw new System.IO.FileNotFoundException($"Unable to locate assembly {parts[0]}");
 
                 //Try to retrieve type
                 Type type = assembly.GetType(parts[1]);
-                if (type == null) throw new NullReferenceException($"Unable to type {parts[1]} within {parts[0]}");
+                if (type == null) throw new System.IO.FileNotFoundException($"Unable to type {parts[1]} within {parts[0]}");
 
                 //Convert SmallTypes to System.Type
                 Type[] types = new Type[pMethod.Parameters.Count];
@@ -133,7 +133,10 @@ namespace SmallerLang.Utils
                             assembly = Assembly.Load(name);
                         }
                     }
-                    catch(Exception) { }
+                    catch(Exception)
+                    {
+                        //We have tried all possibilities, just return a null assembly and let the calling function handle it
+                    }
                 }
             }
 

@@ -23,6 +23,8 @@ namespace SmallerLang
 
         public string Name { get; private set; }
 
+        public string Namespace { get; private set; }
+
         public IList<SmallType> Implements => _implements ?? new List<SmallType>(0);
 
         private readonly SmallType _elementType;
@@ -32,28 +34,31 @@ namespace SmallerLang
 
         #region Constructors
         //Value constructor
-        internal SmallType(string pName)
+        internal SmallType(string pNamespace, string pName)
         {
+            Namespace = pNamespace;
             Name = pName;
         }
 
         //Struct constructor
-        internal SmallType(string pName, FieldDefinition[] pFields)
+        internal SmallType(string pNamespace, string pName, FieldDefinition[] pFields)
         {
+            Namespace = pNamespace;
             Name = pName;
             _fields = pFields;
             _implements = new List<SmallType>();
         }
 
         //Array constructor
-        internal SmallType(string pName, SmallType pElementType)
+        internal SmallType(string pNamespace, string pName, SmallType pElementType)
         {
+            Namespace = pNamespace;
             Name = pName;
             _elementType = pElementType;
         }
 
         //Enum constructor
-        internal SmallType(string pName, string[] pFields, int[] pValues)
+        internal SmallType(string pNamespace, string pName, string[] pFields, int[] pValues)
         {
             System.Diagnostics.Debug.Assert(pFields.Length == pValues.Length);
 
@@ -62,6 +67,7 @@ namespace SmallerLang
             {
                 fields[i] = new FieldDefinition(this, pFields[i], pValues[i]);
             }
+            Namespace = pNamespace;
             Name = pName;
             _fields = fields;
             _implements = new List<SmallType>() { SmallTypeCache.Int };

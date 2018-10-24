@@ -29,7 +29,7 @@ namespace SmallerLang.Syntax
             pContext.EmitDebugLocation(this);
 
             //Check if this is a "static" method
-            if (!SmallTypeCache.IsTypeDefined(Identifier.Value))
+            if (!SmallTypeCache.IsTypeDefined(Identifier.Value))//TODO???
             {
                 LLVMValueRef value;
                 if (Identifier.SyntaxType == SyntaxType.Namespace)

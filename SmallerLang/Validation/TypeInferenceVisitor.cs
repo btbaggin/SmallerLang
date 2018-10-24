@@ -30,7 +30,7 @@ namespace SmallerLang.Validation
 
             foreach (var s in pNode.Structs)
             {
-                using (var st = Store.AddValue("__Struct", s.GetApplicableType()))
+                using (var st = Store.AddValue("__Struct", s.GetApplicableType().Type))
                 {
                     foreach (var m in s.Methods)
                     {
@@ -52,7 +52,7 @@ namespace SmallerLang.Validation
                     }
                     else
                     {
-                        if (SmallTypeCache.IsTypeDefined(pNode.Variables[i].Value))
+                        if (SmallTypeCache.FromStringInNamespace("", pNode.Variables[i].Value) != SmallTypeCache.Undefined)
                         {
                             _error.WriteError("Value is already defined as a type", pNode.Variables[i].Span);
                         }
@@ -248,6 +248,14 @@ namespace SmallerLang.Validation
             base.VisitSelfSyntax(pNode);
         }
 
+        protected override void VisitTypeSyntax(TypeSyntax pNode)
+        {
+            if(pNode.Namespace != null && !NamespaceManager.HasNamespace(pNode.Namespace))
+            {
+                _error.WriteError($"Namespace {pNode.Namespace} has not been defined", pNode.Span);
+            }
+        }
+
         protected override void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
         {
             if (_locals.IsVariableDefinedInScope(pNode.Value))
@@ -262,7 +270,9 @@ namespace SmallerLang.Validation
 
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            if (!SmallTypeCache.IsTypeDefined(pNode.Value))
+            NamespaceManager.TryGetNamespace(Namespace, out NamespaceContainer container);
+            
+            if (!container.IsTypeDefinedInNamespace(pNode.Value))
             {
                 //Normal identifier, continue as usual
                 if (!IsVariableDefined(pNode.Value, out SmallType type))
@@ -278,7 +288,7 @@ namespace SmallerLang.Validation
             else
             {
                 //Shared or enum value
-                var t = SmallTypeCache.FromString(pNode.Value);
+                var t = SmallTypeCache.FromStringInNamespace(Namespace, pNode.Value);
                 pNode.SetType(t);
             }
         }
@@ -311,8 +321,8 @@ namespace SmallerLang.Validation
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
             if (Utils.SyntaxHelper.HasUndefinedCastAsArg(pNode))
             {
-                var methods = MethodCache.CreateNamespace(Namespace);
-                IList<MethodDefinition> matches = methods.GetAllMatches(pNode.Value, pNode.Arguments.Count);
+                var ns = NamespaceManager.GetNamespace(Namespace);
+                IList<MethodDefinition> matches = ns.GetAllMatches(pNode.Value, pNode.Arguments.Count);
                 if(matches.Count > 1)
                 {
                     //If multiple matches are found the implicit cast could map to either method, so we can't tell

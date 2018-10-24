@@ -193,13 +193,16 @@
     <Compile Include="Emitting\AccessStack.cs" />
     <Compile Include="Emitting\GlobalMethodCache.cs" />
     <Compile Include="Emitting\MethodCache.cs" />
+    <Compile Include="Emitting\NamespaceManager.cs" />
     <Compile Include="FieldDefinition.cs" />
+    <Compile Include="GlobalSmallTypeCache.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Lowering\ForRewriter.cs" />
     <Compile Include="Lowering\MethodTraitRewriter.cs" />
     <Compile Include="Lowering\NamespaceRewriter.cs" />
     <Compile Include="Syntax\Annotation.cs" />
     <Compile Include="Syntax\NamespaceSyntax.cs" />
+    <Compile Include="TypeDiscoveryGraph.cs" />
     <Compile Include="Utils\LLVMPInvokes.cs" />
     <Compile Include="Syntax\BreakSyntax.cs" />
     <Compile Include="Syntax\SyntaxType.cs" />
@@ -266,7 +269,7 @@
     <Compile Include="Syntax\UnaryExpressionSyntax.cs" />
     <Compile Include="Syntax\WhileSyntax.cs" />
     <Compile Include="TextSpan.cs" />
-    <Compile Include="TokenType.cs" />
+    <Compile Include="Lexer\TokenType.cs" />
     <Compile Include="Parser\SmallerParser.cs" />
     <Compile Include="Lexer\Trie.cs" />
     <Compile Include="Utils\EnumExtensions.cs" />

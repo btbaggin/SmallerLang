@@ -102,7 +102,7 @@ namespace SmallerLang.Emitting
             return false;
         }
 
-        private bool CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
+        internal bool FindCast(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
         {
             pDefinition = default;
             var name = GetMethodName(null, CAST_METHOD);

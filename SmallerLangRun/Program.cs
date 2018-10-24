@@ -10,7 +10,10 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Namespace types
+         * ERROR MESSAGES IN DIFFERENT MODULES
+         * Allow multiple modules to the same namespace alias
+         * disposable not working because another namespace
+         * Better errors for incorrect namespaces
          * 
          * Range 1..10
          * Generic traits
@@ -47,7 +50,7 @@ namespace SmallerLangRun
             //        }
             //        break;
             //}
-            var prog = @"C:\Test\SML\test.sml";
+            var prog = @"C:\Test\SML\module.sml";
             var output = @"C:\Test\SML\test.bc";
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)

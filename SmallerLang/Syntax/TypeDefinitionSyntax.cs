@@ -61,7 +61,7 @@ namespace SmallerLang.Syntax
             {
                 tp.Add(pa.Value);
             }
-            TypeParameters = tp;//TODO better
+            TypeParameters = tp;
         }
 
         public void EmitMethodHeaders(EmittingContext pContext)
@@ -69,14 +69,16 @@ namespace SmallerLang.Syntax
             //Only structs should be emitted. The other types get merged with structs
             if (DefinitionType == DefinitionTypes.Trait) return;
 
-            var type = GetApplicableType();
+            var typeName = GetApplicableType().Value;
+            var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
+
             pContext.CurrentStruct = type;
             foreach (var m in Methods)
             {
                 m.EmitHeader(pContext);
             }
 
-            if (!type.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext);
+            if (!type.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext, type);
             pContext.CurrentStruct = null;
         }
 
@@ -85,7 +87,9 @@ namespace SmallerLang.Syntax
             //Only structs should be emitted. The other types get merged with structs
             if (DefinitionType == DefinitionTypes.Trait) return;
 
-            var type = GetApplicableType();
+            var typeName = GetApplicableType().Value;
+            var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
+
             pContext.CurrentStruct = type;
             foreach (var m in Methods)
             {
@@ -107,11 +111,11 @@ namespace SmallerLang.Syntax
             return default;
         }
 
-        private void EmitGenericConstructorHeader(EmittingContext pContext)
+        private void EmitGenericConstructorHeader(EmittingContext pContext, SmallType pType)
         {
             //Emit method header
             var ret = LLVMTypeRef.VoidType();
-            var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(SmallTypeCache.FromString(Name)), 0) };
+            var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(pType), 0) };
             pContext.EmitMethodHeader(DeclaredType.Value + ".ctor", ret, parm);
         }
 
@@ -144,9 +148,9 @@ namespace SmallerLang.Syntax
             return base.FromNode(pNode);
         }
 
-        public SmallType GetApplicableType()
+        public TypeSyntax GetApplicableType()
         {
-            return DefinitionType != DefinitionTypes.Implement ? DeclaredType.Type : AppliesTo.Type;
+            return DefinitionType != DefinitionTypes.Implement ? DeclaredType : AppliesTo;
         }
 
         public override string ToString()

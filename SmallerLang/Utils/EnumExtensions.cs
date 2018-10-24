@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Lexer;
 
 namespace SmallerLang.Utils
 {

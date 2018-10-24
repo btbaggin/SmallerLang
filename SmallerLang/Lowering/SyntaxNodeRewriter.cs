@@ -370,7 +370,7 @@ namespace SmallerLang.Lowering
             {
                 enums.Add((EnumSyntax)Visit(e));
             }
-            return SyntaxFactory.Module(pNode.Namespace, pNode.Name, methods, definitions, enums);
+            return SyntaxFactory.Module(pNode.Namespace, pNode.LibraryPath, methods, definitions, enums);
         }
 
         protected virtual SyntaxNode VisitNamespaceSyntax(NamespaceSyntax pNode)

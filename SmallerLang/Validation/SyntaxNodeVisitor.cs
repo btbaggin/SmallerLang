@@ -248,7 +248,7 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            using (var s = Store.AddValue("__Struct", pNode.GetApplicableType()))
+            using (var s = Store.AddValue("__Struct", pNode.GetApplicableType().Type))
             {
                 for (int i = 0; i < pNode.Fields.Count; i++)
                 {

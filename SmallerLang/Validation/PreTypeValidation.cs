@@ -23,5 +23,18 @@ namespace SmallerLang.Validation
                 else Utils.KeyAnnotations.ValidateExternalAnnotation(pNode.Annotation, pNode, _error);
             }
         }
+
+        protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
+        {
+            if(pNode.DefinitionType != DefinitionTypes.Implement)
+            {
+                var name = pNode.Name;
+                if (!string.IsNullOrEmpty(SmallTypeCache.GetNamespace(ref name)))
+                {
+                    _error.WriteError("Struct types cannot specify namespaces", pNode.Span);
+                }
+            }
+            base.VisitTypeDefinitionSyntax(pNode);
+        }
     }
 }

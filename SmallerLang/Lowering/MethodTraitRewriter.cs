@@ -12,7 +12,7 @@ namespace SmallerLang.Lowering
     {
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
-        MethodCache _methods;
+        NamespaceContainer _namespace;
         readonly IErrorReporter _error;
 
         public PostTypeRewriter(IErrorReporter pError)
@@ -24,7 +24,7 @@ namespace SmallerLang.Lowering
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _methods = MethodCache.CreateNamespace(pNode.Namespace);
+            _namespace = NamespaceManager.GetNamespace(pNode.Namespace);
             //Find all methods we need to polymorph
             foreach (var m in pNode.Methods)
             {
@@ -64,17 +64,17 @@ namespace SmallerLang.Lowering
                 }
             }
 
-            return SyntaxFactory.Module(pNode.Namespace, pNode.Name, methods, pNode.Structs, pNode.Enums);
+            return SyntaxFactory.Module(pNode.Namespace, pNode.LibraryPath, methods, pNode.Structs, pNode.Enums);
         }
 
         protected override SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             if(_methodsToPoly.ContainsKey(pNode.Value))
             {
-                var m = _methods.MatchMethod(pNode, _methodsToPoly[pNode.Value]);
-                if (m == null) throw new InvalidOperationException("Unable to find matching method");
+                var method = _namespace.MatchMethod(pNode, _methodsToPoly[pNode.Value]);
+                if (method == null) throw new InvalidOperationException("Unable to find matching method");
 
-                if(TryPolyMethod(m, ref pNode))
+                if(TryPolyMethod(method, ref pNode))
                 {
                     return pNode;
                 }
@@ -131,7 +131,7 @@ namespace SmallerLang.Lowering
                 var method = SyntaxFactory.Method(name.ToString(), returnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
                 var tiv = new Validation.TypeInferenceVisitor(_error);
                 tiv.Visit(method);
-                _methods.AddMethod(method.Name, method);
+                _namespace.AddMethod(method);
 
                 if (!_polydMethods.ContainsKey(name.ToString())) _polydMethods.Add(name.ToString(), new List<MethodSyntax>());
                 _polydMethods[name.ToString()].Add(method);

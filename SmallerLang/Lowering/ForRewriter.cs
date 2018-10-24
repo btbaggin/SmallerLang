@@ -4,12 +4,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Emitting;
+using System.Diagnostics;
 
 namespace SmallerLang.Lowering
 {
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
         SyntaxNode _itVar;
+        SmallType _enumerable;
+        public PostTypeRewriter()
+        {
+            if (NamespaceManager.TryGetStdLib(out NamespaceContainer container))
+            {
+                _enumerable = container.FindType("Enumerable");
+                Debug.Assert(_enumerable != SmallTypeCache.Undefined, "stdlib does not define Enumerable");
+#if DEBUG
+                Debug.Assert(_enumerable.GetFieldIndex("Count") > -1, "Enumerable does not implement Count");
+#endif
+            }
+            else _enumerable = SmallTypeCache.Undefined;
+        }
+
         protected override SyntaxNode VisitForSyntax(ForSyntax pNode)
         {
             //Rewrite for statements with iterator arrays to normal for statements
@@ -37,7 +53,6 @@ namespace SmallerLang.Lowering
                         decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
-
                     else
                     {
                         decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
@@ -47,7 +62,7 @@ namespace SmallerLang.Lowering
                     _itVar = SyntaxFactory.ArrayAccess(pNode.Iterator, i);
 
                 }
-                else if (pNode.Iterator.Type.IsAssignableFrom(SmallTypeCache.Enumerable))
+                else if (pNode.Iterator.Type.IsAssignableFrom(_enumerable))
                 {
                     //We are iterating over an enumerable
                     //Reverse loops will start at Count and decrement to 0

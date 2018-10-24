@@ -41,7 +41,6 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
-                //Module name
                 IgnoreNewlines();
 
                 ITokenStream currentStream = _stream;
@@ -52,22 +51,32 @@ namespace SmallerLang.Parser
                 {
                     do
                     {
-                        Expect(TokenType.String, out string path);
-                        Expect(TokenType.Identifier, out string alias);
-                        IgnoreNewlines();
+                        try
+                        {
+                            Expect(TokenType.String, out string path, "Import must supply relative path to code file");
+                            Expect(TokenType.Identifier, out string alias, "Expecting alias for import");
+                            IgnoreNewlines();
 
-                        string source = GetImportReference(path);
+                            string source = GetImportReference(path);
 
-                        ConsoleErrorReporter reporter = new ConsoleErrorReporter();
-                        reporter.SetSource(source);
-                        var lexer = new SmallerLexer(reporter);
-                        var stream = lexer.StartTokenStream(source);
+                            if (source != null)
+                            {
+                                ConsoleErrorReporter reporter = new ConsoleErrorReporter();
+                                reporter.SetSource(source);
+                                var lexer = new SmallerLexer(reporter);
+                                var stream = lexer.StartTokenStream(source);
 
-                        _stream = stream;
-                        _source = source.AsMemory();
+                                _stream = stream;
+                                _source = source.AsMemory();
 
-                        if(imports.ContainsKey(alias)) _error.WriteError($"Module with alias {alias} has already been imported");
-                        else imports.Add(alias, ParseModule(alias));
+                                if (imports.ContainsKey(alias)) _error.WriteError($"Module with alias {alias} has already been imported");
+                                else imports.Add(alias, ParseModule(alias, path));
+                            }
+                        }
+                        catch
+                        {
+                            Synchronize();
+                        }
 
                     } while (PeekAndExpect(TokenType.Import));
                 }
@@ -75,13 +84,13 @@ namespace SmallerLang.Parser
                 _stream = currentStream;
                 _source = currentSource;
 
-                var module = ParseModule("");
+                var module = ParseModule("", "");
 
                 return SyntaxFactory.Workspace("module", module, imports).SetSpan<WorkspaceSyntax>(t);
             }
         }
 
-        private ModuleSyntax ParseModule(string pNamespace)
+        private ModuleSyntax ParseModule(string pNamespace, string pPath)
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -136,7 +145,7 @@ namespace SmallerLang.Parser
                     return null;
                 }
 
-                return SyntaxFactory.Module(pNamespace, "module", methods, definitions, enums).SetSpan<ModuleSyntax>(t);
+                return SyntaxFactory.Module(pNamespace, pPath, methods, definitions, enums).SetSpan<ModuleSyntax>(t);
             }
         }
 
@@ -156,10 +165,10 @@ namespace SmallerLang.Parser
                 List<IdentifierSyntax> names = new List<IdentifierSyntax>();
                 List<int> values = new List<int>();
                 var i = 0;
-                while(!PeekAndExpect(TokenType.RightBrace))
+                while (!PeekAndExpect(TokenType.RightBrace))
                 {
                     names.Add(ParseIdentifier());
-                    if(PeekAndExpect(TokenType.Equals) && PeekAndExpect(TokenType.Integer, out string v))
+                    if (PeekAndExpect(TokenType.Equals) && PeekAndExpect(TokenType.Integer, out string v, "A constant value is expected"))
                     {
                         i = int.Parse(v);
                     }
@@ -196,7 +205,6 @@ namespace SmallerLang.Parser
                         break;
                 }
 
-                //TODO validate things don't have namespaces
                 var name = ParseType(true);
 
                 TypeSyntax implementOn = null;
@@ -247,7 +255,7 @@ namespace SmallerLang.Parser
             {
                 //Name
                 Expect(TokenType.Extern);
-                Expect(TokenType.Identifier, out string name);
+                Expect(TokenType.Identifier, out string name, "Method must have a name");
 
                 Expect(TokenType.ColonColon);
                 Expect(TokenType.LeftParen);
@@ -307,7 +315,7 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 //Method name
-                Expect(TokenType.Identifier, out string name);
+                Expect(TokenType.Identifier, out string name, "Method must have a name");
 
                 Expect(TokenType.ColonColon);
                 Expect(TokenType.LeftParen);
@@ -1067,7 +1075,6 @@ namespace SmallerLang.Parser
                 else if (PeekAndExpect(TokenType.String, out v)) e = SyntaxFactory.StringLiteral(v);
                 else if (PeekAndExpect(TokenType.True, out v)) e = SyntaxFactory.BooleanLiteral(v);
                 else if (PeekAndExpect(TokenType.False, out v)) e = SyntaxFactory.BooleanLiteral(v);
-                //else if (_allowIt && PeekAndExpect(TokenType.It)) e = SyntaxFactory.It(); //It only allowed in certain situations
                 else if (PeekAndExpect(TokenType.LeftBracket))
                 {
                     var type = ParseType();
@@ -1202,7 +1209,7 @@ namespace SmallerLang.Parser
 
         #region Helper functions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Expect(TokenType pSymbol)
+        private void Expect(TokenType pSymbol, string pError = null)
         {
             if (!_stream.EOF && Current.Type == pSymbol)
             {
@@ -1210,12 +1217,13 @@ namespace SmallerLang.Parser
             }
             else
             {
-                throw ReportError("Expecting " + pSymbol.ToString() + " but encountered " + Current.Type.ToString(), _spans.Current);
+                var error = pError ?? "Expecting " + pSymbol.ToString() + " but encountered " + Current.Type.ToString();
+                throw ReportError(error, _spans.Current);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Expect(TokenType pSymbol, out string s)
+        private void Expect(TokenType pSymbol, out string s, string pError = null)
         {
             if (!_stream.EOF && Current.Type == pSymbol)
             {
@@ -1228,7 +1236,8 @@ namespace SmallerLang.Parser
             }
             else
             {
-                throw ReportError("Expecting " + pSymbol.ToString() + " but encountered " + Current.Type.ToString(), _spans.Current);
+                var error = pError ?? "Expecting " + pSymbol.ToString() + " but encountered " + Current.Type.ToString();
+                throw ReportError(error, _spans.Current);
             }
         }
 
@@ -1267,11 +1276,11 @@ namespace SmallerLang.Parser
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool PeekAndExpect(TokenType pSymbol, out string pValue)
+        private bool PeekAndExpect(TokenType pSymbol, out string pValue, string pError = null)
         {
             if (Peek(pSymbol))
             {
-                Expect(pSymbol, out pValue);
+                Expect(pSymbol, out pValue, pError);
                 return true;
             }
             pValue = "";

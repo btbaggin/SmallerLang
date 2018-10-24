@@ -98,7 +98,7 @@ namespace SmallerLang.Validation
             if(!pNode.FromType.IsAssignableFrom(pNode.Type) &&
                (!IsStandard(pNode.FromType) || !IsStandard(pNode.Type)))
             {
-                if (MethodCache.FindCast(pNode.FromType, pNode.Type, out MethodDefinition d))
+                if (MethodCache.CastExists(pNode.FromType, pNode.Type, out MethodDefinition d))
                 {
                     pNode.SetMethod(d);
                 }

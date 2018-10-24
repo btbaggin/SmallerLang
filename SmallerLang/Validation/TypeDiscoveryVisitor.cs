@@ -11,18 +11,16 @@ namespace SmallerLang.Validation
     class TypeDiscoveryVisitor : SyntaxNodeVisitor 
     {
         readonly IErrorReporter _error;
-        readonly Dictionary<string, int> _structIndex;
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
-        MethodCache _methods;
+        readonly TypeDiscoveryGraph _discoveryGraph;
+        NamespaceContainer _namespace;
         int _order;
 
-        readonly List<(TypeDefinitionSyntax Node, bool Permanent, bool Temporary)> _structs;
 
         public TypeDiscoveryVisitor(IErrorReporter pError)
         {
             _error = pError;
-            _structIndex = new Dictionary<string, int>();
-            _structs = new List<(TypeDefinitionSyntax, bool, bool)>();
+            _discoveryGraph = new TypeDiscoveryGraph();
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
 
@@ -42,8 +40,8 @@ namespace SmallerLang.Validation
             ////// Discover enums
             ////// Add enums first since they can't reference anything, but things can reference enums
             //////
+            _namespace = NamespaceManager.AddNamespace(pNode.LibraryPath, pNode.Namespace);
 
-            _methods = MethodCache.CreateNamespace(pNode.Namespace);
             foreach (var e in pNode.Enums)
             {
                 string[] fields = new string[e.Names.Count];
@@ -53,7 +51,7 @@ namespace SmallerLang.Validation
                     fields[j] = e.Names[j].Value;
                     values[j] = e.Values[j];
             }
-                SmallTypeCache.AddEnum(e.Name, fields, values);
+                _namespace.AddEnum(e.Name, fields, values);
             }
 
             //Build our list for discovering types
@@ -68,19 +66,19 @@ namespace SmallerLang.Validation
                 }
                 else
                 {
-                    _structIndex.Add(s.Name, _structs.Count);
-                    _structs.Add((s, false, false));
+                    _discoveryGraph.AddNode(pNode.Namespace, s);
                 }
             }
 
             /////
             ///// Discover all other types
             /////
-            for (int i = 0; i < _structs.Count; i++)
+            var nodes = _discoveryGraph.GetNodes(pNode.Namespace);
+            for (int i = 0; i < nodes.Count; i++)
             {
-                if(!_structs[i].Permanent && 
-                   !_structs[i].Temporary && 
-                   DiscoverTypes(_structs[i].Node.Name))
+                if(!nodes[i].Permanent && 
+                   !nodes[i].Temporary && 
+                   DiscoverTypes(nodes[i].Node.Name))
                 {
                     //If we discover a type go back to the beginning to see if any that were dependent
                     //on this can now be typed
@@ -92,28 +90,18 @@ namespace SmallerLang.Validation
             {
                 foreach(var s in i.Value)
                 {
-                    //Mark any traits for types
-                    bool validateTrait = true;
-                    if (!SmallTypeCache.IsTypeDefined(s.Name))
-                    {
-                        _error.WriteError($"Use of undeclared type {s.Name}", s.Span);
-                        validateTrait = false;
-                    }
+                    bool validateTrait = ValidateType(s.Name, s);
 
-                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
-                    if (!SmallTypeCache.IsTypeDefined(applies))
-                    {
-                        _error.WriteError($"Use of undeclared type {applies}", s.Span);
-                        validateTrait = false;
-                    }
-                    
+                    var name = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    validateTrait = ValidateType(name, s) && validateTrait;
+
+                    //Mark any traits for types
                     if(validateTrait)
                     {
                         var traitType = SmallTypeCache.FromString(s.Name);
                         s.AppliesTo.Type.AddTrait(traitType);
 
-                        //Validate implementation
-                        var trait = _structs[_structIndex[s.Name]].Node;
+                        var trait = _discoveryGraph.GetNode(s.Name).Node;
                         ValidateImplementation(trait, s);
                     }
                 }
@@ -128,7 +116,10 @@ namespace SmallerLang.Validation
             //Add struct methods to MethodCache
             foreach (var s in pNode.Structs)
             {
-                SmallType type = s.GetApplicableType();
+                var t = s.GetApplicableType();
+
+                var typeName = TypeSyntax.GetFullTypeName(t);
+                SmallType type = SmallTypeCache.FromStringInNamespace(_namespace.Alias, typeName);
 
                 for (int j = 0; j < s.Methods.Count; j++)
                 {
@@ -145,23 +136,22 @@ namespace SmallerLang.Validation
 
         private bool DiscoverTypes(string pType)
         {
-            if(!_structIndex.ContainsKey(pType))
+            if(!_discoveryGraph.NodeExists(pType))
             {
                 _error.WriteError($"Use of undeclared type {pType}");
                 return false;
             }
 
-            var idx = _structIndex[pType];
-            var item = _structs[idx];
-            if (_structs[idx].Permanent) return true;
-            if (_structs[idx].Temporary)
+            var item = _discoveryGraph.GetNode(pType);
+            if (item.Permanent) return true;
+            if (item.Temporary)
             {
                 _error.WriteError($"Found circular reference in struct {item.Node.Name}", item.Node.Span);
                 return false;
             }
 
             item.Temporary = true;
-            _structs[idx] = item;
+
             for (int i = 0; i < item.Node.Fields.Count; i++)
             {
                 var nt = item.Node.Fields[i].TypeNode.Value;
@@ -177,7 +167,6 @@ namespace SmallerLang.Validation
             }
 
             item.Permanent = true;
-            _structs[idx] = item;
             AddType(item.Node);
             return true;
         }
@@ -218,21 +207,21 @@ namespace SmallerLang.Validation
                 }
             }
 
-            if (pDefinition.DefinitionType == DefinitionTypes.Struct) SmallTypeCache.AddStruct(pDefinition.Name, fields.ToArray());
-            else if (pDefinition.DefinitionType == DefinitionTypes.Trait) SmallTypeCache.AddTrait(pDefinition.Name, fields.ToArray());
+            if (pDefinition.DefinitionType == DefinitionTypes.Struct) _namespace.AddStruct(pDefinition.Name, fields.ToArray());
+            else if (pDefinition.DefinitionType == DefinitionTypes.Trait) _namespace.AddTrait(pDefinition.Name, fields.ToArray());
         }
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
         {
             bool found = false;
-            if (pMethod.SyntaxType == SyntaxType.Method) found = _methods.MethodExists(pType, pMethod.Name, pMethod);
+            if (pMethod.SyntaxType == SyntaxType.Method) found = _namespace.MethodExists(pType, pMethod);
             else if (pMethod.SyntaxType == SyntaxType.CastDefinition) found = MethodCache.CastExists(pType, pMethod.Type);
             else throw new InvalidOperationException("Unknown method type " + pMethod.SyntaxType.ToString());
 
             if (found)
             {
-                //TODO better text for casts?
-                _error.WriteError($"Redeclaration of method signature {pMethod}", pMethod.Span);
+                if (pMethod.SyntaxType == SyntaxType.Method) _error.WriteError($"Redeclaration of method signature {pMethod}", pMethod.Span);
+                else if (pMethod.SyntaxType == SyntaxType.CastDefinition) _error.WriteError($"Cast already defined for type {pMethod.Parameters[0].Type} to {pMethod.Type}");
                 pDefinition = default;
                 return false;
             }
@@ -244,7 +233,7 @@ namespace SmallerLang.Validation
                     SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
 
-                pDefinition = _methods.AddMethod(pType, pMethod.Name, pMethod);
+                pDefinition = _namespace.AddMethod(pType, pMethod);
                 return true;
             }
         }
@@ -286,6 +275,26 @@ namespace SmallerLang.Validation
                     _error.WriteError($"Implementation of trait {pTrait.Name} is missing method {tm.Name}", pImplement.Span);
                 }
             }
+        }
+
+        private bool ValidateType(string pType, SyntaxNode pNode)
+        {
+            //Validate that all namespaces exists
+            //Validate that the trait type exists
+            bool validateTrait = true;
+            var ns = SmallTypeCache.GetNamespace(ref pType);
+            if (!NamespaceManager.TryGetNamespace(ns, out NamespaceContainer container))
+            {
+                _error.WriteError($"Namespace {ns} has not been defined", pNode.Span);
+                return false;
+            }
+            else if (!container.IsTypeDefinedInNamespace(pType))
+            {
+                _error.WriteError($"Use of undeclared type {pType}", pNode.Span);
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -10,33 +10,30 @@ namespace SmallerLang.Emitting
 {
     public partial class MethodCache
     {
-        private static Dictionary<string, MethodCache> _namespaces = new Dictionary<string, MethodCache>();
-
-        public static MethodCache CreateNamespace(string pNamespace)
+        public static MethodCache Create(string pNamespace)
         {
-            if (!_namespaces.ContainsKey(pNamespace)) _namespaces.Add(pNamespace, new MethodCache(pNamespace));
-            return _namespaces[pNamespace];
+            return new MethodCache(pNamespace);
         }
 
         public static bool FindMethod(out MethodDefinition pMethod, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
         {
-            if(!_namespaces.ContainsKey(pNamespace))
+            if(!NamespaceManager.TryGetNamespace(pNamespace, out NamespaceContainer ns))
             {
                 pMethod = default;
                 return false;
             }
-            return _namespaces[pNamespace].FindMethod(out pMethod, out bool pExact, pType, pName, pArguments);
+            return ns.FindMethod(out pMethod, out bool pExact, pType, pName, pArguments);
         }
 
         public static bool FindMethod(out MethodDefinition pMethod, out bool pExact, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
         {
-            if (!_namespaces.ContainsKey(pNamespace))
+            if (!NamespaceManager.TryGetNamespace(pNamespace, out NamespaceContainer ns))
             {
                 pMethod = default;
                 pExact = false;
                 return false;
             }
-            return _namespaces[pNamespace].FindMethod(out pMethod, out pExact, pType, pName, pArguments);
+            return ns.FindMethod(out pMethod, out pExact, pType, pName, pArguments);
         }
 
         internal static string GetMangledName(string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
@@ -45,19 +42,19 @@ namespace SmallerLang.Emitting
             return m.MangledName;
         }
 
-        public static bool FindCast(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
+        public static bool CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
         {
             pDefinition = default;
-            foreach(var n in _namespaces.Values)
+            foreach(var ns in NamespaceManager.GetAllNamespaces())
             {
-                if (n.CastExists(pFromType, pToType, out pDefinition)) return true;
+                if (ns.FindCast(out pDefinition, pFromType, pToType)) return true;
             }
             return false;
         }
 
         public static bool CastExists(SmallType pFromType, SmallType pToType)
         {
-            return FindCast(pFromType, pToType, out MethodDefinition pDef);
+            return CastExists(pFromType, pToType, out MethodDefinition pDef);
         }
 
         private static MethodDefinition GetDefinition(MethodSyntax pMethod, int pCounter, string pName)

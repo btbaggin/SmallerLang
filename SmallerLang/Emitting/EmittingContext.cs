@@ -77,7 +77,7 @@ namespace SmallerLang.Emitting
                     types[i] = SmallTypeCache.GetLLVMType(pMethod.ReturnValues[i].Type);
                 }
                 ret = LLVM.StructType(types, false);
-                SmallTypeCache.SetLLVMType(pMethod.Type.Name, ret);
+                SmallTypeCache.SetLLVMType(CurrentNamespace, pMethod.Type.Name, ret);
             }
 
             //If we are emitting a struct method we need to add "self" as a parameter
@@ -196,7 +196,7 @@ namespace SmallerLang.Emitting
         public void EmitDefinition(string pName, Syntax.TypeDefinitionSyntax pNode)
         {
             //Get field types
-            var fields = SmallTypeCache.FromString(pName).GetFields();
+            var fields = SmallTypeCache.FromStringInNamespace(CurrentNamespace, pName).GetFields();
 
             LLVMTypeRef[] types = new LLVMTypeRef[fields.Length];
             for(int i = 0; i < types.Length; i++)
@@ -207,7 +207,7 @@ namespace SmallerLang.Emitting
             //Emit struct
             var t = LLVM.StructCreateNamed(_context, pName);
             t.StructSetBody(types, false);
-            SmallTypeCache.SetLLVMType(pName, t);
+            SmallTypeCache.SetLLVMType(CurrentNamespace, pName, t);
         }
         #endregion
 

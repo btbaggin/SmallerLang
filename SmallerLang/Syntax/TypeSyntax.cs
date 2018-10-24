@@ -25,7 +25,8 @@ namespace SmallerLang.Syntax
         internal TypeSyntax(string pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
         {
             Namespace = pNamespace;
-            Value = pValue;
+            if (Namespace == null) Value = pValue;
+            else Value = Namespace + "." + pValue;
             GenericArguments = pGenericArgs;
         }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Emitting;
+using System.Diagnostics;
 
 namespace SmallerLang.Syntax
 {
@@ -40,20 +41,23 @@ namespace SmallerLang.Syntax
 
         internal static void BuildCallToDispose(EmittingContext pContext)
         {
-            if(SmallTypeCache.Disposable != SmallTypeCache.Undefined)
+            if(NamespaceManager.TryGetStdLib(out NamespaceContainer container))
             {
+                SmallType Disposable = container.FindType("Disposable");
+                Debug.Assert(Disposable != SmallTypeCache.Undefined, "stdlib does not define Disposable");
+
                 foreach (var v in pContext.Locals.GetVariablesInScope())
                 {
-                    if (v.Type.IsAssignableFrom(SmallTypeCache.Disposable))
+                    if (v.Type.IsAssignableFrom(Disposable))
                     {
-                        if (MethodCache.FindMethod(out MethodDefinition pDef, pContext.CurrentNamespace, v.Type, "Dispose", new SmallType[] { }))
-                        {
-                            var func = pContext.GetMethod(pDef.MangledName);
-                            LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");
-                        }
-                    }
+                        Debug.Assert(MethodCache.FindMethod(out MethodDefinition pDef, pContext.CurrentNamespace, v.Type, "Dispose", new SmallType[] { }), "Disposable does not implement Dispose");
+
+                        var func = pContext.GetMethod(pDef.MangledName);
+                        LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");
+                }
                 }
             }
+                
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SmallerLang
+namespace SmallerLang.Lexer
 {
     public enum TokenType
     {

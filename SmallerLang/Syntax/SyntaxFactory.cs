@@ -8,9 +8,9 @@ namespace SmallerLang.Syntax
 {
     public static class SyntaxFactory
     {
-        public static ModuleSyntax Module(string pNamespace, string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        public static ModuleSyntax Module(string pNamespace, string pLibPath, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
-            return new ModuleSyntax(pNamespace, pName, pMethods, pDefinitions, pEnums);
+            return new ModuleSyntax(pNamespace, pLibPath, pMethods, pDefinitions, pEnums);
         }
 
         public static StringLiteralSyntax StringLiteral(string pValue)

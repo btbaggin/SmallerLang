@@ -44,7 +44,7 @@ namespace SmallerLang.Lowering
                 methods.Add((MethodSyntax)Visit(m));
             }
             structs.AddRange(_polydStructs.Values);
-            return SyntaxFactory.Module(pNode.Namespace, pNode.Name, methods, structs, enums);
+            return SyntaxFactory.Module(pNode.Namespace, pNode.LibraryPath, methods, structs, enums);
         }
 
         protected override SyntaxNode VisitStructInitializerSyntax(StructInitializerSyntax pNode)

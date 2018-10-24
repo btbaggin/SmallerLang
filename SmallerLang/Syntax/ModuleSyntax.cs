@@ -14,6 +14,8 @@ namespace SmallerLang.Syntax
 
         public string Namespace { get; private set; }
 
+        public string LibraryPath { get; private set; }
+
         public IList<MethodSyntax> Methods { get; private set; }
 
         public IList<TypeDefinitionSyntax> Structs { get; private set; }
@@ -24,10 +26,10 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Module;
 
-        internal ModuleSyntax(string pNamespace, string pName, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        internal ModuleSyntax(string pNamespace, string pLibPath, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
             Namespace = pNamespace;
-            Name = pName;
+            LibraryPath = pLibPath;
             Methods = pMethods;
             Structs = pDefinitions;
             Enums = pEnums;
