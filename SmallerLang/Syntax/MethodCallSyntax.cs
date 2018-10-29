@@ -28,6 +28,7 @@ namespace SmallerLang.Syntax
 
             LLVMValueRef[] arguments = null;
             int start = 0;
+
             //If we are calling an instance method, we need to add the "self" parameter
             if (pContext.AccessStack.Count > 0)
             {
@@ -55,17 +56,10 @@ namespace SmallerLang.Syntax
                     Utils.LlvmHelper.LoadIfPointer(ref arguments[start + i], pContext);
                 }
 
-                if(_definition.MangledName == "print")
-                {
-                    var v = pContext.AllocateVariable("temp_external", Arguments[i].Type);
-                    LLVM.BuildStore(pContext.Builder, arguments[start + i], v);
-                    arguments[start + i] = LLVM.BuildLoad(pContext.Builder, v, "");
-                }
-
                 //Implicitly cast any derived types
                 if (_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {
-                    var type = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i]);
+                    var type = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i], pContext);
                     Utils.LlvmHelper.MakePointer(arguments[start + i], ref type);
                     arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], type, "");
                 }

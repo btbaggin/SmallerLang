@@ -90,7 +90,7 @@ namespace SmallerLang.Validation
             {
                 if (!ld.IsReferenced)
                 {
-                    _error.WriteWarning($"Variable {ld.Name} is defined but never used"); //TODO span
+                    _error.WriteWarning($"Variable {ld.Name} is defined but never used");
                 }
             }
             _locals.RemoveScope();

@@ -83,6 +83,11 @@ namespace SmallerLang
             return "";
         }
 
+        public static SmallType CreateGenericParameter(string pType, SmallType pElementType)
+        {
+            return new SmallType("", pType, pElementType) { IsGenericParameter = true };
+        }
+
         private static SmallType AddType(string pType, LLVMTypeRef pLLVMType)
         {
             _primitiveTypes[pType] = (new SmallType("", pType), pLLVMType);
@@ -91,6 +96,12 @@ namespace SmallerLang
 
         internal static SmallType GetOrCreateTuple(SmallType[] pTypes)
         {
+            //No return values = void
+            //1 Return value = normal type
+            //> 1 return values is a tuple
+            if (pTypes.Length == 0) return Undefined;
+            if (pTypes.Length == 1) return pTypes[0];
+
             StringBuilder sb = new StringBuilder("!!");
             foreach (var t in pTypes)
             {
@@ -120,12 +131,12 @@ namespace SmallerLang
             container.SetLLVMType(pType, pLLVMType);
         }
 
-        public static LLVMTypeRef GetLLVMType(SmallType pType)
+        public static LLVMTypeRef GetLLVMType(SmallType pType, EmittingContext pContext)
         {
             if (pType.IsArray)
             {
                 var length = LLVMTypeRef.Int32Type();
-                var data = LLVMTypeRef.PointerType(GetLLVMType(pType.GetElementType()), 0);
+                var data = LLVMTypeRef.PointerType(GetLLVMType(pType.GetElementType(), pContext), 0);
                 return LLVMTypeRef.StructType(new LLVMTypeRef[] { length, data }, false);
             }
             else if (pType.IsTuple)
@@ -133,9 +144,15 @@ namespace SmallerLang
                 LLVMTypeRef[] types = new LLVMTypeRef[pType.GetFieldCount()];
                 for (int i = 0; i < types.Length; i++)
                 {
-                    types[i] = GetLLVMType(pType.GetFieldType(i));
+                    types[i] = GetLLVMType(pType.GetFieldType(i), pContext);
                 }
                 return LLVMTypeRef.StructType(types, false);
+            }
+            else if(pType.IsGenericParameter)
+            {
+                System.Diagnostics.Debug.Assert(pContext.TypeMappings.ContainsKey(pType.Name));
+
+                return GetLLVMType(pContext.TypeMappings[pType.Name], pContext);
             }
             else if (_primitiveTypes.ContainsKey(pType.Name))
             {
@@ -158,10 +175,10 @@ namespace SmallerLang
             else if (pType == Float) return pContext.GetFloat(0);
             else if (pType == Double) return pContext.GetDouble(0);
             else if (pType == String) return pContext.GetString(null);
-            else if (pType.IsArray) return pContext.GetArray(pType.GetElementType(), 0);
+            else if (pType.IsArray) return pContext.GetArray(pType.GetElementType(), 0, pContext);
             else if (pType.IsStruct)
             {
-                var var = LLVM.BuildAlloca(pContext.Builder, GetLLVMType(pType), "struct_temp");
+                var var = LLVM.BuildAlloca(pContext.Builder, GetLLVMType(pType, pContext), "struct_temp");
 
                 var m = pType.GetConstructor();
                 LLVMValueRef[] arguments = new LLVMValueRef[m.ArgumentTypes.Count + 1];

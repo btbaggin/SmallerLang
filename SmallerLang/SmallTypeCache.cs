@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SmallerLang.Emitting;
+using SmallerLang.Syntax;
 using LLVMSharp;
 
 namespace SmallerLang
@@ -47,24 +47,68 @@ namespace SmallerLang
             return new SmallType(Namespace, pType, t);
         }
 
-        internal SmallType AddEnum(string pType, string[] pFields, int[] pValues)
+        internal SmallType AddType(TypeDefinitionSyntax pType)
         {
-            var st = new SmallType(Namespace, pType, pFields, pValues) { IsEnum = true };
-            _cache[pType] = (st, LLVMTypeRef.Int32Type());
+            var name = TypeSyntax.GetFullTypeName(pType.DeclaredType);
+
+            FieldDefinition[] fields = new FieldDefinition[pType.Fields.Count];
+            for (int i = 0; i < pType.Fields.Count; i++)
+            {
+                var f = pType.Fields[i];
+                FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
+                fields[i] = new FieldDefinition(f.Type, f.Value, visibility);
+            }
+
+            var isStruct = pType.DefinitionType == DefinitionTypes.Struct;
+            var isTrait = pType.DefinitionType == DefinitionTypes.Trait;
+            var isGeneric = pType.TypeParameters.Count > 0;
+
+            var st = new SmallType(Namespace, name, fields.ToArray()) {
+                IsStruct = isStruct,
+                IsTrait = isTrait,
+                IsGenericType = isGeneric,
+                GenericParameters = pType.TypeParameters
+            };
+            _cache[name] = (st, default);
             return st;
         }
 
-        internal SmallType AddStruct(string pType, FieldDefinition[] pFields)
+        internal SmallType GetConcreteType(SmallType pType, params SmallType[] pGenericParameters)
         {
-            var st = new SmallType(Namespace, pType, pFields) { IsStruct = true };
-            _cache[pType] = (st, default);
-            return st;
+            System.Diagnostics.Debug.Assert(pType.IsGenericType);
+
+            var name = pType.Name + "<" + string.Join<SmallType>(",", pGenericParameters) + ">";
+            if(!_cache.ContainsKey(name))
+            {
+                var st = new SmallType(pType.Namespace, pType.Name, pType.GetFields())
+                {
+                    GenericArguments = pGenericParameters,
+                    GenericParameters = pType.GenericParameters,
+                    IsTrait = pType.IsTrait,
+                    IsStruct = pType.IsStruct,
+                    IsTuple = pType.IsTuple,
+                    IsEnum = pType.IsEnum
+                };
+                st.SetConstructor(pType.GetConstructor());
+                _cache[name] = (st, default);
+            }
+
+            return _cache[name].Type;
         }
 
-        internal SmallType AddTrait(string pType, FieldDefinition[] pFields)
+        internal SmallType AddType(EnumSyntax pType)
         {
-            var st = new SmallType(Namespace, pType, pFields) { IsTrait = true };
-            _cache[pType] = (st, default);
+            string name = pType.Name;
+            string[] fields = new string[pType.Names.Count];
+            int[] values = new int[pType.Names.Count];
+            for (int j = 0; j < fields.Length; j++)
+            {
+                fields[j] = pType.Names[j].Value;
+                values[j] = pType.Values[j];
+            }
+
+            var st = new SmallType(Namespace, name, fields, values) { IsEnum = true };
+            _cache[name] = (st, LLVMTypeRef.Int32Type());
             return st;
         }
 

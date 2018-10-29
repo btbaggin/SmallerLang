@@ -4,24 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Emitting;
 
 namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
-        HashSet<string> _namespaces;
         protected override SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            _namespaces = new HashSet<string>();
-            foreach(var i in pNode.Imports.Keys)
+            foreach(var i in pNode.Imports.Values)
             {
-                _namespaces.Add(i);
+                NamespaceManager.AddNamespace(i.LibraryPath, i.Namespace);
             }
+            NamespaceManager.AddNamespace("", "");
+
             return base.VisitWorkspaceSyntax(pNode);
         }
+
         protected override SyntaxNode VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
-            if(_namespaces.Contains(pNode.Identifier.Value))
+            if(NamespaceManager.HasNamespace(pNode.Identifier.Value))
             {
                 return SyntaxFactory.MemberAccess(SyntaxFactory.Namespace(pNode.Identifier.Value), (IdentifierSyntax)Visit(pNode.Value));
             }

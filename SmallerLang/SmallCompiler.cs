@@ -77,6 +77,9 @@ namespace SmallerLang
             new PostTypeValidationVisitor(_error).Visit(tree);
             if (_error.ErrorOccurred) return false;
 
+            new PolyRewriter(_error).Visit(tree);
+            if (_error.ErrorOccurred) return false;
+
             LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
 

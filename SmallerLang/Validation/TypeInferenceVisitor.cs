@@ -52,7 +52,7 @@ namespace SmallerLang.Validation
                     }
                     else
                     {
-                        if (SmallTypeCache.FromStringInNamespace("", pNode.Variables[i].Value) != SmallTypeCache.Undefined)
+                        if (SmallTypeCache.IsTypeDefined(pNode.Variables[i].Value))
                         {
                             _error.WriteError("Value is already defined as a type", pNode.Variables[i].Span);
                         }
@@ -93,7 +93,6 @@ namespace SmallerLang.Validation
 
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
-            base.VisitStructInitializerSyntax(pNode);
             for (int i = 0; i < pNode.Values.Count; i++)
             {
                 if(pNode.Values[i] is MemberAccessSyntax) Visit(pNode.Values[i]);
@@ -432,18 +431,18 @@ namespace SmallerLang.Validation
         {
             if(!_locals.IsVariableDefined(pName))
             {
-                if(Type != null)
-                {
-                    foreach(var trait in Type.Implements)
-                    {
-                        var i = trait.GetFieldIndex(pName);
-                        if (i > -1)
-                        {
-                            pType = trait.GetFieldType(i);
-                            return true;
-                        }
-                    }
-                }
+                //if(Type != null)
+                //{
+                //    foreach(var trait in Type.Implements)
+                //    {
+                //        var i = trait.GetFieldIndex(pName);
+                //        if (i > -1)
+                //        {
+                //            pType = trait.GetFieldType(i);
+                //            return true;
+                //        }
+                //    }
+                //}
 
                 pType = null;
                 return false;

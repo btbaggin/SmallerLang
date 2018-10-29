@@ -24,11 +24,6 @@ namespace SmallerLang.Syntax
         {
             get
             {
-                //No return values = void
-                //1 Return value = normal type
-                //> 1 return values is a tuple
-                if (ReturnValues.Count == 0) return SmallTypeCache.Undefined;
-                if (ReturnValues.Count == 1) return ReturnValues[0].Type;
                 return SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(ReturnValues));
             }
         }

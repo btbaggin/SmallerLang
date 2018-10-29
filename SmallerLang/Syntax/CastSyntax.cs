@@ -41,14 +41,14 @@ namespace SmallerLang.Syntax
             var val = Value.Emit(pContext);
             if (FromType == Type) return val;
 
-            LLVMTypeRef type = SmallTypeCache.GetLLVMType(Type);
+            LLVMTypeRef type = SmallTypeCache.GetLLVMType(Type, pContext);
             LLVMValueRef ret;
             if (!string.IsNullOrEmpty(_method.MangledName))
             {
                 //User defined cast, call the method
                 if(_method.ArgumentTypes[0] != Value.Type)
                 {
-                    var t = SmallTypeCache.GetLLVMType(_method.ArgumentTypes[0]);
+                    var t = SmallTypeCache.GetLLVMType(_method.ArgumentTypes[0], pContext);
                     Utils.LlvmHelper.MakePointer(val, ref t);
                     val = LLVM.BuildBitCast(pContext.Builder, val, t, "");
                 }

@@ -38,24 +38,24 @@ namespace SmallerLang.Emitting
             _types.SetLLVMType(pType, pLLVMType);
         }
 
-        public SmallType AddEnum(string pName, string[] pFields, int[] pValues)
+        public SmallType AddType(Syntax.TypeDefinitionSyntax pType)
         {
-            return _types.AddEnum(pName, pFields, pValues);
+            return _types.AddType(pType);
         }
 
-        public SmallType AddStruct(string pName, FieldDefinition[] pFields)
+        public SmallType AddType(Syntax.EnumSyntax pType)
         {
-            return _types.AddStruct(pName, pFields);
-        }
-
-        public SmallType AddTrait(string pName, FieldDefinition[] pFields)
-        {
-            return _types.AddTrait(pName, pFields);
+            return _types.AddType(pType);
         }
 
         public bool IsTypeDefinedInNamespace(string pType)
         {
             return _types.IsTypeDefinedInNamespace(pType);
+        }
+
+        public SmallType GetConcreteType(SmallType pType, params SmallType[] pGenericParameters)
+        {
+            return _types.GetConcreteType(pType, pGenericParameters);
         }
         #endregion
 

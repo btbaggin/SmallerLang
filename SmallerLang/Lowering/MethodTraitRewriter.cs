@@ -121,14 +121,7 @@ namespace SmallerLang.Lowering
                     parameters.Add(parm);
                 }
 
-                //TODO poly me!
-                List<TypeSyntax> returnValues = new List<TypeSyntax>(pMethod.ReturnValues.Count);
-                foreach(var r in pMethod.ReturnValues)
-                {
-                    returnValues.Add((TypeSyntax)Visit(r));
-                }
-
-                var method = SyntaxFactory.Method(name.ToString(), returnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
+                var method = SyntaxFactory.Method(name.ToString(), pMethod.ReturnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
                 var tiv = new Validation.TypeInferenceVisitor(_error);
                 tiv.Visit(method);
                 _namespace.AddMethod(method);

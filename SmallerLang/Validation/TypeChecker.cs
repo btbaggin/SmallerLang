@@ -18,11 +18,6 @@ namespace SmallerLang.Validation
             _error = pError;
         }
 
-        protected override void VisitModuleSyntax(ModuleSyntax pNode)
-        {
-            base.VisitModuleSyntax(pNode);
-        }
-
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
             if(!CanCast(pNode.Index.Type, SmallTypeCache.Int))
@@ -49,6 +44,31 @@ namespace SmallerLang.Validation
                 }
             }
             base.VisitAssignmentSyntax(pNode);
+        }
+
+        protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
+        {
+            //Since our types have become concrete types we need to set the type of any generic return variables to the concrete type
+            //TODO single values
+            if(pNode.Value.Type.IsTuple)
+            {
+                var fields = pNode.Value.Type.GetFields();
+                for(int i = 0; i < fields.Length; i++)
+                {
+                    if(fields[i].Type.IsGenericParameter)
+                    {
+                        if(pNode.Value is MemberAccessSyntax m && m.Value is MethodCallSyntax c)
+                        {
+                            var t = m.Identifier.Type;
+                            if(t.HasGenericArguments)
+                            {
+                                pNode.Variables[i].SetType(t.GenericArguments[i]);
+                            }
+                        }
+                    }
+                }
+            }
+            base.VisitDeclarationSyntax(pNode);
         }
 
         protected override void VisitBinaryExpressionSyntax(BinaryExpressionSyntax pNode)
@@ -119,20 +139,25 @@ namespace SmallerLang.Validation
             SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
             //Current type can be undefined if we have a method call on a type that isn't defined
-            if(Type != SmallTypeCache.Undefined)
+            if (Type != SmallTypeCache.Undefined)
             {
                 var methodFound = FindMethod(out MethodDefinition m, pNode.Value, Type, types);
                 System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
 
-                for (int i = 0; i < m.ArgumentTypes.Count; i++)
+                if (!methodFound)
                 {
-                    if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
+                    //Parameters are type-checked in FindMethod but this will give us good error messages
+                    for (int i = 0; i < m.ArgumentTypes.Count; i++)
                     {
-                        _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                        if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
+                        {
+                            _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                        }
                     }
                 }
 
                 //Method calls are finally validated, set the mangled method name which we will actually call
+                m = m.MakeConcreteDefinition(Type);
                 pNode.SetDefinition(m);
             }
 
@@ -165,7 +190,7 @@ namespace SmallerLang.Validation
 
             if(pNode.Struct.Type == SmallTypeCache.Undefined)
             {
-                _error.WriteError($"Use of undeclared type {pNode.Struct.Value}", pNode.Span);
+                _error.WriteError($"Use of undeclared type {pNode.Struct}", pNode.Span);
             }
             else if(pNode.Struct.Type.IsTrait)
             {

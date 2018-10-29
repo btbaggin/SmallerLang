@@ -14,7 +14,7 @@ namespace SmallerLang.Syntax
 
         public override SmallType Type
         {
-            get { return TypeNode.Type.MakeArrayType(); }
+            get { return TypeNode.Type; }
         }
 
         public override SyntaxType SyntaxType => SyntaxType.ArrayLiteral;
@@ -42,7 +42,7 @@ namespace SmallerLang.Syntax
             var length = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
             LLVM.BuildStore(pContext.Builder, pContext.GetInt(int.Parse(Value)), length);
 
-            var data = LLVM.BuildAlloca(pContext.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(Type.GetElementType()), Size), "");
+            var data = pContext.AllocateArrayLiteral(this);
             var dataAccess = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
             var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
             LLVM.BuildStore(pContext.Builder, dataAccess, variableData);

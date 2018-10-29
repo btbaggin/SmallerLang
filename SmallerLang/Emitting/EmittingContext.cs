@@ -26,6 +26,8 @@ namespace SmallerLang.Emitting
 
         public AccessStack<LLVMValueRef> BreakLocations { get; set; } //Used to control which loop to jump from when breaking
 
+        public Dictionary<string, SmallType> TypeMappings { get; set; } //TODO
+
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
 
@@ -68,13 +70,13 @@ namespace SmallerLang.Emitting
             //Get method return type
             LLVMTypeRef ret;
             if (pMethod.ReturnValues.Count == 0) ret = LLVMTypeRef.VoidType();
-            else if (pMethod.ReturnValues.Count == 1) ret = SmallTypeCache.GetLLVMType(pMethod.Type);
+            else if (pMethod.ReturnValues.Count == 1) ret = SmallTypeCache.GetLLVMType(pMethod.Type, this);
             else
             {
                 LLVMTypeRef[] types = new LLVMTypeRef[pMethod.ReturnValues.Count];
                 for (int i = 0; i < types.Length; i++)
                 {
-                    types[i] = SmallTypeCache.GetLLVMType(pMethod.ReturnValues[i].Type);
+                    types[i] = SmallTypeCache.GetLLVMType(pMethod.ReturnValues[i].Type, this);
                 }
                 ret = LLVM.StructType(types, false);
                 SmallTypeCache.SetLLVMType(CurrentNamespace, pMethod.Type.Name, ret);
@@ -87,7 +89,7 @@ namespace SmallerLang.Emitting
             if (CurrentStruct != null)
             {
                 parmTypes = new LLVMTypeRef[pMethod.Parameters.Count + 1];
-                parmTypes[0] = LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(CurrentStruct), 0);
+                parmTypes[0] = LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(CurrentStruct, this), 0);
                 start = 1;
             }
             else
@@ -98,9 +100,11 @@ namespace SmallerLang.Emitting
             //Get parameter types
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
-                parmTypes[start + i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type);
+                parmTypes[start + i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type, this);
                 if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
-                originalTypes[i] = pMethod.Parameters[i].Type;
+
+                if (pMethod.Parameters[i].Type.IsGenericParameter) originalTypes[i] = TypeMappings[pMethod.Parameters[i].Type.Name];
+                else originalTypes[i] = pMethod.Parameters[i].Type;
             }
 
             //Do not mangle external calls so they are properly exported
@@ -196,12 +200,12 @@ namespace SmallerLang.Emitting
         public void EmitDefinition(string pName, Syntax.TypeDefinitionSyntax pNode)
         {
             //Get field types
-            var fields = SmallTypeCache.FromStringInNamespace(CurrentNamespace, pName).GetFields();
+            var fields = CurrentStruct.GetFields();
 
             LLVMTypeRef[] types = new LLVMTypeRef[fields.Length];
             for(int i = 0; i < types.Length; i++)
             {
-                types[i] = SmallTypeCache.GetLLVMType(fields[i].Type);
+                types[i] = SmallTypeCache.GetLLVMType(fields[i].Type, this);
             }
 
             //Emit struct
@@ -211,13 +215,23 @@ namespace SmallerLang.Emitting
         }
         #endregion
 
+        public LLVMValueRef AllocateArrayLiteral(Syntax.ArrayLiteralSyntax pNode)
+        {
+            var tempBuilder = GetTempBuilder();
+            LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
+
+            var alloc = LLVM.BuildAlloca(tempBuilder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(pNode.Type.GetElementType(), this), pNode.Size), "");
+            LLVM.DisposeBuilder(tempBuilder);
+            return alloc;
+        }
+
         public LLVMValueRef AllocateVariable(string pName, Syntax.SyntaxNode pNode)
         {
             //Move to the start of the current function and emit the variable allocation
             var tempBuilder = GetTempBuilder();
             LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
 
-            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pNode.Type), pName);
+            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pNode.Type, this), pName);
             EmitDebugVariable(tempBuilder, alloc, pName, pNode.Type, pNode.Span.Line);
             LLVM.DisposeBuilder(tempBuilder);
             return alloc;
@@ -229,7 +243,7 @@ namespace SmallerLang.Emitting
             var tempBuilder = GetTempBuilder();
             LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
 
-            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType), pName);
+            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType, this), pName);
             EmitDebugVariable(tempBuilder, alloc, pName, pType, 0);
             LLVM.DisposeBuilder(tempBuilder);
             return alloc;
@@ -304,7 +318,7 @@ namespace SmallerLang.Emitting
             return  LLVM.ConstString(pString, (uint)pString.Length, false);
         }
 
-        public LLVMValueRef GetArray(SmallType pType, int pSize)
+        public LLVMValueRef GetArray(SmallType pType, int pSize, EmittingContext pContext)
         {
             LLVMValueRef[] values = new LLVMValueRef[pSize];
             LLVMValueRef def = SmallTypeCache.GetLLVMDefault(pType, this);
@@ -313,7 +327,7 @@ namespace SmallerLang.Emitting
                 values[i] = def;
             }
             var t = pType.IsArray ? pType.GetElementType() : pType;
-            return LLVM.ConstArray(SmallTypeCache.GetLLVMType(t), values);
+            return LLVM.ConstArray(SmallTypeCache.GetLLVMType(t, pContext), values);
         }
         #endregion
 

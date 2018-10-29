@@ -31,6 +31,61 @@ namespace SmallerLang.Emitting
             ReturnType = SmallTypeCache.Undefined;
         }
 
+        public MethodDefinition MakeConcreteDefinition(SmallType pType)
+        {
+            //Not a generic type... don't need to worry about it
+            if (pType == null || !pType.HasGenericArguments) return this;
+
+            //Transform the generic parameters and return types to match the concrete type
+            List<SmallType> arguments = new List<SmallType>(ArgumentTypes.Count);
+
+            Dictionary<string, int> typeIndexes = new Dictionary<string, int>(pType.GenericParameters.Count);
+            for(int i = 0; i < pType.GenericParameters.Count; i++)
+            {
+                typeIndexes.Add(pType.GenericParameters[i], i);
+            }
+
+            foreach (var a in ArgumentTypes)
+            {
+                if (a.IsGenericParameter && typeIndexes.ContainsKey(a.Name))
+                {
+                    var i = typeIndexes[a.Name];
+                    arguments.Add(pType.GenericArguments[i]);
+                }
+                else if (!a.IsGenericParameter)
+                {
+                    arguments.Add(a);
+                }
+            }
+
+            List<SmallType> returnTypes = new List<SmallType>();
+            if (ReturnType.IsTuple)
+            {
+                foreach (var f in ReturnType.GetFields())
+                {
+                    if (f.Type.IsGenericParameter && typeIndexes.ContainsKey(f.Type.Name))
+                    {
+                        var i = typeIndexes[f.Type.Name];
+                        returnTypes.Add(pType.GenericArguments[i]);
+                    }
+                    else if (!f.Type.IsGenericParameter)
+                    {
+                        returnTypes.Add(f.Type);
+                    }
+                }
+            }
+            else if (ReturnType.IsGenericParameter && typeIndexes.ContainsKey(ReturnType.Name))
+            {
+                var i = typeIndexes[ReturnType.Name];
+                returnTypes.Add(pType.GenericArguments[i]);
+            }
+            else if (!ReturnType.IsGenericParameter) returnTypes.Add(ReturnType);
+
+            SmallType ret = SmallTypeCache.GetOrCreateTuple(returnTypes.ToArray());
+
+            return new MethodDefinition(Name, MangledName, arguments, ret);
+        }
+
         public override string ToString()
         {
             var name = new StringBuilder();
@@ -152,7 +207,14 @@ namespace SmallerLang.Emitting
                     bool found = true;
                     for (int i = 0; i < c.ArgumentTypes.Count && found; i++)
                     {
-                        found = pArguments[i].IsAssignableFrom(c.ArgumentTypes[i]);
+                        if(c.ArgumentTypes[i].IsGenericParameter && pType != null)
+                        {
+                            found = pArguments[i].IsAssignableFrom(pType.GenericArguments[i]);
+                        }
+                        else
+                        {
+                            found = pArguments[i].IsAssignableFrom(c.ArgumentTypes[i]);
+                        }
                     }                   
 
                     if (found)

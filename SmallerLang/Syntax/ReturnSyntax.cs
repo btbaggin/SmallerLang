@@ -57,11 +57,13 @@ namespace SmallerLang.Syntax
             else
             {
                 //Allocate our tuple and set each field
-                v = LLVM.BuildAlloca(pContext.Builder, SmallTypeCache.GetLLVMType(Type), "");
+                v = LLVM.BuildAlloca(pContext.Builder, SmallTypeCache.GetLLVMType(Type, pContext), "");
                 for(int i = 0; i < Values.Count; i++)
                 {
-                    var value = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
-                    LLVM.BuildStore(pContext.Builder, Values[i].Emit(pContext), value);
+                    var location = LLVM.BuildInBoundsGEP(pContext.Builder, v, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(i) }, "");
+                    var value = Values[i].Emit(pContext);
+                    Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
+                    LLVM.BuildStore(pContext.Builder, value, location);
                 }
                 v = LLVM.BuildLoad(pContext.Builder, v, "");
             }

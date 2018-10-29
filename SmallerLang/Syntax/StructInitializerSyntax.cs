@@ -50,7 +50,7 @@ namespace SmallerLang.Syntax
                     //Implicitly cast any derived types
                     if (m.ArgumentTypes[i] != Arguments[i].Type)
                     {
-                        var t = SmallTypeCache.GetLLVMType(m.ArgumentTypes[i]);
+                        var t = SmallTypeCache.GetLLVMType(m.ArgumentTypes[i], pContext);
                         Utils.LlvmHelper.MakePointer(arguments[i + 1], ref t);
                         arguments[i + 1] = LLVM.BuildBitCast(pContext.Builder, arguments[i + 1], t, "");
                     }

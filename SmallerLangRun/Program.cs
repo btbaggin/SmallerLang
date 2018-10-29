@@ -11,15 +11,15 @@ namespace SmallerLangRun
     {
         /*TODO
          * ERROR MESSAGES IN DIFFERENT MODULES
+         * remove unused structs
          * Allow multiple modules to the same namespace alias
-         * disposable not working because another namespace
-         * Better errors for incorrect namespaces
+         * make array syntax not stupid
          * 
          * Range 1..10
          * Generic traits
          * Trait dependencies?
          * Zero out array allocations
-         * Allow returning traits from methods?
+         * Allow returning traits from methods? - No, this should be an error
          * tree shaking of methods
          * control flow analysis?
          * Do struct poly after type inference?

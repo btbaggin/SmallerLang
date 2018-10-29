@@ -25,6 +25,19 @@ namespace SmallerLang
 
         public string Namespace { get; private set; }
 
+        public bool IsGenericParameter { get; internal set; }
+
+        public bool IsGenericType { get; internal set; }
+
+        public SmallType[] GenericArguments { get; internal set; }
+
+        public IList<string> GenericParameters { get; internal set; }
+
+        public bool HasGenericArguments
+        {
+            get { return GenericArguments.Length > 0; }
+        }
+
         public IList<SmallType> Implements => _implements ?? new List<SmallType>(0);
 
         private readonly SmallType _elementType;
@@ -65,6 +78,7 @@ namespace SmallerLang
             FieldDefinition[] fields = new FieldDefinition[pFields.Length];
             for (int i = 0; i < fields.Length; i++)
             {
+                //TODO i do this here so I can reference the enum type... can I move this somewhere?
                 fields[i] = new FieldDefinition(this, pFields[i], pValues[i]);
             }
             Namespace = pNamespace;
@@ -129,6 +143,12 @@ namespace SmallerLang
         public int GetFieldCount()
         {
             return _fields.Length;
+        }
+
+        public SmallType MakeConcreteType(params SmallType[] pTypes)
+        {
+            var ns = Emitting.NamespaceManager.GetNamespace(Namespace);
+            return ns.GetConcreteType(this, pTypes);
         }
 
         #region Type constructor methods

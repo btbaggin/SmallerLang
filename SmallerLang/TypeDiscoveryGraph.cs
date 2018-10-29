@@ -45,7 +45,9 @@ namespace SmallerLang
             }
 
             var idx = GetNamespaceIndex(pNamespace);
-            _structIndex[idx].Add(pNode.Name, _structs[idx].Count);
+            var name = TypeSyntax.GetFullTypeName(pNode.GetApplicableType());
+
+            _structIndex[idx].Add(name, _structs[idx].Count);
             _structs[idx].Add(new DiscoveryNode(pNode));
         }
 

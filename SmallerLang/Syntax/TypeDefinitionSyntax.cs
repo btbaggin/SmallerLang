@@ -36,6 +36,8 @@ namespace SmallerLang.Syntax
 
         internal int EmitOrder { get; set; }
 
+        readonly private List<Dictionary<string, SmallType>> _typeMappings;
+
         public string Name
         {
             get { return DeclaredType.Value; }
@@ -62,24 +64,24 @@ namespace SmallerLang.Syntax
                 tp.Add(pa.Value);
             }
             TypeParameters = tp;
+            _typeMappings = new List<Dictionary<string, SmallType>>();
         }
 
+        #region Methods
         public void EmitMethodHeaders(EmittingContext pContext)
         {
             //Only structs should be emitted. The other types get merged with structs
             if (DefinitionType == DefinitionTypes.Trait) return;
 
-            var typeName = GetApplicableType().Value;
-            var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
-
-            pContext.CurrentStruct = type;
-            foreach (var m in Methods)
+            Emit((pType) =>
             {
-                m.EmitHeader(pContext);
-            }
+                foreach (var m in Methods)
+                {
+                    m.EmitHeader(pContext);
+                }
 
-            if (!type.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext, type);
-            pContext.CurrentStruct = null;
+                if (!pType.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext, pType);
+            }, pContext);
         }
 
         public void EmitMethods(EmittingContext pContext)
@@ -87,25 +89,53 @@ namespace SmallerLang.Syntax
             //Only structs should be emitted. The other types get merged with structs
             if (DefinitionType == DefinitionTypes.Trait) return;
 
-            var typeName = GetApplicableType().Value;
+            Emit((pType) =>
+            {
+                foreach (var m in Methods)
+                {
+                    m.Emit(pContext);
+                }
+
+                if (!pType.HasDefinedConstructor() && DefinitionType == DefinitionTypes.Struct) EmitGenericConstructor(pContext, pType);
+            }, pContext);
+        }
+        #endregion
+
+        private void Emit(Action<SmallType> pAction, EmittingContext pContext)
+        {
+            var typeName = TypeSyntax.GetFullTypeName(GetApplicableType());
             var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
 
-            pContext.CurrentStruct = type;
-            foreach (var m in Methods)
+            //TODO this is kinda gross...
+            if(_typeMappings.Count > 0)
             {
-                m.Emit(pContext);
+                foreach (var t in _typeMappings)
+                {
+                    pContext.CurrentStruct = type.MakeConcreteType(t.Values.ToArray());
+                    pContext.TypeMappings = t;
+                    pAction.Invoke(type);
+                    pContext.CurrentStruct = null;
+                    pContext.TypeMappings = null;
+                }
             }
-
-            if (!type.HasDefinedConstructor() && DefinitionType == DefinitionTypes.Struct) EmitGenericConstructor(pContext, type);
-            pContext.CurrentStruct = null;
+            else
+            {
+                pContext.CurrentStruct = type;
+                pAction.Invoke(type);
+                pContext.CurrentStruct = null;
+            }
         }
 
+        #region Types
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
             //We need both structs and traits to have definitions because either could be referenced as a type
             if(DefinitionType != DefinitionTypes.Implement)
             {
-                pContext.EmitDefinition(DeclaredType.Value, this);
+                Emit((pType) =>
+                {
+                    pContext.EmitDefinition(TypeSyntax.GetFullTypeName(DeclaredType), this);
+                }, pContext);
             }
 
             return default;
@@ -115,8 +145,12 @@ namespace SmallerLang.Syntax
         {
             //Emit method header
             var ret = LLVMTypeRef.VoidType();
-            var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(pType), 0) };
-            pContext.EmitMethodHeader(DeclaredType.Value + ".ctor", ret, parm);
+
+            Emit((pT) =>
+            {
+                var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(pType, pContext), 0) };
+                pContext.EmitMethodHeader(DeclaredType.Value + ".ctor", ret, parm);
+            }, pContext);
         }
 
         private void EmitGenericConstructor(EmittingContext pContext, SmallType pType)
@@ -141,6 +175,7 @@ namespace SmallerLang.Syntax
 
             LLVM.BuildRetVoid(pContext.Builder);
         }
+        #endregion
 
         public override T FromNode<T>(T pNode)
         {
@@ -151,6 +186,11 @@ namespace SmallerLang.Syntax
         public TypeSyntax GetApplicableType()
         {
             return DefinitionType != DefinitionTypes.Implement ? DeclaredType : AppliesTo;
+        }
+
+        internal void AddTypeMapping(Dictionary<string, SmallType> pTypes)
+        {
+            _typeMappings.Add(pTypes);
         }
 
         public override string ToString()

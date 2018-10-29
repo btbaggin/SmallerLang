@@ -200,7 +200,9 @@
     <Compile Include="Lowering\ForRewriter.cs" />
     <Compile Include="Lowering\MethodTraitRewriter.cs" />
     <Compile Include="Lowering\NamespaceRewriter.cs" />
+    <Compile Include="Lowering\TraitRewriter.cs" />
     <Compile Include="Syntax\Annotation.cs" />
+    <Compile Include="Syntax\GenericTypeSyntax.cs" />
     <Compile Include="Syntax\NamespaceSyntax.cs" />
     <Compile Include="TypeDiscoveryGraph.cs" />
     <Compile Include="Utils\LLVMPInvokes.cs" />
@@ -224,7 +226,7 @@
     <Compile Include="Utils\LLVMHelper.cs" />
     <Compile Include="Validation\PreTypeValidation.cs" />
     <Compile Include="Lowering\ReturnBlockRewriter.cs" />
-    <Compile Include="Lowering\StructInheritanceRewriter.cs" />
+    <Compile Include="Lowering\StructPolyRewriter.cs" />
     <Compile Include="Validation\SyntaxNodeVisitor.cs" />
     <Compile Include="CompilerOptions.cs" />
     <Compile Include="ConsoleErrorReporter.cs" />

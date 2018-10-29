@@ -40,18 +40,11 @@ namespace SmallerLang.Validation
             ////// Discover enums
             ////// Add enums first since they can't reference anything, but things can reference enums
             //////
-            _namespace = NamespaceManager.AddNamespace(pNode.LibraryPath, pNode.Namespace);
+            _namespace = NamespaceManager.GetNamespace(pNode.Namespace);
 
             foreach (var e in pNode.Enums)
             {
-                string[] fields = new string[e.Names.Count];
-                int[] values = new int[e.Names.Count];
-                for (int j = 0; j < fields.Length; j++)
-                {
-                    fields[j] = e.Names[j].Value;
-                    values[j] = e.Values[j];
-            }
-                _namespace.AddEnum(e.Name, fields, values);
+                _namespace.AddType(e);
             }
 
             //Build our list for discovering types
@@ -76,9 +69,10 @@ namespace SmallerLang.Validation
             var nodes = _discoveryGraph.GetNodes(pNode.Namespace);
             for (int i = 0; i < nodes.Count; i++)
             {
+                var t = TypeSyntax.GetFullTypeName(nodes[i].Node.DeclaredType);
                 if(!nodes[i].Permanent && 
                    !nodes[i].Temporary && 
-                   DiscoverTypes(nodes[i].Node.Name))
+                   DiscoverTypes(t))
                 {
                     //If we discover a type go back to the beginning to see if any that were dependent
                     //on this can now be typed
@@ -90,18 +84,21 @@ namespace SmallerLang.Validation
             {
                 foreach(var s in i.Value)
                 {
-                    bool validateTrait = ValidateType(s.Name, s);
-
                     var name = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    var validateTrait = ValidateType(name, s);
+
+                    name = TypeSyntax.GetFullTypeName(s.DeclaredType);
                     validateTrait = ValidateType(name, s) && validateTrait;
+
 
                     //Mark any traits for types
                     if(validateTrait)
                     {
-                        var traitType = SmallTypeCache.FromString(s.Name);
+                        //TODO List<undefined>???
+                        var traitType = SmallTypeCache.FromString(name);
                         s.AppliesTo.Type.AddTrait(traitType);
 
-                        var trait = _discoveryGraph.GetNode(s.Name).Node;
+                        var trait = _discoveryGraph.GetNode(name).Node;
                         ValidateImplementation(trait, s);
                     }
                 }
@@ -176,39 +173,16 @@ namespace SmallerLang.Validation
             pDefinition.EmitOrder = _order++;
 
             HashSet<string> fieldNames = new HashSet<string>();
-            List<FieldDefinition> fields = new List<FieldDefinition>();
             for (int i = 0; i < pDefinition.Fields.Count; i++)
             {
                 var f = pDefinition.Fields[i];
                 if (!fieldNames.Add(f.Value))
                 {
-                    _error.WriteError($"Duplicate field definition: {f.Value} within struct {pDefinition.Name}", f.Span);
-                }
-                else
-                {
-                    FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
-                    fields.Add(new FieldDefinition(pDefinition.Fields[i].Type, pDefinition.Fields[i].Value, visibility));
-                }
-            }
-             
-            //Merge trait fields into this struct
-            if(_implements.ContainsKey(pDefinition.Name))
-            {
-                foreach(var trait in _implements[pDefinition.Name])
-                {
-                    foreach (var f in trait.Fields)
-                    {
-                        if(fieldNames.Add(f.Value))
-                        {
-                            FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
-                            fields.Add(new FieldDefinition(f.Type, f.Value, visibility));
-                        }
-                    }
+                    _error.WriteError($"Duplicate field definition '{f.Value}' within struct {pDefinition.Name}", f.Span);
                 }
             }
 
-            if (pDefinition.DefinitionType == DefinitionTypes.Struct) _namespace.AddStruct(pDefinition.Name, fields.ToArray());
-            else if (pDefinition.DefinitionType == DefinitionTypes.Trait) _namespace.AddTrait(pDefinition.Name, fields.ToArray());
+            _namespace.AddType(pDefinition);
         }
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
@@ -281,7 +255,6 @@ namespace SmallerLang.Validation
         {
             //Validate that all namespaces exists
             //Validate that the trait type exists
-            bool validateTrait = true;
             var ns = SmallTypeCache.GetNamespace(ref pType);
             if (!NamespaceManager.TryGetNamespace(ns, out NamespaceContainer container))
             {

@@ -11,7 +11,15 @@ namespace SmallerLang.Syntax
     {
         public override SmallType Type
         {
-            get { return SmallTypeCache.FromString(GetFullTypeName(this)); } 
+            get
+            {
+                var t = SmallTypeCache.FromString(GetFullTypeName(this));
+                if(t.IsGenericType)
+                {
+                    return t.MakeConcreteType(Utils.SyntaxHelper.SelectNodeTypes(GenericArguments));
+                }
+                return t;
+            } 
         }
 
         public override SyntaxType SyntaxType => SyntaxType.Type;
@@ -36,19 +44,20 @@ namespace SmallerLang.Syntax
             throw new NotImplementedException();
         }
 
+        //TODO move me
         public static string GetFullTypeName(TypeSyntax pNode)
         {
             if (pNode.GenericArguments.Count == 0) return pNode.Value;
 
             var structName = new StringBuilder(pNode.Value);
-            structName.Append("<");
-            for (int i = 0; i < pNode.GenericArguments.Count; i++)
-            {
-                structName.Append(pNode.GenericArguments[i].Value + ",");
-            }
-            structName = structName.Remove(structName.Length - 1, 1);
-            structName.Append(">");
+            structName.Append("`");
+            structName.Append(pNode.GenericArguments.Count);
             return structName.ToString();
+        }
+
+        public override string ToString()
+        {
+            return TypeSyntax.GetFullTypeName(this);
         }
     }
 }
