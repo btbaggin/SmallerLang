@@ -10,7 +10,7 @@ namespace SmallerLang.Parser
     internal class SpanManager
     {
         readonly Stack<(int Count, SpanTracker Span)> _positions;
-        readonly ITokenStream _stream;
+        ITokenStream _stream;
 
         public TextSpan Current
         {
@@ -23,7 +23,12 @@ namespace SmallerLang.Parser
             _stream = pStream;
 
             //Push a dummy tracker into the stack in case we access Current before creating trackers
-            _positions.Push((0, new SpanTracker(-1, 0, 0, this)));
+            _positions.Push((0, new SpanTracker(-1, 0, 0, null, null, this)));
+        }
+
+        public void SetStream(ITokenStream pStream)
+        {
+            _stream = pStream;
         }
 
         public SpanTracker Create()
@@ -43,7 +48,7 @@ namespace SmallerLang.Parser
             }
             else
             {
-                s = new SpanTracker(start, line, column, this);
+                s = new SpanTracker(start, line, column, _stream.Source, _stream.SourcePath, this); //TODO source path or something
                 _positions.Push((1, s));
             }
             
@@ -53,11 +58,6 @@ namespace SmallerLang.Parser
         internal int GetEndIndex()
         {
             return _stream.SourceIndex;
-        }
-
-        internal string MapCurrentToSource()
-        {
-            return _stream.Source.Substring(Current.Start, Current.Length);
         }
 
         internal void Pop()
@@ -83,18 +83,22 @@ namespace SmallerLang.Parser
 
         public int Column { get; }
 
+        readonly string _file;
+        readonly string _path;
         readonly SpanManager _manager;
-        public SpanTracker(int pStart, int pLine, int pColumn, SpanManager pManager)
+        public SpanTracker(int pStart, int pLine, int pColumn, string pFile, string pPath, SpanManager pManager)
         {
             Start = pStart;
             Line = pLine;
             Column = pColumn;
             _manager = pManager;
+            _file = pFile;
+            _path = pPath;
         }
 
         private TextSpan ToTextSpan()
         {
-            return new TextSpan(Start, _manager.GetEndIndex(), Line, Column);
+            return new TextSpan(Start, _manager.GetEndIndex(), Line, Column, _file, _path);
         }
 
         public static implicit operator TextSpan(SpanTracker pT)

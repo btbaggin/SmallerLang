@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Utils;
 using LLVMSharp;
 
 namespace SmallerLang
@@ -49,13 +50,13 @@ namespace SmallerLang
 
         internal SmallType AddType(TypeDefinitionSyntax pType)
         {
-            var name = TypeSyntax.GetFullTypeName(pType.DeclaredType);
+            var name = SyntaxHelper.GetFullTypeName(pType.DeclaredType);
 
             FieldDefinition[] fields = new FieldDefinition[pType.Fields.Count];
             for (int i = 0; i < pType.Fields.Count; i++)
             {
                 var f = pType.Fields[i];
-                FieldVisibility visibility = f.Annotation.Value == Utils.KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
+                FieldVisibility visibility = f.Annotation.Value == KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
                 fields[i] = new FieldDefinition(f.Type, f.Value, visibility);
             }
 

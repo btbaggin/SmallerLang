@@ -9,6 +9,7 @@ namespace SmallerLang.Lexer
     interface ITokenSource
     {
         string Source { get; }
+        string SourcePath { get; }
         int Index { get; }
         int Line { get; }
         int Column { get; }

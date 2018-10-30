@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Utils;
 
 namespace SmallerLang
 {
@@ -45,7 +46,7 @@ namespace SmallerLang
             }
 
             var idx = GetNamespaceIndex(pNamespace);
-            var name = TypeSyntax.GetFullTypeName(pNode.GetApplicableType());
+            var name = SyntaxHelper.GetFullTypeName(pNode.GetApplicableType());
 
             _structIndex[idx].Add(name, _structs[idx].Count);
             _structs[idx].Add(new DiscoveryNode(pNode));

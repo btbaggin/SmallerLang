@@ -9,6 +9,7 @@ namespace SmallerLang.Lexer
     public interface ITokenStream
     {
         string Source { get; }
+        string SourcePath { get; }
         int SourceIndex { get; }
         int SourceLine { get; }
         int SourceColumn { get; }

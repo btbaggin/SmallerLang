@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
@@ -21,7 +22,7 @@ namespace SmallerLang.Lowering
                 var s = pNode.Structs[i];
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
                     if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
                     _implements[applies].Add(s);
                 }
@@ -33,7 +34,7 @@ namespace SmallerLang.Lowering
         protected override SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
             //Merge trait fields into this struct
-            _currentType = TypeSyntax.GetFullTypeName(pNode.GetApplicableType());
+            _currentType = SyntaxHelper.GetFullTypeName(pNode.GetApplicableType());
 
             //TODO make this better by making it less dictionary...ful...
             if(!_types.ContainsKey(_currentType))

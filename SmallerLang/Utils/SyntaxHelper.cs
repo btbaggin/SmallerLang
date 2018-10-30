@@ -84,5 +84,15 @@ namespace SmallerLang.Utils
         {
             return pNode.SyntaxType == SyntaxType.ArrayLiteral;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string GetFullTypeName(TypeSyntax pNode)
+        {
+            if (pNode.GenericArguments.Count == 0) return pNode.Value;
+
+            var structName = new StringBuilder(pNode.Value);
+            structName.Append("`").Append(pNode.GenericArguments.Count);
+            return structName.ToString();
+        }
     }
 }

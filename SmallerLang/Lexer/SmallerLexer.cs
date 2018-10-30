@@ -16,6 +16,8 @@ namespace SmallerLang.Lexer
         #region Properties
         public string Source { get; private set; }
 
+        public string SourcePath { get; private set; }
+
         public int Index
         {
             get { return _tokenizer.Index; }
@@ -112,9 +114,10 @@ namespace SmallerLang.Lexer
             _keywords.Insert("#", TokenType.Hash);
         }
 
-        public ITokenStream StartTokenStream(string pstrSource)
+        public ITokenStream StartTokenStream(string pstrSource, string pPath)
         {
             Source = pstrSource;
+            SourcePath = pPath;
             _atEnd = false;
             _tokenizer = new Tokenizer(pstrSource);
             return new BufferedTokenStream(this);
@@ -187,7 +190,8 @@ namespace SmallerLang.Lexer
             }
             if(!result.Leaf)
             {
-                _error.WriteError("Unknown character: '" + _tokenizer.Current + "'", new TextSpan(_tokenizer.Index, _tokenizer.Index + 1, _tokenizer.Line, _tokenizer.Column));
+                var span = new TextSpan(_tokenizer.Index, _tokenizer.Index + 1, _tokenizer.Line, _tokenizer.Column, Source, SourcePath);
+                _error.WriteError("Unknown character: '" + _tokenizer.Current + "'", span);
                 Eat();
                 return CreateToken(TokenType.Unknown);
             }

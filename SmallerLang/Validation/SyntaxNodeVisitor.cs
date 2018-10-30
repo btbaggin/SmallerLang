@@ -179,6 +179,7 @@ namespace SmallerLang.Validation
             }
         }
 
+        #region Visit ...
         protected virtual void VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode) { }
 
         protected virtual void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
@@ -426,5 +427,6 @@ namespace SmallerLang.Validation
             }
             Visit(pNode.Module);
         }
+        #endregion
     }
 }

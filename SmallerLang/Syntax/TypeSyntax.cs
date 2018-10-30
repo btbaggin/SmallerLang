@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Syntax
 {
@@ -13,10 +14,10 @@ namespace SmallerLang.Syntax
         {
             get
             {
-                var t = SmallTypeCache.FromString(GetFullTypeName(this));
+                var t = SmallTypeCache.FromString(SyntaxHelper.GetFullTypeName(this));
                 if(t.IsGenericType)
                 {
-                    return t.MakeConcreteType(Utils.SyntaxHelper.SelectNodeTypes(GenericArguments));
+                    return t.MakeConcreteType(SyntaxHelper.SelectNodeTypes(GenericArguments));
                 }
                 return t;
             } 
@@ -44,20 +45,9 @@ namespace SmallerLang.Syntax
             throw new NotImplementedException();
         }
 
-        //TODO move me
-        public static string GetFullTypeName(TypeSyntax pNode)
-        {
-            if (pNode.GenericArguments.Count == 0) return pNode.Value;
-
-            var structName = new StringBuilder(pNode.Value);
-            structName.Append("`");
-            structName.Append(pNode.GenericArguments.Count);
-            return structName.ToString();
-        }
-
         public override string ToString()
         {
-            return TypeSyntax.GetFullTypeName(this);
+            return SyntaxHelper.GetFullTypeName(this);
         }
     }
 }

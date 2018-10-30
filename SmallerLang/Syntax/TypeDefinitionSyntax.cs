@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LLVMSharp;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Syntax
 {
@@ -103,7 +104,7 @@ namespace SmallerLang.Syntax
 
         private void Emit(Action<SmallType> pAction, EmittingContext pContext)
         {
-            var typeName = TypeSyntax.GetFullTypeName(GetApplicableType());
+            var typeName = SyntaxHelper.GetFullTypeName(GetApplicableType());
             var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
 
             //TODO this is kinda gross...
@@ -134,7 +135,7 @@ namespace SmallerLang.Syntax
             {
                 Emit((pType) =>
                 {
-                    pContext.EmitDefinition(TypeSyntax.GetFullTypeName(DeclaredType), this);
+                    pContext.EmitDefinition(SyntaxHelper.GetFullTypeName(DeclaredType), this);
                 }, pContext);
             }
 

@@ -10,10 +10,11 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * ERROR MESSAGES IN DIFFERENT MODULES
+         * Look to make some structs ref returns
          * remove unused structs
          * Allow multiple modules to the same namespace alias
          * make array syntax not stupid
+         * Contracts???
          * 
          * Range 1..10
          * Generic traits

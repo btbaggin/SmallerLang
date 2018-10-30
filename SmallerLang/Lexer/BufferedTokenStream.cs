@@ -10,6 +10,8 @@ namespace SmallerLang.Lexer
     {
         public string Source { get => _source.Source; }
 
+        public string SourcePath { get => _source.SourcePath; }
+
         public ref Token Current { get { return ref _tokens[Index]; } }
 
         public bool EOF { get => Index >= _tokenCount; }

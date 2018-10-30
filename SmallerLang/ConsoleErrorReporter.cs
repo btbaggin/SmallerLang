@@ -18,16 +18,16 @@ namespace SmallerLang
 
         public ConsoleColor SpanColor { get; set; } = ConsoleColor.Cyan;
 
-        string _source;
+        //string _source;
         public ConsoleErrorReporter()
         {
             ErrorOccurred = false;
         }
 
-        public void SetSource(string pSource)
-        {
-            _source = pSource;
-        }
+        //public void SetSource(string pSource)
+        //{
+        //    _source = pSource;
+        //}
 
         public void WriteError(string pError)
         {
@@ -60,7 +60,8 @@ namespace SmallerLang
             if (pSpan.HasValue)
             {
                 TextSpan s = pSpan.Value;
-                Console.WriteLine($"at line: {s.Line.ToString()} column: {s.Column.ToString()}");
+                var path = System.IO.Path.GetFileName(s.Path);
+                Console.WriteLine($"in file '{path}' at line: {s.Line.ToString()} column: {s.Column.ToString()}");
 
                 Console.ForegroundColor = TextColor;
                 Console.WriteLine(pError);
@@ -81,7 +82,7 @@ namespace SmallerLang
             var spanStart = pSpan.Column;
             if (pSpan.Start != pSpan.Column) spanStart++;
 
-            string line = pSpan.GetContainingLine(_source);
+            string line = pSpan.GetContainingLine();
             Console.Write(line.Substring(0, spanStart).TrimStart());
 
             Console.ForegroundColor = SpanColor;

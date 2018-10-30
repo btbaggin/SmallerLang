@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Validation
 {
@@ -53,7 +54,7 @@ namespace SmallerLang.Validation
                 var s = pNode.Structs[i];
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
                     if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
                     _implements[applies].Add(s);
                 }
@@ -69,10 +70,10 @@ namespace SmallerLang.Validation
             var nodes = _discoveryGraph.GetNodes(pNode.Namespace);
             for (int i = 0; i < nodes.Count; i++)
             {
-                var t = TypeSyntax.GetFullTypeName(nodes[i].Node.DeclaredType);
+                var t = SyntaxHelper.GetFullTypeName(nodes[i].Node.DeclaredType);
                 if(!nodes[i].Permanent && 
                    !nodes[i].Temporary && 
-                   DiscoverTypes(t))
+                   DiscoverTypes(t, nodes[i].Node.Span))
                 {
                     //If we discover a type go back to the beginning to see if any that were dependent
                     //on this can now be typed
@@ -84,10 +85,10 @@ namespace SmallerLang.Validation
             {
                 foreach(var s in i.Value)
                 {
-                    var name = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    var name = SyntaxHelper.GetFullTypeName(s.AppliesTo);
                     var validateTrait = ValidateType(name, s);
 
-                    name = TypeSyntax.GetFullTypeName(s.DeclaredType);
+                    name = SyntaxHelper.GetFullTypeName(s.DeclaredType);
                     validateTrait = ValidateType(name, s) && validateTrait;
 
 
@@ -115,7 +116,7 @@ namespace SmallerLang.Validation
             {
                 var t = s.GetApplicableType();
 
-                var typeName = TypeSyntax.GetFullTypeName(t);
+                var typeName = SyntaxHelper.GetFullTypeName(t);
                 SmallType type = SmallTypeCache.FromStringInNamespace(_namespace.Alias, typeName);
 
                 for (int j = 0; j < s.Methods.Count; j++)
@@ -131,11 +132,11 @@ namespace SmallerLang.Validation
             }
         }
 
-        private bool DiscoverTypes(string pType)
+        private bool DiscoverTypes(string pType, TextSpan pSpan)
         {
             if(!_discoveryGraph.NodeExists(pType))
             {
-                _error.WriteError($"Use of undeclared type {pType}");
+                _error.WriteError($"Use of undeclared type {pType}", pSpan);
                 return false;
             }
 
@@ -151,13 +152,14 @@ namespace SmallerLang.Validation
 
             for (int i = 0; i < item.Node.Fields.Count; i++)
             {
-                var nt = item.Node.Fields[i].TypeNode.Value;
+                var type = item.Node.Fields[i].TypeNode;
+                var nt = type.Value;
                 if (nt.IndexOf('[') > -1) nt = nt.Substring(0, nt.IndexOf('['));
 
                 //Only look through user defined types which should be undefined at this point
                 if(!item.Node.TypeParameters.Contains(nt) && 
                    !SmallTypeCache.IsTypeDefined(nt) &&
-                   !DiscoverTypes(nt))
+                   !DiscoverTypes(nt, type.Span))
                 {
                     return false;
                 }

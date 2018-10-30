@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
-using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
@@ -29,7 +29,7 @@ namespace SmallerLang.Lowering
                 if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
-                    var applies = TypeSyntax.GetFullTypeName(s.AppliesTo);
+                    var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
                     if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
                     _implements[applies].Add(s);
                 }
@@ -62,7 +62,7 @@ namespace SmallerLang.Lowering
             pNode.AddTypeMapping(types);
 
             //We also need to add the same type mappings for any trait implementations
-            var name = TypeSyntax.GetFullTypeName(pNode.GetApplicableType());
+            var name = SyntaxHelper.GetFullTypeName(pNode.GetApplicableType());
             if (_implements.ContainsKey(name))
             {
                 foreach(var impl in _implements[name])

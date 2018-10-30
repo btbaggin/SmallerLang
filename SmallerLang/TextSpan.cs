@@ -16,36 +16,28 @@ namespace SmallerLang
         {
             get { return Start + Length; }
         }
+        public string Source { get; private set; }
+        public string Path { get; private set; }
 
-        public TextSpan(int pStart, int pEnd, int pLine, int pColumn)
+        public TextSpan(int pStart, int pEnd, int pLine, int pColumn, string pFile, string pPath)
         {
             Start = pStart;
             Length = pEnd - pStart;
             Line = pLine;
             Column = pColumn;
+            Source = pFile;
+            Path = pPath;
         }
 
-        public TextSpan(int pStart, int pLength)
+        public string GetContainingLine()
         {
-            Start = pStart;
-            Length = pLength;
-            Line = 0;
-            Column = 0;
-        }
-
-        public string ToSource(string pSource)
-        {
-            return pSource.Substring(Start, Length);
-        }
-
-        public string GetContainingLine(string pSource)
-        {
+            var source = Source;
             var lineStart = Start - Column;
             if (Start != Column) lineStart--;
 
-            var lineEnd = pSource.IndexOf('\n', End);
-            if (lineEnd == -1) lineEnd = pSource.Length;
-            return pSource.Substring(lineStart, lineEnd - lineStart);
+            var lineEnd = source.IndexOf('\n', End);
+            if (lineEnd == -1) lineEnd = source.Length;
+            return source.Substring(lineStart, lineEnd - lineStart);
         }
     }
 }

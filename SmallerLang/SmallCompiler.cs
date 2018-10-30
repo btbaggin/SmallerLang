@@ -43,10 +43,10 @@ namespace SmallerLang
             string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : ReadSourceFile(pOptions.SourceFile);
             if (source == null) return false;
 
-            _error.SetSource(source);
+            //_error.SetSource(source);
 
             var lexer = new SmallerLexer(_error);
-            var stream = lexer.StartTokenStream(source);
+            var stream = lexer.StartTokenStream(source, pOptions.SourceFile);
             var parser = new SmallerParser(stream, _error);
 
             var tree = parser.Parse();

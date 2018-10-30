@@ -62,9 +62,9 @@ namespace SmallerLang.Parser
                             if (source != null)
                             {
                                 ConsoleErrorReporter reporter = new ConsoleErrorReporter();
-                                reporter.SetSource(source);
                                 var lexer = new SmallerLexer(reporter);
-                                var stream = lexer.StartTokenStream(source);
+                                var stream = lexer.StartTokenStream(source, path);
+                                _spans.SetStream(stream);
 
                                 _stream = stream;
                                 _source = source.AsMemory();
@@ -83,6 +83,7 @@ namespace SmallerLang.Parser
 
                 _stream = currentStream;
                 _source = currentSource;
+                _spans.SetStream(_stream);
 
                 var module = ParseModule("", "");
 
