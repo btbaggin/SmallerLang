@@ -48,7 +48,7 @@ namespace SmallerLang.Parser
             }
             else
             {
-                s = new SpanTracker(start, line, column, _stream.Source, _stream.SourcePath, this); //TODO source path or something
+                s = new SpanTracker(start, line, column, _stream.Source, _stream.SourcePath, this);
                 _positions.Push((1, s));
             }
             

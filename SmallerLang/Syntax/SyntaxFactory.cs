@@ -163,6 +163,11 @@ namespace SmallerLang.Syntax
             return Type(null, pValue, new List<TypeSyntax>());
         }
 
+        public static GenericTypeSyntax GenericType(string pValue, SmallType pElementType)
+        {
+            return new GenericTypeSyntax(pValue, pElementType);
+        }
+
         public static TypeSyntax Type(string pValue, IList<TypeSyntax> pGenericArgs)
         {
             return Type(null, pValue, pGenericArgs);

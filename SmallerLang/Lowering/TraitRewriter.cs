@@ -42,9 +42,11 @@ namespace SmallerLang.Lowering
                 _types.Add(_currentType, new Dictionary<string, GenericTypeSyntax>());
                 foreach (var t in pNode.TypeParameters)
                 {
-                    var b = new GenericTypeSyntax(t, null);
-                    _types[_currentType].Add(t, b);
-                    _types[_currentType].Add(t + "[]", new GenericTypeSyntax(t + "[]", b.Type));
+                    var singleT = SyntaxFactory.GenericType(t, null);
+                    var arrayT = SyntaxFactory.GenericType(t + "[]", singleT.Type);
+
+                    _types[_currentType].Add(t, singleT);
+                    _types[_currentType].Add(t + "[]",  arrayT);
                 }
             }
             

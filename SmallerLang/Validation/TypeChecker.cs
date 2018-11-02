@@ -46,31 +46,6 @@ namespace SmallerLang.Validation
             base.VisitAssignmentSyntax(pNode);
         }
 
-        protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
-        {
-            //Since our types have become concrete types we need to set the type of any generic return variables to the concrete type
-            //TODO single values
-            if(pNode.Value.Type.IsTuple)
-            {
-                var fields = pNode.Value.Type.GetFields();
-                for(int i = 0; i < fields.Length; i++)
-                {
-                    if(fields[i].Type.IsGenericParameter)
-                    {
-                        if(pNode.Value is MemberAccessSyntax m && m.Value is MethodCallSyntax c)
-                        {
-                            var t = m.Identifier.Type;
-                            if(t.HasGenericArguments)
-                            {
-                                pNode.Variables[i].SetType(t.GenericArguments[i]);
-                            }
-                        }
-                    }
-                }
-            }
-            base.VisitDeclarationSyntax(pNode);
-        }
-
         protected override void VisitBinaryExpressionSyntax(BinaryExpressionSyntax pNode)
         {
             switch(pNode.Operator)

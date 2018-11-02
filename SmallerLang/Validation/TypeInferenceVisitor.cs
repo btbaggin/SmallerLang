@@ -359,6 +359,9 @@ namespace SmallerLang.Validation
             {
                 ForceCastLiteral(m.ArgumentTypes[i], pNode.Arguments[i]);
             }
+            
+            //Poly our method definition to match any generic types
+            m = m.MakeConcreteDefinition(Type);
             pNode.SetType(m.ReturnType);
         }
 
