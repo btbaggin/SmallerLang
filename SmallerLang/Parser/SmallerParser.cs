@@ -404,7 +404,7 @@ namespace SmallerLang.Parser
                     if (PeekAndExpect(TokenType.LeftBracket))
                     {
                         Expect(TokenType.RightBracket);
-                        part1 += "[]";
+                        part1 = SmallTypeCache.GetArrayType(part1);
                     }
                 }
 
@@ -568,13 +568,12 @@ namespace SmallerLang.Parser
             {
                 if (PeekAndExpect(TokenType.New))
                 {
-                    //TODO cleanup
                     var type = ParseType(pAllowArray:false);
                     if(PeekAndExpect(TokenType.LeftBracket))
                     {
                         Expect(TokenType.Integer, out string size);
                         Expect(TokenType.RightBracket);
-                        type = SyntaxFactory.Type(type.Namespace, type.Value + "[]", type.GenericArguments);
+                        type = SyntaxFactory.Type(type.Namespace, SmallTypeCache.GetArrayType(type.Value), type.GenericArguments);
                         return SyntaxFactory.ArrayLiteral(type, size);
                     }
 

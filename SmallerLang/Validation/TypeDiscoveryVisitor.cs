@@ -95,7 +95,6 @@ namespace SmallerLang.Validation
                     //Mark any traits for types
                     if(validateTrait)
                     {
-                        //TODO List<undefined>???
                         var traitType = SmallTypeCache.FromString(name);
                         s.AppliesTo.Type.AddTrait(traitType);
 
@@ -206,7 +205,7 @@ namespace SmallerLang.Validation
                 //Create the tuple type if we are returning more than one value from a method
                 if (pMethod.ReturnValues.Count > 1)
                 {
-                    SmallTypeCache.GetOrCreateTuple(Utils.SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
+                    SmallTypeCache.GetOrCreateTuple(SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
 
                 pDefinition = _namespace.AddMethod(pType, pMethod);

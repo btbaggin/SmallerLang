@@ -90,7 +90,7 @@ namespace SmallerLang
 
         public SmallType MakeArrayType()
         {
-            return SmallTypeCache.FromString(Name + "[]");
+            return SmallTypeCache.FromString(SmallTypeCache.GetArrayType(this));
         }
 
         public SmallType GetElementType()

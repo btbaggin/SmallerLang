@@ -42,11 +42,11 @@ namespace SmallerLang.Lowering
                 _types.Add(_currentType, new Dictionary<string, GenericTypeSyntax>());
                 foreach (var t in pNode.TypeParameters)
                 {
-                    var singleT = SyntaxFactory.GenericType(t, null);
-                    var arrayT = SyntaxFactory.GenericType(t + "[]", singleT.Type);
+                    var T = SmallTypeCache.CreateGenericParameter(t);
+                    var arrT = SmallTypeCache.CreateGenericParameter(SmallTypeCache.GetArrayType(T), T);
 
-                    _types[_currentType].Add(t, singleT);
-                    _types[_currentType].Add(t + "[]",  arrayT);
+                    _types[_currentType].Add(T.Name, SyntaxFactory.GenericType(T));
+                    _types[_currentType].Add(arrT.Name,  SyntaxFactory.GenericType(arrT));
                 }
             }
 
@@ -88,8 +88,27 @@ namespace SmallerLang.Lowering
                 methods.Add((MethodSyntax)Visit(m));
             }
 
+            var appliesTo = pNode.AppliesTo;
+            if(appliesTo != null)
+            {
+                List<TypeSyntax> genericArgs = new List<TypeSyntax>();
+                foreach(var ga in appliesTo.GenericArguments)
+                {
+                    if(_types[_currentType].ContainsKey(ga.Value))
+                    {
+                        genericArgs.Add(_types[_currentType][ga.Value]);
+                    }
+                    else
+                    {
+                        genericArgs.Add(ga);
+                    }
+                }
+
+                appliesTo = SyntaxFactory.Type(appliesTo.Namespace, appliesTo.Value, genericArgs);
+            }
+
             _currentType = null;
-            return SyntaxFactory.TypeDefinition(pNode.DeclaredType, pNode.AppliesTo, pNode.DefinitionType, methods, fields);
+            return SyntaxFactory.TypeDefinition(pNode.DeclaredType, appliesTo, pNode.DefinitionType, methods, fields);
         }
 
         protected override SyntaxNode VisitMethodSyntax(MethodSyntax pNode)

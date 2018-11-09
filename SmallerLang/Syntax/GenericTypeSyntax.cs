@@ -14,10 +14,9 @@ namespace SmallerLang.Syntax
             get { return _type; }
         }
 
-        //TODO I don't like this constructor
-        internal GenericTypeSyntax(string pValue, SmallType pElementType) : base(null, pValue, new List<TypeSyntax>())
+        internal GenericTypeSyntax(SmallType pType) : base(null, pType.Name, new List<TypeSyntax>())
         {
-            _type = SmallTypeCache.CreateGenericParameter(pValue, pElementType);
+            _type = pType;
         }
     }
 }

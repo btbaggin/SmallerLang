@@ -70,6 +70,16 @@ namespace SmallerLang
             return container.IsTypeDefinedInNamespace(pType);
         }
 
+        public static string GetArrayType(string pType)
+        {
+            return pType + "[]";
+        }
+
+        public static string GetArrayType(SmallType pType)
+        {
+            return GetArrayType(pType.Name);
+        }
+
         internal static string GetNamespace(ref string pType)
         {
             var idx = pType.IndexOf('.');
@@ -81,6 +91,11 @@ namespace SmallerLang
             }
 
             return "";
+        }
+
+        public static SmallType CreateGenericParameter(string pType)
+        {
+            return CreateGenericParameter(pType, null);
         }
 
         public static SmallType CreateGenericParameter(string pType, SmallType pElementType)
