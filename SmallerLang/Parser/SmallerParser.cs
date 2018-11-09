@@ -359,7 +359,7 @@ namespace SmallerLang.Parser
             }
         }
 
-        private TypeSyntax ParseType(bool pGenericParameter = false)
+        private TypeSyntax ParseType(bool pGenericParameter = false, bool pAllowArray = true)
         {
             using (SpanTracker t = _spans.Create())
             {
@@ -399,10 +399,13 @@ namespace SmallerLang.Parser
                 }
 
                 //Check for array types
-                if (PeekAndExpect(TokenType.LeftBracket))
+                if (pAllowArray)
                 {
-                    Expect(TokenType.RightBracket);
-                    part1 += "[]";
+                    if (PeekAndExpect(TokenType.LeftBracket))
+                    {
+                        Expect(TokenType.RightBracket);
+                        part1 += "[]";
+                    }
                 }
 
                 var ns = part2 != null ? part1 : null;
@@ -532,8 +535,12 @@ namespace SmallerLang.Parser
 
                 //new only allowed in assignment and declaration statements
                 SyntaxNode right = ParseExpression();
-                var newStruct = ParseStructInitializer(variables);
-                if (newStruct != null) right = newStruct;
+                if (Peek(TokenType.New))
+                {
+                    var newStruct = ParseInitializer(variables);
+                    if (newStruct != null) right = newStruct;
+                }
+                
 
                 if(right == null)
                 {
@@ -555,23 +562,34 @@ namespace SmallerLang.Parser
             }
         }
 
-        private StructInitializerSyntax ParseStructInitializer(IList<IdentifierSyntax> pIdentifier)
+        private SyntaxNode ParseInitializer(IList<IdentifierSyntax> pIdentifier)
         {
             using (SpanTracker t = _spans.Create())
             {
                 if (PeekAndExpect(TokenType.New))
                 {
-                    var type = ParseType();
-                    Expect(TokenType.LeftParen);
-                    List<SyntaxNode> arguments = new List<SyntaxNode>();
-                    if(!Peek(TokenType.RightParen))
+                    //TODO cleanup
+                    var type = ParseType(pAllowArray:false);
+                    if(PeekAndExpect(TokenType.LeftBracket))
                     {
-                        do
-                        {
-                            arguments.Add(ParseExpression());
-                        } while (PeekAndExpect(TokenType.Comma));
+                        Expect(TokenType.Integer, out string size);
+                        Expect(TokenType.RightBracket);
+                        type = SyntaxFactory.Type(type.Namespace, type.Value + "[]", type.GenericArguments);
+                        return SyntaxFactory.ArrayLiteral(type, size);
                     }
-                    Expect(TokenType.RightParen);
+
+                    List<SyntaxNode> arguments = new List<SyntaxNode>();
+                    if(PeekAndExpect(TokenType.LeftParen))
+                    {
+                        if (!Peek(TokenType.RightParen))
+                        {
+                            do
+                            {
+                                arguments.Add(ParseExpression());
+                            } while (PeekAndExpect(TokenType.Comma));
+                        }
+                        Expect(TokenType.RightParen);
+                    }
 
                     return SyntaxFactory.StructInitializer(pIdentifier, type, arguments).SetSpan<StructInitializerSyntax>(t);
                 }
@@ -852,8 +870,11 @@ namespace SmallerLang.Parser
 
                     //new only allowed in assignment and declaration statements
                     SyntaxNode right = ParseExpressionWithFullAssignment();
-                    var newStruct = ParseStructInitializer(variables);
-                    if (newStruct != null) right = newStruct;
+                    if(Peek(TokenType.New))
+                    {
+                        var newStruct = ParseInitializer(variables);
+                        if (newStruct != null) right = newStruct;
+                    }
 
                     if (right == null)
                     {
@@ -884,7 +905,7 @@ namespace SmallerLang.Parser
                     SyntaxNode right = ParseExpression();
                     if (!(e is IdentifierSyntax i)) throw ReportError("Only identifiers can be the subject of assignment", e.Span);
 
-                    var newStruct = ParseStructInitializer(new List<IdentifierSyntax>() { i });
+                    var newStruct = ParseInitializer(new List<IdentifierSyntax>() { i });
                     if (newStruct != null) right = newStruct;
 
                     if (right == null)

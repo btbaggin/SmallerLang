@@ -49,7 +49,6 @@ namespace SmallerLang.Lowering
                     _types[_currentType].Add(t + "[]",  arrayT);
                 }
             }
-            
 
             List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count); 
             for (int i = 0; i < pNode.Fields.Count; i++)
