@@ -36,7 +36,7 @@ namespace SmallerLang.Lowering
             //Merge trait fields into this struct
             _currentType = SyntaxHelper.GetFullTypeName(pNode.GetApplicableType());
 
-            //TODO make this better by making it less dictionary...ful...
+            //Create our generic parameter types
             if(!_types.ContainsKey(_currentType))
             {
                 _types.Add(_currentType, new Dictionary<string, GenericTypeSyntax>());
@@ -50,6 +50,7 @@ namespace SmallerLang.Lowering
                 }
             }
 
+            //Update any field identifier types to use the generic parm
             List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count); 
             for (int i = 0; i < pNode.Fields.Count; i++)
             {
@@ -64,17 +65,18 @@ namespace SmallerLang.Lowering
                 fields.Add(ti);
             }
 
+            //Update any trait field identifier types to use the generic parm
             if (_implements.ContainsKey(_currentType) && pNode.DefinitionType != DefinitionTypes.Implement)
             {
                 foreach (var trait in _implements[_currentType])
                 {
-                    foreach (var f in trait.Fields)
+                    foreach (var field in trait.Fields)
                     {
-                        var type = f.TypeNode.Value;
-                        var ti = f;
+                        var type = field.TypeNode.Value;
+                        var ti = field;
                         if (_types[_currentType].ContainsKey(type))
                         {
-                            ti = SyntaxFactory.TypedIdentifier(_types[_currentType][type], f.Value);
+                            ti = SyntaxFactory.TypedIdentifier(_types[_currentType][type], field.Value);
                         }
 
                         fields.Add(ti);
@@ -88,6 +90,7 @@ namespace SmallerLang.Lowering
                 methods.Add((MethodSyntax)Visit(m));
             }
 
+            //Poly the type it applies to use the generic type
             var appliesTo = pNode.AppliesTo;
             if(appliesTo != null)
             {
@@ -115,6 +118,7 @@ namespace SmallerLang.Lowering
         {
             if(_currentType != null && _types[_currentType].Count > 0)
             {
+                //Poly any parameters
                 List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>(pNode.Parameters.Count);
                 foreach (var p in pNode.Parameters)
                 {
@@ -128,6 +132,7 @@ namespace SmallerLang.Lowering
                     }
                 }
 
+                //Poly return types
                 List<TypeSyntax> returnValues = new List<TypeSyntax>(pNode.ReturnValues.Count);
                 foreach (var r in pNode.ReturnValues)
                 {

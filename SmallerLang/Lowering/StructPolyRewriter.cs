@@ -12,11 +12,9 @@ namespace SmallerLang.Lowering
     {
         readonly Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
-        readonly IErrorReporter _error;
 
-        public PolyRewriter(IErrorReporter pError)
+        public PolyRewriter()
         {
-            _error = pError;
             _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
@@ -26,13 +24,13 @@ namespace SmallerLang.Lowering
             //Add and mark structs for poly
             foreach (var s in pNode.Structs)
             {
-                if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
                 if (s.DefinitionType == DefinitionTypes.Implement)
                 {
                     var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
                     if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
                     _implements[applies].Add(s);
                 }
+                else if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
             }
             base.VisitModuleSyntax(pNode);
         }
@@ -51,7 +49,7 @@ namespace SmallerLang.Lowering
         {
             if(pInitializer.Struct.GenericArguments.Count != pNode.TypeParameters.Count)
             {
-                _error.WriteError("Incorrect number of type arguments supplied to struct, expecting " + pNode.TypeParameters.Count, pInitializer.Span);
+                CompilerErrors.TypePolyArgumentCount(pInitializer.Struct, pNode.TypeParameters.Count, pInitializer.Span);
             }
 
             Dictionary<string, SmallType> types = new Dictionary<string, SmallType>();

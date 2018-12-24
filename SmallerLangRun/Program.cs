@@ -23,7 +23,6 @@ namespace SmallerLangRun
          * tree shaking of methods
          * control flow analysis?
          * Do struct poly after type inference?
-         * imports
          * strings
         */
         static void Main(string[] args)

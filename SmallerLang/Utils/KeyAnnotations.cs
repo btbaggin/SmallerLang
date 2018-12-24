@@ -16,13 +16,19 @@ namespace SmallerLang.Utils
         public static string Complete => "complete";
         public static string Hidden => "hidden";
 
-        public static void ValidateExternalAnnotation(Annotation pAnnotation, MethodSyntax pMethod, IErrorReporter pError)
+        public static void ValidateExternalAnnotation(Annotation pAnnotation, MethodSyntax pMethod)
         {
             //Check basic format
+            if(string.IsNullOrEmpty(pAnnotation.Value))
+            {
+                CompilerErrors.NoExternalAnnotation(pMethod.Span);
+                return;
+            }
+
             var parts = pAnnotation.Value.Split(',');
             if (parts.Length != 3)
             {
-                pError.WriteError("Incorrectly formatted annotation. Must be in format Assembly,Type,Method", pAnnotation.Span);
+                CompilerErrors.ExternalAnnotationFormat(pAnnotation.Span);
                 return;
             }
 
@@ -52,13 +58,13 @@ namespace SmallerLang.Utils
 
                 MethodInfo method = type.GetMethod(parts[2], types);
 
-                if (method == null) pError.WriteError("Unknown method " + parts[2], pAnnotation.Span);
+                if (method == null) CompilerErrors.UnknownExternalMethod(parts[2], pAnnotation.Span);
                 else
                 {
                     //Method must be a static and double check argument types. Primitive types can be implicitly casted in GetMethod
                     if (!method.IsStatic)
                     {
-                        pError.WriteError("Method must be static", pAnnotation.Span);
+                        CompilerErrors.StaticExternalMethod(parts[2], pAnnotation.Span);
                     }
 
                     var parmTypes = method.GetParameters();
@@ -66,14 +72,14 @@ namespace SmallerLang.Utils
                     {
                         if (parmTypes[i].ParameterType != types[i])
                         {
-                            pError.WriteError($"Cannot convert type {types[i]} to {parmTypes[i].ParameterType}", pAnnotation.Span);
+                            CompilerErrors.TypeCastError(types[i].ToString(), parmTypes[i].ParameterType.ToString(), pAnnotation.Span);
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                pError.WriteError("Error validating external method: " + e.Message, pAnnotation.Span);
+                CompilerErrors.UnknownExternalError(e.Message, pAnnotation.Span);
             }
         }
 

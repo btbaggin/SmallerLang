@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Validation
 {
@@ -40,7 +41,7 @@ namespace SmallerLang.Validation
                     //This will allow implementing traits to access the struct's private fields
                     if (currentStruct == null || !currentStruct.IsTrait || !currentType.IsAssignableFrom(currentStruct))
                     {
-                        _error.WriteError("Cannot access hidden struct member outside of the struct", pNode.Span);
+                        CompilerErrors.AccessPrivateMember(pNode, pNode.Span);
                     }
                 }
             }
@@ -69,7 +70,7 @@ namespace SmallerLang.Validation
 
                 if (pNode == _mainModule && v.Value == null)
                 {
-                    _error.WriteError("No run method found!", pNode.Span);
+                    CompilerErrors.NoRunMethod(pNode.Span);
                 }
             }
         }
@@ -78,9 +79,9 @@ namespace SmallerLang.Validation
         {
             //Validate that deferred statements do not contain "return" statements
             //Report any unused variables
-            if(pNode.Deferred && Utils.SyntaxHelper.LastStatementIsReturn(pNode))
+            if(pNode.Deferred && SyntaxHelper.LastStatementIsReturn(pNode))
             {
-                _error.WriteError("Unable to defer a return statement", pNode.Span);
+                CompilerErrors.InvalidDefer(pNode.Span);
             }
 
             //Report any unused variables
@@ -90,7 +91,7 @@ namespace SmallerLang.Validation
             {
                 if (!ld.IsReferenced)
                 {
-                    _error.WriteWarning($"Variable {ld.Name} is defined but never used");
+                    CompilerErrors.VariableNeverUsed(ld.Name);
                 }
             }
             _locals.RemoveScope();
@@ -99,12 +100,12 @@ namespace SmallerLang.Validation
         protected override void VisitSelectSyntax(SelectSyntax pNode)
         {
             //Validate if a select is marked as complete, ensure all enum values are used
-            if(pNode.Annotation.Value == Utils.KeyAnnotations.Complete)
+            if(pNode.Annotation.Value == KeyAnnotations.Complete)
             {
                 var t = pNode.Condition.Type;
                 if(!t.IsEnum)
                 {
-                    _error.WriteWarning("complete annotation can only be used with enum types", pNode.Condition.Span);
+                    CompilerErrors.CompleteNonEnum(pNode.Condition.Span);
                 }
                 else
                 {
@@ -153,12 +154,12 @@ namespace SmallerLang.Validation
                     fields = fields.Where((f) => f != null).ToList();
                     if(fields.Count > 0)
                     {
-                        _error.WriteError("select marked as complete does not contain values: " + fields.Aggregate(new StringBuilder(), (c, f) =>
+                        CompilerErrors.SelectComplete(fields.Aggregate(new StringBuilder(), (c, f) =>
                         {
                             if (c.Length > 0) c.Append(", ");
                             c.Append(f);
                             return c;
-                        }), pNode.Span);
+                        }).ToString(), pNode.Span);
                     }
                 }
             }
@@ -171,23 +172,23 @@ namespace SmallerLang.Validation
             switch(pNode.NumberType)
             {
                 case NumberTypes.Double:
-                    if(!double.TryParse(pNode.Value, out double d)) _error.WriteError("Value is too large for a double", pNode.Span);
+                    if(!double.TryParse(pNode.Value, out double d)) CompilerErrors.TooLargeNumber(pNode, "Double", pNode.Span);
                     break;
 
                 case NumberTypes.Float:
-                    if (!float.TryParse(pNode.Value, out float f)) _error.WriteError("Value is too large for a float", pNode.Span);
+                    if (!float.TryParse(pNode.Value, out float f)) CompilerErrors.TooLargeNumber(pNode, "Float", pNode.Span);
                     break;
 
                 case NumberTypes.Integer:
-                    if (!int.TryParse(pNode.Value, out int i)) _error.WriteError("Value is too large for a int", pNode.Span);
+                    if (!int.TryParse(pNode.Value, out int i)) CompilerErrors.TooLargeNumber(pNode, "Int", pNode.Span);
                     break;
 
                 case NumberTypes.Long:
-                    if (!long.TryParse(pNode.Value, out long l)) _error.WriteError("Value is too large for a long", pNode.Span);
+                    if (!long.TryParse(pNode.Value, out long l)) CompilerErrors.TooLargeNumber(pNode, "Long", pNode.Span);
                     break;
 
                 case NumberTypes.Short:
-                    if (!short.TryParse(pNode.Value, out short s)) _error.WriteError("Value is too large for a short", pNode.Span);
+                    if (!short.TryParse(pNode.Value, out short s)) CompilerErrors.TooLargeNumber(pNode, "Short", pNode.Span);
                     break;
             }
             base.VisitNumericLiteralSyntax(pNode);
@@ -258,13 +259,13 @@ namespace SmallerLang.Validation
         {
             if(!Store.GetValueOrDefault<bool>("CanBreak"))
             {
-                _error.WriteError("Break statements can only appear in loops or case statements", pNode.Span);
+                CompilerErrors.InvalidBreakLocation(pNode.Span);
             }
             else
             {
                 if(pNode.CountAsInt >= _breakCount)
                 {
-                    _error.WriteError($"Invalid break count cannot be larger than {_breakCount - 1}", pNode.Span);
+                    CompilerErrors.InvalidBreakCount(_breakCount - 1, pNode.Span);
                 }
             }
         }

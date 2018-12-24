@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
@@ -23,9 +24,9 @@ namespace SmallerLang.Lowering
 
             if (_rewrite)
             {
-                if(pNode.Annotation.Value == Utils.KeyAnnotations.Complete)
+                if(pNode.Annotation.Value == KeyAnnotations.Complete)
                 {
-                    _error.WriteWarning("complete annotation is ignored on select statements with 'it'", pNode.Span);
+                    CompilerErrors.IgnoredComplete(pNode.Span);
                 }
 
                 //Only rewrite if we have "it"

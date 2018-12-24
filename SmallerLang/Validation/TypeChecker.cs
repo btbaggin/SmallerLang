@@ -5,28 +5,23 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Validation
 {
     class TypeChecker : SyntaxNodeVisitor
     {
-        readonly IErrorReporter _error;
         SmallType[] _methodReturns;
-
-        public TypeChecker(IErrorReporter pError)
-        {
-            _error = pError;
-        }
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
             if(!CanCast(pNode.Index.Type, SmallTypeCache.Int))
             {
-                _error.WriteError($"Type of {pNode.Index.Type.ToString()} cannot be converted to {SmallTypeCache.Int.ToString()}", pNode.Index.Span);
+                CompilerErrors.TypeCastError(pNode.Index.Type, SmallTypeCache.Int, pNode.Index.Span);
             }
             if(!pNode.Identifier.Type.IsArray)
             {
-                _error.WriteError($"Array access can only be on array types", pNode.Span);
+                CompilerErrors.TypeCastError(pNode.Identifier.Type.ToString(), "array", pNode.Span);
             }
             base.VisitArrayAccessSyntax(pNode);
         }
@@ -40,7 +35,7 @@ namespace SmallerLang.Validation
 
                 if (!CanCast(pNode.Variables[i].Type, valueType))
                 {
-                    _error.WriteError($"Type of {pNode.Variables[i].Type.ToString()} cannot be converted to {valueType.ToString()}", pNode.Span);
+                    CompilerErrors.TypeCastError(pNode.Variables[i].Type, valueType, pNode.Span);
                 }
             }
             base.VisitAssignmentSyntax(pNode);
@@ -54,11 +49,11 @@ namespace SmallerLang.Validation
                 case BinaryExpressionOperator.Or:
                     if (!CanCast(pNode.Left.Type, SmallTypeCache.Boolean))
                     {
-                        _error.WriteError($"Type of {pNode.Left.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Span);
+                        CompilerErrors.TypeCastError(pNode.Left.Type, SmallTypeCache.Boolean, pNode.Span);
                     }
                     if(!CanCast(pNode.Right.Type, SmallTypeCache.Boolean))
                     {
-                        _error.WriteError($"Type of {pNode.Right.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Span);
+                        CompilerErrors.TypeCastError(pNode.Right.Type, SmallTypeCache.Boolean, pNode.Span);
                     }
                     break;
 
@@ -69,7 +64,7 @@ namespace SmallerLang.Validation
                         pNode.Right.Type != SmallTypeCache.Undefined &&
                         BinaryExpressionSyntax.GetResultType(pNode.Left.Type, pNode.Operator, pNode.Right.Type) == SmallTypeCache.Undefined)
                     {
-                        _error.WriteError($"Type of {pNode.Left.Type.ToString()} cannot be converted to {pNode.Right.Type.ToString()}", pNode.Span);
+                        CompilerErrors.TypeCastError(pNode.Left.Type, pNode.Right.Type, pNode.Span);
                     }
                     break;
             }
@@ -84,14 +79,14 @@ namespace SmallerLang.Validation
                 case UnaryExpressionOperator.Not:
                     if(!CanCast(pNode.Value.Type, SmallTypeCache.Boolean))
                     {
-                        _error.WriteError($"Type of {pNode.Value.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Value.Span);
+                        CompilerErrors.TypeCastError(pNode.Value.Type, SmallTypeCache.Boolean, pNode.Value.Span);
                     }
                     break;
 
                 case UnaryExpressionOperator.Length:
                     if(!pNode.Value.Type.IsArray)
                     {
-                        _error.WriteError("lengthof can only be used on array types", pNode.Span);
+                        CompilerErrors.TypeCastError(pNode.Value.Type.ToString(), "array", pNode.Span);
                     }
                     break;
 
@@ -100,9 +95,9 @@ namespace SmallerLang.Validation
                 case UnaryExpressionOperator.PostDecrement:
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.Negative:
-                    if(!Utils.TypeHelper.IsNumber(pNode.Value.Type))
+                    if(!TypeHelper.IsNumber(pNode.Value.Type))
                     {
-                        _error.WriteError($"{pNode.Value.Type.ToString()} is not a numeric type", pNode.Span);
+                        CompilerErrors.TypeCastError(pNode.Value.Type, SmallTypeCache.Int, pNode.Span);
                     }
                     break;
             }
@@ -111,7 +106,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
-            SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
+            SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
             //Current type can be undefined if we have a method call on a type that isn't defined
             if (Type != SmallTypeCache.Undefined)
@@ -126,7 +121,7 @@ namespace SmallerLang.Validation
                     {
                         if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
                         {
-                            _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                            CompilerErrors.TypeCastError(pNode.Arguments[i].Type, m.ArgumentTypes[i], pNode.Arguments[i].Span);
                         }
                     }
                 }
@@ -161,16 +156,19 @@ namespace SmallerLang.Validation
 
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
-            SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
+            SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
+            //Check if the type exists
             if(pNode.Struct.Type == SmallTypeCache.Undefined)
             {
-                _error.WriteError($"Use of undeclared type {pNode.Struct}", pNode.Span);
+                CompilerErrors.UndeclaredType(pNode.Struct.ToString(), pNode.Span);
             }
+            //Check if the type is a trait
             else if(pNode.Struct.Type.IsTrait)
             {
-                _error.WriteError("Traits cannot be directly initialized", pNode.Span);
+                CompilerErrors.AttemptDeclareTrait(pNode.Struct.Type, pNode.Span);
             }
+            //Ensure the constructor arguments 
             else if(pNode.Struct.Type.HasDefinedConstructor())
             {
                 var ctor = pNode.Struct.Type.GetConstructor().Name;
@@ -179,7 +177,7 @@ namespace SmallerLang.Validation
                 {
                     if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
                     {
-                        _error.WriteError($"Type of {pNode.Arguments[i].Type.ToString()} cannot be converted to {m.ArgumentTypes[i].ToString()}", pNode.Arguments[i].Span);
+                        CompilerErrors.TypeCastError(pNode.Arguments[i].Type, m.ArgumentTypes[i], pNode.Arguments[i].Span);
                     }
                 }
             }
@@ -199,20 +197,20 @@ namespace SmallerLang.Validation
             {
                 if(pNode.ReturnValues[i].Type == SmallTypeCache.Undefined)
                 {
-                    _error.WriteError($"Use of undefined type {pNode.ReturnValues[i].Value}", pNode.ReturnValues[i].Span);
+                    CompilerErrors.UndeclaredType(pNode.ReturnValues[i].Value, pNode.ReturnValues[i].Span);
                 }
             }
-            _methodReturns = Utils.SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
+            _methodReturns = SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
             base.VisitMethodSyntax(pNode);
         }
 
         protected override void VisitReturnSyntax(ReturnSyntax pNode)
         {
-            for(int i = 0; i < pNode.Values.Count; i++)
+            for(int i = 0; i < Math.Min(_methodReturns.Length, pNode.Values.Count); i++)
             {
                 if (!CanCast(pNode.Values[i].Type, _methodReturns[i]))
                 {
-                    _error.WriteError($"Type of {pNode.Values[i].Type.ToString()} cannot be converted to {_methodReturns[i].ToString()}", pNode.Values[i].Span);
+                    CompilerErrors.TypeCastError(pNode.Values[i].Type, _methodReturns[i], pNode.Values[i].Span);
                 }
             }
             base.VisitReturnSyntax(pNode);
@@ -222,7 +220,7 @@ namespace SmallerLang.Validation
         {
             if (!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
-                _error.WriteError($"Type of {pNode.Condition.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Condition.Span);
+                CompilerErrors.TypeCastError(pNode.Condition.Type, SmallTypeCache.Boolean, pNode.Condition.Span);
             }
             base.VisitForSyntax(pNode);
         }
@@ -231,7 +229,7 @@ namespace SmallerLang.Validation
         {
             if (!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
-                _error.WriteError($"Type of {pNode.Condition.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Condition.Span);
+                CompilerErrors.TypeCastError(pNode.Condition.Type, SmallTypeCache.Boolean, pNode.Condition.Span);
             }
             base.VisitIfSyntax(pNode);
         }
@@ -240,7 +238,7 @@ namespace SmallerLang.Validation
         {
             if(!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
-                _error.WriteError($"Type of {pNode.Condition.Type.ToString()} cannot be converted to {SmallTypeCache.Boolean.ToString()}", pNode.Condition.Span);
+                CompilerErrors.TypeCastError(pNode.Condition.Type, SmallTypeCache.Boolean, pNode.Condition.Span);
             }
             base.VisitWhileSyntax(pNode);
         }
@@ -260,7 +258,7 @@ namespace SmallerLang.Validation
             {
                 if(!CanCast(caseType, c.Type))
                 {
-                    _error.WriteError($"Type of {c.Type.ToString()} cannot be converted to {caseType.ToString()}", pNode.Span);
+                    CompilerErrors.TypeCastError(c.Type, caseType, pNode.Span);
                 }
             }
             base.VisitCaseSyntax(pNode);
@@ -270,7 +268,7 @@ namespace SmallerLang.Validation
         {
             if (pNode.Type == SmallTypeCache.Undefined)
             {
-                _error.WriteError($"Use of undefined type {pNode.TypeNode.Value}", pNode.Span);
+                CompilerErrors.UndeclaredType(pNode.TypeNode.Value, pNode.Span);
             }
             base.VisitTypedIdentifierSyntax(pNode);
         }

@@ -455,10 +455,10 @@ namespace SmallerLang.Lowering
         
         protected virtual SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            Dictionary<string, ModuleSyntax> imports = new Dictionary<string, ModuleSyntax>(pNode.Imports.Count);
+            List<ModuleSyntax> imports = new List<ModuleSyntax>(pNode.Imports.Count);
             foreach(var m in pNode.Imports)
             {
-                imports.Add(m.Key, (ModuleSyntax)Visit(m.Value));
+                imports.Add((ModuleSyntax)Visit(m));
             }
 
             return SyntaxFactory.Workspace(pNode.Name, (ModuleSyntax)Visit(pNode.Module), imports);

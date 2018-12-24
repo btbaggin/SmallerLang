@@ -70,6 +70,12 @@ namespace SmallerLang
             return container.IsTypeDefinedInNamespace(pType);
         }
 
+        public static bool IsTypeDefined(string pNamespace, string pType)
+        {
+            if (!NamespaceManager.TryGetNamespace(pNamespace, out NamespaceContainer container)) return false;
+            return container.IsTypeDefinedInNamespace(pType);
+        }
+
         public static string GetArrayType(string pType)
         {
             return pType + "[]";

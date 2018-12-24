@@ -48,6 +48,8 @@ namespace SmallerLang.Syntax
             //then variables referenced in deferred statements will still be valid
             BlockSyntax.BuildCallToDispose(pContext);
 
+            if (Values.Count == 0) return LLVM.BuildRetVoid(pContext.Builder);
+
             LLVMValueRef v;
             if (Values.Count == 1)
             {

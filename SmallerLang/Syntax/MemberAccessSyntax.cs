@@ -28,8 +28,16 @@ namespace SmallerLang.Syntax
         {
             pContext.EmitDebugLocation(this);
 
+            string ns = "";
+            string type = Identifier.Value;
+            if (Identifier.SyntaxType == SyntaxType.Namespace)
+            {
+                ns = Identifier.Value;
+                type = Value.Value;
+            }
+
             //Check if this is a "static" method
-            if (!SmallTypeCache.IsTypeDefined(Identifier.Value))//TODO namespaces???
+            if (!SmallTypeCache.IsTypeDefined(ns, type))
             {
                 LLVMValueRef value;
                 if (Identifier.SyntaxType == SyntaxType.Namespace)

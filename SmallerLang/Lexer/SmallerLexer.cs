@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Lexer
 {
@@ -11,7 +12,6 @@ namespace SmallerLang.Lexer
         int _length;
         bool _atEnd;
         readonly Trie _keywords;
-        readonly IErrorReporter _error;
 
         #region Properties
         public string Source { get; private set; }
@@ -34,9 +34,8 @@ namespace SmallerLang.Lexer
         }
         #endregion
 
-        public SmallerLexer(IErrorReporter pError)
+        public SmallerLexer()
         {
-            _error = pError;
             _keywords = new Trie();
 
             //Keywords
@@ -191,7 +190,7 @@ namespace SmallerLang.Lexer
             if(!result.Leaf)
             {
                 var span = new TextSpan(_tokenizer.Index, _tokenizer.Index + 1, _tokenizer.Line, _tokenizer.Column, Source, SourcePath);
-                _error.WriteError("Unknown character: '" + _tokenizer.Current + "'", span);
+                CompilerErrors.UnknownCharacter(_tokenizer.Current, span);
                 Eat();
                 return CreateToken(TokenType.Unknown);
             }

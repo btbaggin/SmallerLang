@@ -423,7 +423,7 @@ namespace SmallerLang.Validation
         {
             foreach(var m in pNode.Imports)
             {
-                Visit(m.Value);
+                Visit(m);
             }
             Visit(pNode.Module);
         }

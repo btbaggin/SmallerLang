@@ -16,7 +16,6 @@ namespace SmallerLang.Parser
     {
         private Token Current { get { return _stream.Current; } }
 
-        readonly IErrorReporter _error;
         ITokenStream _stream;
 
         ReadOnlyMemory<char> _source;
@@ -24,10 +23,9 @@ namespace SmallerLang.Parser
         private bool _allowIt;
         private bool _allowSelf;
 
-        public SmallerParser(ITokenStream pStream, IErrorReporter pError)
+        public SmallerParser(ITokenStream pStream)
         {
             _stream = pStream;
-            _error = pError;
             _spans = new SpanManager(_stream);
         }
 
@@ -46,7 +44,9 @@ namespace SmallerLang.Parser
                 ITokenStream currentStream = _stream;
                 ReadOnlyMemory<char> currentSource = _source;
 
-                Dictionary<string, ModuleSyntax> imports = new Dictionary<string, ModuleSyntax>();
+                HashSet<string> importTest = new HashSet<string>();
+                importTest.Add("");
+                List<ModuleSyntax> imports = new List<ModuleSyntax>();
                 if (PeekAndExpect(TokenType.Import))
                 {
                     do
@@ -54,23 +54,22 @@ namespace SmallerLang.Parser
                         try
                         {
                             Expect(TokenType.String, out string path, "Import must supply relative path to code file");
-                            Expect(TokenType.Identifier, out string alias, "Expecting alias for import");
+                            Expect(TokenType.Identifier, out string alias, "Each import must specify a lib alias");
                             IgnoreNewlines();
 
                             string source = GetImportReference(path);
 
                             if (source != null)
                             {
-                                ConsoleErrorReporter reporter = new ConsoleErrorReporter();
-                                var lexer = new SmallerLexer(reporter);
+                                var lexer = new SmallerLexer();
                                 var stream = lexer.StartTokenStream(source, path);
                                 _spans.SetStream(stream);
 
                                 _stream = stream;
                                 _source = source.AsMemory();
 
-                                if (imports.ContainsKey(alias)) _error.WriteError($"Module with alias {alias} has already been imported");
-                                else imports.Add(alias, ParseModule(alias, path));
+                                if (!importTest.Add(alias)) CompilerErrors.DuplicateNamespaceAlias(alias, t);
+                                imports.Add(ParseModule(alias, path));
                             }
                         }
                         catch
@@ -132,7 +131,7 @@ namespace SmallerLang.Parser
                                 break;
 
                             default:
-                                _error.WriteError($"Unknown token {Current.Type}");
+                                CompilerErrors.UnknownToken(Current.Type, t);
                                 Ignore(Current.Type);
                                 break;
                         }
@@ -211,7 +210,7 @@ namespace SmallerLang.Parser
                 TypeSyntax implementOn = null;
                 if (type == DefinitionTypes.Implement)
                 {
-                    Expect(TokenType.On);
+                    Expect(TokenType.On, pError:"Must specify a type on which to implement the trait");
                     implementOn = ParseType(true);
                 }
 
@@ -373,14 +372,14 @@ namespace SmallerLang.Parser
                 else if (Peek(TokenType.TypeLong)) Expect(TokenType.TypeLong, out part1);
                 else if (Peek(TokenType.TypeString)) Expect(TokenType.TypeString, out part1);
                 else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out part1);
-                else
+                else if (PeekAndExpect(TokenType.Identifier, out part1))
                 {
-                    Expect(TokenType.Identifier, out part1);
                     if (PeekAndExpect(TokenType.Period))
                     {
                         Expect(TokenType.Identifier, out part2);
                     }
                 }
+                else return null;
 
                 List<TypeSyntax> genericArgs = new List<TypeSyntax>();
                 if(PeekAndExpect(TokenType.LessThan))
@@ -399,13 +398,10 @@ namespace SmallerLang.Parser
                 }
 
                 //Check for array types
-                if (pAllowArray)
+                if (pAllowArray && PeekAndExpect(TokenType.LeftBracket))
                 {
-                    if (PeekAndExpect(TokenType.LeftBracket))
-                    {
-                        Expect(TokenType.RightBracket);
-                        part1 = SmallTypeCache.GetArrayType(part1);
-                    }
+                    Expect(TokenType.RightBracket);
+                    part1 = SmallTypeCache.GetArrayType(part1);
                 }
 
                 var ns = part2 != null ? part1 : null;
@@ -483,6 +479,7 @@ namespace SmallerLang.Parser
                     case TokenType.Identifier:
                     case TokenType.It:
                     case TokenType.Self:
+                    case TokenType.LengthOf:
                         //Assignment with multiple identifiers is only allowed as a separate statement
                         node = ParseExpressionWithFullAssignment();
                         break;
@@ -509,10 +506,13 @@ namespace SmallerLang.Parser
             {
                 Expect(TokenType.Return);
                 List<SyntaxNode> values = new List<SyntaxNode>();
-                do
+                if(!Peek(TokenType.Newline) && !Peek(TokenType.RightBrace))
                 {
-                    values.Add(ParseExpression());
-                } while (PeekAndExpect(TokenType.Comma));
+                    do
+                    {
+                        values.Add(ParseExpression());
+                    } while (PeekAndExpect(TokenType.Comma));
+                }
                 return SyntaxFactory.Return(values).SetSpan<ReturnSyntax>(t);
             }
         }
@@ -1326,7 +1326,7 @@ namespace SmallerLang.Parser
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ParseException ReportError(string pError, TextSpan pSpan)
         {
-            _error.WriteError(pError, pSpan);
+            CompilerErrors.GenericError(pError, pSpan);
             return new ParseException(pError);
         }
 
@@ -1358,7 +1358,7 @@ namespace SmallerLang.Parser
         private string GetImportReference(string pFile)
         {
             var fullPath = Path.Combine(SmallCompiler.CurrentDirectory, pFile);
-            if (!File.Exists(fullPath)) _error.WriteError($"File '{pFile}' not found");
+            if (!File.Exists(fullPath)) CompilerErrors.FileNotFound(pFile);
 
             string source;
             try
@@ -1367,7 +1367,7 @@ namespace SmallerLang.Parser
             }
             catch (Exception)
             {
-                _error.WriteError($"Unable to read file '{pFile}'");
+                CompilerErrors.UnableToReadFile(pFile);
                 return null;
             }
 

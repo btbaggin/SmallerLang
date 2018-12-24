@@ -39,5 +39,10 @@ namespace SmallerLang
             if (lineEnd == -1) lineEnd = source.Length;
             return source.Substring(lineStart, lineEnd - lineStart);
         }
+
+        public override string ToString()
+        {
+            return Line + "," + Column;
+        }
     }
 }

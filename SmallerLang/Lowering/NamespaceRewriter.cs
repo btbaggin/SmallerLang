@@ -12,8 +12,9 @@ namespace SmallerLang.Lowering
     {
         protected override SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            foreach(var i in pNode.Imports.Values)
+            foreach(var i in pNode.Imports)
             {
+                //TODO
                 NamespaceManager.AddNamespace(i.LibraryPath, i.Namespace);
             }
             NamespaceManager.AddNamespace("", "");

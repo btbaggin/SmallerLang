@@ -5,19 +5,18 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Validation
 {
     class TypeInferenceVisitor : SyntaxNodeVisitor
     {
         VariableCache _locals;
-        readonly IErrorReporter _error;
         SmallType[] _methodReturns;
 
-        public TypeInferenceVisitor(IErrorReporter pError)
+        public TypeInferenceVisitor()
         {
             _locals = new VariableCache();
-            _error = pError;
         }
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
@@ -42,38 +41,41 @@ namespace SmallerLang.Validation
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
+            Visit((dynamic)pNode.Value);
+            var isTuple = pNode.Value.Type.IsTuple;
+
             for (int i = 0; i < pNode.Variables.Count; i++)
             {
-                if(!Utils.SyntaxHelper.IsDiscard(pNode.Variables[i]))
+                if(!SyntaxHelper.IsDiscard(pNode.Variables[i]))
                 {
                     if (_locals.IsVariableDefinedInScope(pNode.Variables[i].Value))
                     {
-                        _error.WriteError("Local variable named '" + pNode.Variables[i].Value + "' is already defined in this scope", pNode.Span);
+                        CompilerErrors.IdentifierAlreadyDeclared(pNode.Variables[i].ToString(), pNode.Span);
                     }
                     else
                     {
+                        //We do not allow variables to have the same names as types
+                        //This makes it easier to check for "static" method/fields
                         if (SmallTypeCache.IsTypeDefined(pNode.Variables[i].Value))
                         {
-                            _error.WriteError("Value is already defined as a type", pNode.Variables[i].Span);
+                            CompilerErrors.ValueDefinedAsType(pNode.Variables[i], pNode.Variables[i].Span);
                         }
                         else
                         {
-                            Visit((dynamic)pNode.Value);
-
                             //For tuple types we set the individual variables to the tuple field type... not the tuple itself
-                            var isTuple = pNode.Value.Type.IsTuple;
                             var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
                             pNode.Variables[i].SetType(t);
                             _locals.DefineVariableInScope(pNode.Variables[i].Value, pNode.Variables[i].Type);
-
-                            if (isTuple && pNode.Value.Type.GetFieldCount() != pNode.Variables.Count)
-                            {
-                                _error.WriteError($"Value returns {pNode.Value.Type.GetFieldCount()} values but {pNode.Variables.Count} are specified", pNode.Span);
-                            }
                         }
                     }
                 }
+            }
+
+            //Check that we are declaring the proper number of variables
+            if (isTuple && pNode.Value.Type.GetFieldCount() != pNode.Variables.Count)
+            {
+                CompilerErrors.DeclarationCountMismatch(pNode.Value.Type.GetFieldCount(), pNode.Variables.Count, pNode.Span);
             }
         }
 
@@ -87,7 +89,7 @@ namespace SmallerLang.Validation
                 var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
                 //We have to set the type of discards so the tuple is created properly
-                if (Utils.SyntaxHelper.IsDiscard(pNode.Variables[i])) ((DiscardSyntax)pNode.Variables[i]).SetType(t);
+                if (SyntaxHelper.IsDiscard(pNode.Variables[i])) ((DiscardSyntax)pNode.Variables[i]).SetType(t);
             }
         }
 
@@ -101,7 +103,7 @@ namespace SmallerLang.Validation
             var m = pNode.Type.GetConstructor();
             if(m.ArgumentTypes != null && m.ArgumentTypes.Count != pNode.Arguments.Count)
             {
-                _error.WriteError($"Constructor to {pNode.Type.Name} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
+                CompilerErrors.ConstructorMethodArguments(pNode.Type, m.ArgumentTypes.Count, pNode.Arguments.Count, pNode.Span);
             }
         }
 
@@ -251,7 +253,7 @@ namespace SmallerLang.Validation
         {
             if(pNode.Namespace != null && !NamespaceManager.HasNamespace(pNode.Namespace))
             {
-                _error.WriteError($"Namespace {pNode.Namespace} has not been defined", pNode.Span);
+                CompilerErrors.NamespaceNotDefined(pNode.Namespace, pNode.Span);
             }
         }
 
@@ -259,7 +261,7 @@ namespace SmallerLang.Validation
         {
             if (_locals.IsVariableDefinedInScope(pNode.Value))
             {
-                _error.WriteError("The name '" + pNode.Value + "' is already defined in this scope", pNode.Span);
+                CompilerErrors.IdentifierAlreadyDeclared(pNode.Value, pNode.Span);
             }
             else
             {
@@ -276,8 +278,8 @@ namespace SmallerLang.Validation
                 //Normal identifier, continue as usual
                 if (!IsVariableDefined(pNode.Value, out SmallType type))
                 {
-                    if (Struct == null) _error.WriteError("The name '" + pNode.Value + "' does not exist in the current context", pNode.Span);
-                    else _error.WriteError("Type " + Struct.ToString() + " does not contain a definition for '" + pNode.Value + "'", pNode.Span);
+                    if (Struct == null) CompilerErrors.IdentifierNotDeclared(pNode, pNode.Span);
+                    else CompilerErrors.IdentifierNotDeclared(Struct, pNode, pNode.Span); //TODO this is weird if we forget "self."
                 }
                 else
                 {
@@ -317,22 +319,22 @@ namespace SmallerLang.Validation
         {
             base.VisitMethodCallSyntax(pNode);
 
-            SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Arguments);
-            if (Utils.SyntaxHelper.HasUndefinedCastAsArg(pNode))
+            SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
+            if (SyntaxHelper.HasUndefinedCastAsArg(pNode))
             {
                 var ns = NamespaceManager.GetNamespace(Namespace);
                 IList<MethodDefinition> matches = ns.GetAllMatches(pNode.Value, pNode.Arguments.Count);
                 if(matches.Count > 1)
                 {
                     //If multiple matches are found the implicit cast could map to either method, so we can't tell
-                    _error.WriteError("Cannot infer type of implicit cast. Try using an explicit cast instead.", pNode.Span);
+                    CompilerErrors.InferImplicitCast(pNode.Span);
                 }
                 else if(matches.Count == 1)
                 {
                     //Check if we can determine implicit cast type yet
                     for (int j = 0; j < Math.Min(matches[0].ArgumentTypes.Count, pNode.Arguments.Count); j++)
                     {
-                        if (Utils.SyntaxHelper.IsUndefinedCast(pNode.Arguments[j]))
+                        if (SyntaxHelper.IsUndefinedCast(pNode.Arguments[j]))
                         {
                             TrySetImplicitCastType(pNode.Arguments[j], matches[0].ArgumentTypes[j]);
                             types[j] = pNode.Arguments[j].Type;
@@ -344,14 +346,8 @@ namespace SmallerLang.Validation
             //Check to ensure this method exists
             if (!FindMethod(out MethodDefinition m, pNode.Value, Type, types))
             {
-                if (Struct == null) _error.WriteError("Method definition for " + pNode.Value + " not found", pNode.Span);
-                else _error.WriteError("Type " + Struct.ToString() + " does not contain method '" + pNode.Value + "'", pNode.Span);
-                return;
-            }
-
-            if (pNode.Arguments.Count != m.ArgumentTypes.Count)
-            {
-                _error.WriteError($"Method {pNode.Value} is expecting {m.ArgumentTypes.Count.ToString()} argument(s) but has {pNode.Arguments.Count.ToString()}", pNode.Span);
+                if (Struct == null) CompilerErrors.MethodNotFound(pNode.Value, pNode.Span);
+                else CompilerErrors.MethodNotFound(Struct, pNode.Value, pNode.Span);
                 return;
             }
 
@@ -434,19 +430,6 @@ namespace SmallerLang.Validation
         {
             if(!_locals.IsVariableDefined(pName))
             {
-                //if(Type != null)
-                //{
-                //    foreach(var trait in Type.Implements)
-                //    {
-                //        var i = trait.GetFieldIndex(pName);
-                //        if (i > -1)
-                //        {
-                //            pType = trait.GetFieldType(i);
-                //            return true;
-                //        }
-                //    }
-                //}
-
                 pType = null;
                 return false;
             }
@@ -458,6 +441,7 @@ namespace SmallerLang.Validation
         private bool FindMethod(out MethodDefinition pDef, string pName, SmallType pType, params SmallType[] pArguments)
         {
             MethodCache.FindMethod(out pDef, out bool pExact, Namespace, pType, pName, pArguments); 
+            //If it's not an exact match, look through each traits methods until we find it
             if(!pExact)
             {
                 if(pType != null)

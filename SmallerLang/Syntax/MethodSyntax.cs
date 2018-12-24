@@ -81,15 +81,15 @@ namespace SmallerLang.Syntax
                 }
 
 
-                if (ReturnValues.Count == 0)
+                if(!lastIsReturn)
                 {
-                    LLVM.BuildRetVoid(pContext.Builder);
-                }
-                else if(!lastIsReturn)
-                {
-                    //Return statements have been validated. It probably returned in some other block earlier.
-                    //LLVM requires return statement so just return default
-                    LLVM.BuildRet(pContext.Builder, SmallTypeCache.GetLLVMDefault(Type, pContext));
+                    if (ReturnValues.Count == 0) LLVM.BuildRetVoid(pContext.Builder);
+                    else
+                    {
+                        //Return statements have been validated. It probably returned in some other block earlier.
+                        //LLVM requires return statement so just return default
+                        LLVM.BuildRet(pContext.Builder, SmallTypeCache.GetLLVMDefault(Type, pContext));
+                    }
                 }
 
                 //End method

@@ -11,16 +11,14 @@ namespace SmallerLang.Validation
 {
     class TypeDiscoveryVisitor : SyntaxNodeVisitor 
     {
-        readonly IErrorReporter _error;
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
         readonly TypeDiscoveryGraph _discoveryGraph;
         NamespaceContainer _namespace;
         int _order;
 
 
-        public TypeDiscoveryVisitor(IErrorReporter pError)
+        public TypeDiscoveryVisitor()
         {
-            _error = pError;
             _discoveryGraph = new TypeDiscoveryGraph();
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
@@ -29,7 +27,7 @@ namespace SmallerLang.Validation
         {
             foreach(var i in pNode.Imports)
             {
-                Visit(i.Value);
+                Visit(i);
             }
 
             Visit(pNode.Module);
@@ -135,7 +133,7 @@ namespace SmallerLang.Validation
         {
             if(!_discoveryGraph.NodeExists(pType))
             {
-                _error.WriteError($"Use of undeclared type {pType}", pSpan);
+                CompilerErrors.UndeclaredType(pType, pSpan);
                 return false;
             }
 
@@ -143,7 +141,7 @@ namespace SmallerLang.Validation
             if (item.Permanent) return true;
             if (item.Temporary)
             {
-                _error.WriteError($"Found circular reference in struct {item.Node.Name}", item.Node.Span);
+                CompilerErrors.CircularReference(item.Node, item.Node.Span);
                 return false;
             }
 
@@ -172,6 +170,12 @@ namespace SmallerLang.Validation
         private void AddType(TypeDefinitionSyntax pDefinition)
         {
             pDefinition.EmitOrder = _order++;
+            var name = SyntaxHelper.GetFullTypeName(pDefinition.DeclaredType);
+            if (_namespace.IsTypeDefinedInNamespace(name))
+            {
+                CompilerErrors.DuplicateType(name, pDefinition.Span);
+                return;
+            }
 
             HashSet<string> fieldNames = new HashSet<string>();
             for (int i = 0; i < pDefinition.Fields.Count; i++)
@@ -179,7 +183,7 @@ namespace SmallerLang.Validation
                 var f = pDefinition.Fields[i];
                 if (!fieldNames.Add(f.Value))
                 {
-                    _error.WriteError($"Duplicate field definition '{f.Value}' within struct {pDefinition.Name}", f.Span);
+                    CompilerErrors.DuplicateField(f.Value, pDefinition, f.Span);
                 }
             }
 
@@ -195,8 +199,8 @@ namespace SmallerLang.Validation
 
             if (found)
             {
-                if (pMethod.SyntaxType == SyntaxType.Method) _error.WriteError($"Redeclaration of method signature {pMethod}", pMethod.Span);
-                else if (pMethod.SyntaxType == SyntaxType.CastDefinition) _error.WriteError($"Cast already defined for type {pMethod.Parameters[0].Type} to {pMethod.Type}");
+                if (pMethod.SyntaxType == SyntaxType.Method) CompilerErrors.MethodDuplicate(pMethod, pMethod.Span);
+                else if (pMethod.SyntaxType == SyntaxType.CastDefinition) CompilerErrors.CastDuplicate(pMethod.Parameters[0].Type, pMethod.Type, pMethod.Span);
                 pDefinition = default;
                 return false;
             }
@@ -229,7 +233,7 @@ namespace SmallerLang.Validation
                 }
                 if (!found)
                 {
-                    _error.WriteError($"Implementation of trait {pTrait.Name} is missing field {tf.Value}", pImplement.Span);
+                    CompilerErrors.ImplementationMissingField(tf.Value, pTrait, pImplement.Span);
                 }
             }
 
@@ -247,7 +251,7 @@ namespace SmallerLang.Validation
                 }
                 if (!found)
                 {
-                    _error.WriteError($"Implementation of trait {pTrait.Name} is missing method {tm.Name}", pImplement.Span);
+                    CompilerErrors.ImplementationMissingMethod(tm.Name, pTrait, pImplement.Span);
                 }
             }
         }
@@ -259,12 +263,12 @@ namespace SmallerLang.Validation
             var ns = SmallTypeCache.GetNamespace(ref pType);
             if (!NamespaceManager.TryGetNamespace(ns, out NamespaceContainer container))
             {
-                _error.WriteError($"Namespace {ns} has not been defined", pNode.Span);
+                CompilerErrors.NamespaceNotDefined(ns, pNode.Span);
                 return false;
             }
             else if (!container.IsTypeDefinedInNamespace(pType))
             {
-                _error.WriteError($"Use of undeclared type {pType}", pNode.Span);
+                CompilerErrors.UndeclaredType(pType, pNode.Span);
                 return false;
             }
 

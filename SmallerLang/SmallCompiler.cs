@@ -9,6 +9,7 @@ using SmallerLang.Parser;
 using SmallerLang.Validation;
 using SmallerLang.Lowering;
 using SmallerLang.Syntax;
+using SmallerLang.Utils;
 using LLVMSharp;
 
 namespace SmallerLang
@@ -17,11 +18,9 @@ namespace SmallerLang
     {
         public static string CurrentDirectory { get; private set; }
 
-        readonly ConsoleErrorReporter _error;
-
         public SmallCompiler()
         {
-            _error = new ConsoleErrorReporter();
+            CompilerErrors.SetReporter(new ConsoleErrorReporter());
         }
 
         public bool Compile(CompilerOptions pOptions)
@@ -43,42 +42,40 @@ namespace SmallerLang
             string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : ReadSourceFile(pOptions.SourceFile);
             if (source == null) return false;
 
-            //_error.SetSource(source);
-
-            var lexer = new SmallerLexer(_error);
+            var lexer = new SmallerLexer();
             var stream = lexer.StartTokenStream(source, pOptions.SourceFile);
-            var parser = new SmallerParser(stream, _error);
+            var parser = new SmallerParser(stream);
 
             var tree = parser.Parse();
 
             //Basic transformations that can be done without type information
-            tree = (WorkspaceSyntax)new TreeRewriter(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            tree = (WorkspaceSyntax)new TreeRewriter().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
             //Info gathering passes
-            new PreTypeValidation(_error).Visit(tree);
-            if(_error.ErrorOccurred) return false;
+            new PreTypeValidation().Visit(tree);
+            if(CompilerErrors.ErrorOccurred) return false;
 
-            new TypeDiscoveryVisitor(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            new TypeDiscoveryVisitor().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
             //Type inference
-            new TypeInferenceVisitor(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            new TypeInferenceVisitor().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
             //More advanced transformations that require type information
-            tree = (WorkspaceSyntax)new PostTypeRewriter(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            tree = (WorkspaceSyntax)new PostTypeRewriter().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
             //Validation passes
-            new TypeChecker(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            new TypeChecker().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
-            new PostTypeValidationVisitor(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            new PostTypeValidationVisitor().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
-            new PolyRewriter(_error).Visit(tree);
-            if (_error.ErrorOccurred) return false;
+            new PolyRewriter().Visit(tree);
+            if (CompilerErrors.ErrorOccurred) return false;
 
             LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
@@ -122,7 +119,7 @@ namespace SmallerLang
 
         private string ReadSourceFile(string pFile)
         {
-            if(!System.IO.File.Exists(pFile)) _error.WriteError($"File '{pFile}' not found");
+            if(!System.IO.File.Exists(pFile)) CompilerErrors.FileNotFound(pFile);
 
             string source;
             try
@@ -131,7 +128,7 @@ namespace SmallerLang
             }
             catch (Exception)
             {
-                _error.WriteError($"Unable to read file '{pFile}'");
+                CompilerErrors.UnableToReadFile(pFile);
                 return null;
             }
 

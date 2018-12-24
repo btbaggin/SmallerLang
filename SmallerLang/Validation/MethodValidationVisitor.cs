@@ -5,44 +5,39 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Validation
 {
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
-        readonly IErrorReporter _error;
         private HashSet<string> _usedFields;
-
-        public PostTypeValidationVisitor(IErrorReporter pError)
-        {
-            _error = pError;
-        }
 
         protected override void VisitMethodSyntax(MethodSyntax pNode)
         {
             //Validate that one and only 1 method is annotated with "run"
             //This method must contain no parameters and return no values
-            if (pNode.Annotation.Value == Utils.KeyAnnotations.RunMethod)
+            if (pNode.Annotation.Value == KeyAnnotations.RunMethod)
             {
                 if (Store.GetValue<string>("RunMethod") != null)
                 {
-                    _error.WriteError($"Two run methods found: {Store.GetValue<string>("RunMethod")} and {pNode.Name}", pNode.Span);
+                    CompilerErrors.RunMethodDuplicate(Store.GetValue<string>("RunMethod"), pNode.Name, pNode.Span);
                     return;
                 }
 
                 Store.SetValue("RunMethod", pNode.Name);
                 if (pNode.Parameters.Count != 0)
                 {
-                    _error.WriteError("Run method must have no parameters", pNode.Span);
+                    CompilerErrors.RunMethodParameters(pNode.Span);
                 }
 
                 if (pNode.ReturnValues.Count != 0)
                 {
-                    _error.WriteError("Run method must not return a value", pNode.Span);
+                    CompilerErrors.RunMethodReturn(pNode.Span);
                 }
             }
 
-            using (var ic = Store.AddValue("InConstructor", pNode.Annotation.Value == Utils.KeyAnnotations.Constructor))
+            using (var ic = Store.AddValue("InConstructor", pNode.Annotation.Value == KeyAnnotations.Constructor))
             {
                 using (var rf = Store.AddValue("ReturnFound", false))
                 {
@@ -56,11 +51,11 @@ namespace SmallerLang.Validation
                         {
                             if (pNode.ReturnValues.Count != 0 && !rf.Value)
                             {
-                                _error.WriteError("Not all code paths return a value", pNode.Span);
+                                CompilerErrors.MethodReturnPaths(pNode, pNode.Span);
                             }
                             else if (pNode.ReturnValues.Count == 0 && rf.Value)
                             {
-                                _error.WriteError("Method has no return value, so no return statement must be present", pNode.Span);
+                                CompilerErrors.MethodNoReturn(pNode, pNode.Span);
                             }
                         }
                     }
@@ -75,7 +70,7 @@ namespace SmallerLang.Validation
                         {
                             if (!_usedFields.Contains(f.Name))
                             {
-                                _error.WriteError($"Field {f.Name} is not initialized");
+                                CompilerErrors.FieldNotInitialized(f.Name, pNode.Span);
                             }
                         }
                     }
@@ -104,7 +99,7 @@ namespace SmallerLang.Validation
                 }
                 else
                 {
-                    _error.WriteError($"No cast defined for types {pNode.FromType.ToString()} and {pNode.Type.ToString()}");
+                    CompilerErrors.CastDuplicate(pNode.FromType, pNode.Type, pNode.Span);
                 }
             }
         }
@@ -119,11 +114,11 @@ namespace SmallerLang.Validation
 
                     if (pNode.ReturnValues.Count != 0 && !rf.Value)
                     {
-                        _error.WriteError("Not all code paths return a value", pNode.Span);
+                        CompilerErrors.MethodReturnPaths(pNode, pNode.Span);
                     }
                     else if (pNode.ReturnValues.Count == 0 && rf.Value)
                     {
-                        _error.WriteError("Method has no return value, so no return statement must be present", pNode.Span);
+                        CompilerErrors.MethodNoReturn(pNode, pNode.Span);
                     }
                 }
             }
@@ -148,16 +143,19 @@ namespace SmallerLang.Validation
 
         protected override void VisitReturnSyntax(ReturnSyntax pNode)
         {
-            Store.SetValue("ReturnFound", true);
+            Store.SetValue("ReturnFound", pNode.Values.Count > 0);
             var count = Store.GetValue<int>("ReturnValueCount");
-            if(pNode.Values.Count != count)
+
+            //If we have 0 return values it will be caught when we return to the method for checking return statements
+            if(count > 0 && pNode.Values.Count != count)
             {
-                _error.WriteError($"Method must return {count} values", pNode.Span);
+                CompilerErrors.MethodReturnCount(count, pNode.Span);
             }
 
+            //Return statements can't be deferred otherwise we would defer forever!
             if (pNode.Deferred)
             {
-                _error.WriteError("Unable to defer a return statement", pNode.Span);
+                CompilerErrors.InvalidDefer(pNode.Span);
             }
             base.VisitReturnSyntax(pNode);
         }

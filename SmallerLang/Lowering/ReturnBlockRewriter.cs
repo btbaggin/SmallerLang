@@ -4,18 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
-        readonly IErrorReporter _error;
-
-        public TreeRewriter(IErrorReporter pError)
-        {
-            _error = pError;
-        }
-
         protected override SyntaxNode VisitBlockSyntax(BlockSyntax pNode)
         {
             //Rewrite any statements after the return statement to be a NOP
@@ -24,7 +18,7 @@ namespace SmallerLang.Lowering
             for (int i = 0; i < pNode.Statements.Count; i++)
             {
                 if (!returnFound) statements.Add(Visit((dynamic)pNode.Statements[i]));
-                else _error.WriteWarning("Unreachable code detected", pNode.Statements[i].Span);
+                else CompilerErrors.UnreachableCode(pNode.Statements[i].Span);
 
                 if (pNode.Statements[i].SyntaxType == SyntaxType.Return)
                 {

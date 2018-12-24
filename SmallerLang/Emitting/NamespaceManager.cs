@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using LLVMSharp;
 
 namespace SmallerLang.Emitting
 {
@@ -28,12 +29,12 @@ namespace SmallerLang.Emitting
             return _types.FindType(pType);
         }
 
-        public LLVMSharp.LLVMTypeRef GetLLVMTypeOfType(string pType)
+        public LLVMTypeRef GetLLVMTypeOfType(string pType)
         {
             return _types.GetLLVMTypeOfType(pType);
         }
 
-        public void SetLLVMType(string pType, LLVMSharp.LLVMTypeRef pLLVMType)
+        public void SetLLVMType(string pType, LLVMTypeRef pLLVMType)
         {
             _types.SetLLVMType(pType, pLLVMType);
         }

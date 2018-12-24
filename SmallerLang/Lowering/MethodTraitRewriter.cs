@@ -13,13 +13,12 @@ namespace SmallerLang.Lowering
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
         NamespaceContainer _namespace;
-        readonly IErrorReporter _error;
 
-        public PostTypeRewriter(IErrorReporter pError)
+        public PostTypeRewriter()
         {
-            _error = pError;
             _methodsToPoly = new Dictionary<string, List<MethodSyntax>>();
             _polydMethods = new Dictionary<string, List<MethodSyntax>>();
+            GetEnumerable();
         }
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
@@ -39,7 +38,7 @@ namespace SmallerLang.Lowering
                 }
             }
 
-            var tiv = new Validation.TypeInferenceVisitor(_error);
+            var tiv = new Validation.TypeInferenceVisitor();
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
             foreach (var m in pNode.Methods)
             {
@@ -122,7 +121,7 @@ namespace SmallerLang.Lowering
                 }
 
                 var method = SyntaxFactory.Method(name.ToString(), pMethod.ReturnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
-                var tiv = new Validation.TypeInferenceVisitor(_error);
+                var tiv = new Validation.TypeInferenceVisitor();
                 tiv.Visit(method);
                 _namespace.AddMethod(method);
 

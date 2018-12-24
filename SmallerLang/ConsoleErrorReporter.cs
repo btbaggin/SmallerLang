@@ -18,16 +18,10 @@ namespace SmallerLang
 
         public ConsoleColor SpanColor { get; set; } = ConsoleColor.Cyan;
 
-        //string _source;
         public ConsoleErrorReporter()
         {
             ErrorOccurred = false;
         }
-
-        //public void SetSource(string pSource)
-        //{
-        //    _source = pSource;
-        //}
 
         public void WriteError(string pError)
         {

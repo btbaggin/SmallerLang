@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 using System.Diagnostics;
+using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
@@ -13,11 +14,11 @@ namespace SmallerLang.Lowering
     {
         SyntaxNode _itVar;
         SmallType _enumerable;
-        public PostTypeRewriter()
+        private void GetEnumerable()
         {
             if (NamespaceManager.TryGetStdLib(out NamespaceContainer container))
             {
-                _enumerable = container.FindType("Enumerable");
+                _enumerable = container.FindType("Enumerable`1");
                 Debug.Assert(_enumerable != SmallTypeCache.Undefined, "stdlib does not define Enumerable");
 #if DEBUG
                 Debug.Assert(_enumerable.GetFieldIndex("Count") > -1, "Enumerable does not implement Count");
@@ -83,7 +84,7 @@ namespace SmallerLang.Lowering
                 }
                 else
                 {
-                    _error.WriteError("Iterator variables must be an array or implement Enumerable", pNode.Iterator.Span);
+                    CompilerErrors.TypeCastError(pNode.Iterator.Type.ToString(), "array or Enumerable", pNode.Iterator.Span);
                     return base.VisitForSyntax(pNode);
                 }
 
