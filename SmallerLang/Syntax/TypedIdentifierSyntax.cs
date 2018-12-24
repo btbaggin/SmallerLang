@@ -7,10 +7,8 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Syntax
 {
-    public class TypedIdentifierSyntax : SyntaxNode
+    public class TypedIdentifierSyntax : IdentifierSyntax
     {
-        public string Value { get; private set; }
-
         public TypeSyntax TypeNode { get; private set; }
 
         public override SmallType Type
@@ -20,9 +18,8 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.TypedIdentifier;
 
-        internal TypedIdentifierSyntax(TypeSyntax pType, string pValue)
+        internal TypedIdentifierSyntax(TypeSyntax pType, string pValue) : base(pValue)
         {
-            Value = pValue;
             TypeNode = pType;
         }
 

@@ -50,7 +50,7 @@ namespace SmallerLang.Validation
                 {
                     if (_locals.IsVariableDefinedInScope(pNode.Variables[i].Value))
                     {
-                        CompilerErrors.IdentifierAlreadyDeclared(pNode.Variables[i].ToString(), pNode.Span);
+                        CompilerErrors.IdentifierAlreadyDeclared(pNode.Variables[i], pNode.Span);
                     }
                     else
                     {
@@ -261,7 +261,7 @@ namespace SmallerLang.Validation
         {
             if (_locals.IsVariableDefinedInScope(pNode.Value))
             {
-                CompilerErrors.IdentifierAlreadyDeclared(pNode.Value, pNode.Span);
+                CompilerErrors.IdentifierAlreadyDeclared(pNode, pNode.Span);
             }
             else
             {
@@ -278,8 +278,14 @@ namespace SmallerLang.Validation
                 //Normal identifier, continue as usual
                 if (!IsVariableDefined(pNode.Value, out SmallType type))
                 {
-                    if (Struct == null) CompilerErrors.IdentifierNotDeclared(pNode, pNode.Span);
-                    else CompilerErrors.IdentifierNotDeclared(Struct, pNode, pNode.Span); //TODO this is weird if we forget "self."
+                    if (Type == null)
+                    {
+                        //Generate a slightly different error message if we are in a struct
+                        //This can happen if we forget self
+                        if (Struct != null) CompilerErrors.IdentifierNotDeclaredSelf(pNode, pNode.Span);
+                        else CompilerErrors.IdentifierNotDeclared(pNode, pNode.Span);
+                    }
+                    else CompilerErrors.IdentifierNotDeclared(Type, pNode, pNode.Span);
                 }
                 else
                 {

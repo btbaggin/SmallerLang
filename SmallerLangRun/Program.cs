@@ -17,12 +17,10 @@ namespace SmallerLangRun
          * 
          * Range 1..10
          * Generic traits
-         * Trait dependencies?
          * Zero out array allocations
          * Allow returning traits from methods? - No, this should be an error
          * tree shaking of methods
          * control flow analysis?
-         * Do struct poly after type inference?
          * strings
         */
         static void Main(string[] args)

@@ -26,7 +26,7 @@ namespace SmallerLang.Emitting
 
         public AccessStack<LLVMValueRef> BreakLocations { get; set; } //Used to control which loop to jump from when breaking
 
-        public Dictionary<string, SmallType> TypeMappings { get; set; } //TODO
+        public Dictionary<string, SmallType> TypeMappings { get; set; }
 
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;

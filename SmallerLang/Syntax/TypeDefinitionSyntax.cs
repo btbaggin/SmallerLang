@@ -107,7 +107,6 @@ namespace SmallerLang.Syntax
             var typeName = SyntaxHelper.GetFullTypeName(GetApplicableType());
             var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
 
-            //TODO this is kinda gross...
             if(_typeMappings.Count > 0)
             {
                 foreach (var t in _typeMappings)

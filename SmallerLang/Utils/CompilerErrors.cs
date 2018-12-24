@@ -72,14 +72,19 @@ namespace SmallerLang.Utils
         #endregion
 
         #region Variable Errors
-        public static void IdentifierAlreadyDeclared(string pIdentifier, TextSpan pSpan)//TODO typedidentifier?
+        public static void IdentifierAlreadyDeclared(Syntax.IdentifierSyntax pIdentifier, TextSpan pSpan)
         {
-            _error.WriteError($"The name '{pIdentifier}' is already declared in the current scope", pSpan);
+            _error.WriteError($"The name '{pIdentifier.Value}' is already declared in the current scope", pSpan);
         }
 
         public static void IdentifierNotDeclared(Syntax.IdentifierSyntax pIdentifier, TextSpan pSpan)
         {
-            _error.WriteError($"The name '{pIdentifier}' does not exist in the current context", pSpan);
+            _error.WriteError($"The name '{pIdentifier.Value}' does not exist in the current context", pSpan);
+        }
+
+        public static void IdentifierNotDeclaredSelf(Syntax.IdentifierSyntax pIdentifier, TextSpan pSpan)
+        {
+            _error.WriteError($"The name '{pIdentifier.Value}' does not exist in the current context. Are you missing 'self'?", pSpan);
         }
 
         public static void IdentifierNotDeclared(SmallType pType, Syntax.IdentifierSyntax pIdentifier, TextSpan pSpan)
