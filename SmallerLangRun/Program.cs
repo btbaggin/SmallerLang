@@ -10,7 +10,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * returning strings not working
+         * returning arrays not working
          * constructor overloads
          * Look to make some structs ref returns
          * remove unused structs

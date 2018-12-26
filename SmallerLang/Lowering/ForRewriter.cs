@@ -97,8 +97,11 @@ namespace SmallerLang.Lowering
                 var op = pNode.Reverse ? BinaryExpressionOperator.GreaterThanOrEqual : BinaryExpressionOperator.LessThan;
                 var condition = SyntaxFactory.BinaryExpression(i, op, end);
 
+                var body = (BlockSyntax)Visit(pNode.Body);
+                var forStatement = SyntaxFactory.For(new List<DeclarationSyntax>() { decl }, condition, new List<SyntaxNode>() { finalizer }, body);
+
+                //Restore our it for any other nested loops
                 _itVar = it;
-                var forStatement = SyntaxFactory.For(new List<DeclarationSyntax>() { decl }, condition, new List<SyntaxNode>() { finalizer }, (BlockSyntax)Visit(pNode.Body));
 
                 //Return our iterator declaration and for rewrite
                 return SyntaxFactory.Block(new List<SyntaxNode>() { iterDecl, forStatement });

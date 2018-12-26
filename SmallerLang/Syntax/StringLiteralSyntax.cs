@@ -23,21 +23,21 @@ namespace SmallerLang.Syntax
             var variable = pContext.AllocateVariable("string_temp", this);
 
             //Save length
-            var length = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+            var length = pContext.GetArrayLength(variable);
             LLVM.BuildStore(pContext.Builder, pContext.GetInt(Value.Length), length);
 
             //Allocate space for our string
-            var tempBuilder = pContext.GetTempBuilder();
-            LLVM.PositionBuilder(tempBuilder, pContext.CurrentMethod.GetEntryBasicBlock(), pContext.CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
+            LLVMValueRef dataArray;
+            using (var b = new VariableDeclarationBuilder(pContext))
+            {
+                dataArray = LLVM.BuildAlloca(b.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(SmallTypeCache.Char, pContext), (uint)(Value.Length + 1)), ""); //Need to allocate 1 more space for the /0
+            }
 
-            var dataArray = LLVM.BuildAlloca(tempBuilder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(SmallTypeCache.Char, pContext), (uint)(Value.Length + 1)), "");
-            LLVM.DisposeBuilder(tempBuilder);
-
-            //Store the string constant in the array
+            //Store the string constant in the allocated array
             var data = pContext.GetString(Value);
             LLVM.BuildStore(pContext.Builder, data, dataArray);
 
-            //Load the length and data
+            //Store the allocated array in the string variable
             var dataAccess = LLVM.BuildInBoundsGEP(pContext.Builder, dataArray, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
             var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
             LLVM.BuildStore(pContext.Builder, dataAccess, variableData);

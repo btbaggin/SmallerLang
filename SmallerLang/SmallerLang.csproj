@@ -194,6 +194,7 @@
     <Compile Include="Emitting\GlobalMethodCache.cs" />
     <Compile Include="Emitting\MethodCache.cs" />
     <Compile Include="Emitting\NamespaceManager.cs" />
+    <Compile Include="Emitting\VariableDeclarationBuilder.cs" />
     <Compile Include="FieldDefinition.cs" />
     <Compile Include="GlobalSmallTypeCache.cs" />
     <Compile Include="GlobalSuppressions.cs" />

@@ -35,7 +35,7 @@ namespace SmallerLang.Syntax
 
             pContext.BreakLocations.Push(endBlock);
 
-            var builder = pContext.GetTempBuilder();
+            var builder = LLVM.CreateBuilder();
             //Default case has to be the last one
             if(Cases[Cases.Count - 1].IsDefault)
             {

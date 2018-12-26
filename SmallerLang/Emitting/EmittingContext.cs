@@ -219,45 +219,44 @@ namespace SmallerLang.Emitting
         }
         #endregion
 
+        #region Variable functionality
         public LLVMValueRef AllocateArrayLiteral(SmallType pElementType, LLVMValueRef pSize)
         {
-            var tempBuilder = GetTempBuilder();
-            LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
-
-            var alloc = LLVM.BuildArrayAlloca(Builder, SmallTypeCache.GetLLVMType(pElementType, this), pSize, "");
-            //var alloc = LLVM.BuildAlloca(tempBuilder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(pElementType, this), pSize), "");
-            LLVM.DisposeBuilder(tempBuilder);
-            return alloc;
+            using (var b = new VariableDeclarationBuilder(this))
+            {
+                var alloc = LLVM.BuildArrayAlloca(b.Builder, SmallTypeCache.GetLLVMType(pElementType, this), pSize, "");
+                //EmitDebugVariable(b.Builder, alloc, pName, pNode.Type, pNode.Span.Line);
+                return alloc;
+            }
         }
 
         public LLVMValueRef AllocateVariable(string pName, Syntax.SyntaxNode pNode)
         {
             //Move to the start of the current function and emit the variable allocation
-            var tempBuilder = GetTempBuilder();
-            LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
-
-            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pNode.Type, this), pName);
-            EmitDebugVariable(tempBuilder, alloc, pName, pNode.Type, pNode.Span.Line);
-            LLVM.DisposeBuilder(tempBuilder);
-            return alloc;
+            using (var b = new VariableDeclarationBuilder(this))
+            {
+                var alloc = LLVM.BuildAlloca(b.Builder, SmallTypeCache.GetLLVMType(pNode.Type, this), pName);
+                EmitDebugVariable(b.Builder, alloc, pName, pNode.Type, pNode.Span.Line);
+                return alloc;
+            }
         }
 
         public LLVMValueRef AllocateVariable(string pName, SmallType pType)
         {
             //Move to the start of the current function and emit the variable allocation
-            var tempBuilder = GetTempBuilder();
-            LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
-
-            var alloc = LLVM.BuildAlloca(tempBuilder, SmallTypeCache.GetLLVMType(pType, this), pName);
-            EmitDebugVariable(tempBuilder, alloc, pName, pType, 0);
-            LLVM.DisposeBuilder(tempBuilder);
-            return alloc;
+            using (var b = new VariableDeclarationBuilder(this))
+            {
+                var alloc = LLVM.BuildAlloca(b.Builder, SmallTypeCache.GetLLVMType(pType, this), pName);
+                EmitDebugVariable(b.Builder, alloc, pName, pType, 0);
+                return alloc;
+            }
         }
 
-        public LLVMBuilderRef GetTempBuilder()
+        public LLVMValueRef GetArrayLength(LLVMValueRef pArray)
         {
-            return LLVM.CreateBuilder();
+            return LLVM.BuildInBoundsGEP(Builder, pArray, new LLVMValueRef[] { GetInt(0), GetInt(0) }, "");
         }
+        #endregion
 
         internal void SetBuilder(LLVMBuilderRef pBuilder)
         {

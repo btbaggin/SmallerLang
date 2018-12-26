@@ -66,8 +66,8 @@ namespace SmallerLang.Syntax
                 var data = Arguments[0].Emit(pContext);
 
                 //Save length
-                var arrayLength = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
-                var stringLength = LLVM.BuildInBoundsGEP(pContext.Builder, pType, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+                var arrayLength = pContext.GetArrayLength(data);
+                var stringLength = pContext.GetArrayLength(pType);
 
                 LLVM.BuildStore(pContext.Builder, LLVM.BuildLoad(pContext.Builder, arrayLength, ""), stringLength);
 
