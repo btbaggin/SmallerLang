@@ -18,8 +18,22 @@ namespace SmallerLang
         internal static SmallType Long { get; private set; } = AddType("long", LLVMTypeRef.Int64Type());
         internal static SmallType Float { get; private set; } = AddType("float", LLVMTypeRef.FloatType());
         internal static SmallType Double { get; private set; } = AddType("double", LLVMTypeRef.DoubleType());
-        internal static SmallType String { get; private set; } = AddType("string", LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0));
         internal static SmallType Boolean { get; private set; } = AddType("bool", LLVMTypeRef.Int1Type());
+        internal static SmallType Char { get; private set; } = AddType("char", LLVMTypeRef.Int8Type());
+        internal static SmallType String { get; private set; } = GetStringType();
+
+        internal static SmallType GetStringType()
+        {
+            var length = LLVMTypeRef.Int32Type();
+            var data = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0);
+            var stringType = LLVMTypeRef.StructType(new LLVMTypeRef[] { length, data }, false);
+
+            var s = new SmallType("", "string", Char);
+            s.SetDefaultConstructor(new List<SmallType>() { new SmallType("", "char[]", Char) });
+            _primitiveTypes["string"] = (s, stringType);
+            return s;
+        }
+
 
         public static SmallTypeCache Create(string pNamespace)
         {
@@ -150,6 +164,11 @@ namespace SmallerLang
         {
             System.Diagnostics.Debug.Assert(NamespaceManager.TryGetNamespace(pNamespace, out NamespaceContainer container));
             container.SetLLVMType(pType, pLLVMType);
+        }
+
+        internal static LLVMTypeRef GetLLVMType(SmallType pType)
+        {
+            return GetLLVMType(pType, null);
         }
 
         public static LLVMTypeRef GetLLVMType(SmallType pType, EmittingContext pContext)

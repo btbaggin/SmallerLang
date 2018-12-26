@@ -156,7 +156,7 @@ namespace SmallerLang.Lowering
         {
             if (_currentType != null && _types[_currentType].ContainsKey(pNode.TypeNode.Value))
             {
-                return SyntaxFactory.ArrayLiteral(_types[_currentType][pNode.TypeNode.Value], pNode.Value);
+                return SyntaxFactory.ArrayLiteral(_types[_currentType][pNode.TypeNode.Value], pNode.Size);
             }
             return base.VisitArrayLiteralSyntax(pNode);
         }

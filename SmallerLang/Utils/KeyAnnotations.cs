@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using LLVMSharp;
 using SmallerLang.Syntax;
+using cache = SmallerLang.SmallTypeCache;
 
 namespace SmallerLang.Utils
 {
@@ -47,12 +48,14 @@ namespace SmallerLang.Utils
                 for (int i = 0; i < pMethod.Parameters.Count; i++)
                 {
                     var t = pMethod.Parameters[i].Type;
-                    if (t == SmallTypeCache.Double) types[i] = typeof(double);
-                    else if (t == SmallTypeCache.Float) types[i] = typeof(float);
-                    else if (t == SmallTypeCache.Long) types[i] = typeof(long);
-                    else if (t == SmallTypeCache.Int) types[i] = typeof(int);
-                    else if (t == SmallTypeCache.Short) types[i] = typeof(short);
-                    else if (t == SmallTypeCache.Boolean) types[i] = typeof(bool);
+                    if (t == cache.Double) types[i] = typeof(double);
+                    else if (t == cache.Float) types[i] = typeof(float);
+                    else if (t == cache.Long) types[i] = typeof(long);
+                    else if (t == cache.Int) types[i] = typeof(int);
+                    else if (t == cache.Short) types[i] = typeof(short);
+                    else if (t == cache.Boolean) types[i] = typeof(bool);
+                    else if (t == cache.String) types[i] = typeof(string);
+                    else if (t == cache.Char) types[i] = typeof(char);
                     else throw new InvalidCastException("Unknown type " + t.ToString());
                 }
 
@@ -96,12 +99,14 @@ namespace SmallerLang.Utils
             for (int i = 0; i < parms.Length; i++)
             {
                 var t = parms[i].TypeOf();
-                if(t.Equals(LLVMTypeRef.DoubleType())) types[i] = typeof(double);
-                else if (t.Equals(LLVMTypeRef.FloatType())) types[i] = typeof(float);
-                else if (t.Equals(LLVMTypeRef.Int64Type())) types[i] = typeof(long);
-                else if (t.Equals(LLVMTypeRef.Int32Type())) types[i] = typeof(int);
-                else if (t.Equals(LLVMTypeRef.Int16Type())) types[i] = typeof(short);
-                else if (t.Equals(LLVMTypeRef.Int1Type())) types[i] = typeof(bool);
+                if (t.Equals(cache.GetLLVMType(cache.Double))) types[i] = typeof(double);
+                else if (t.Equals(cache.GetLLVMType(cache.Float))) types[i] = typeof(float);
+                else if (t.Equals(cache.GetLLVMType(cache.Long))) types[i] = typeof(long);
+                else if (t.Equals(cache.GetLLVMType(cache.Int))) types[i] = typeof(int);
+                else if (t.Equals(cache.GetLLVMType(cache.Short))) types[i] = typeof(short);
+                else if (t.Equals(cache.GetLLVMType(cache.Boolean))) types[i] = typeof(bool);
+                else if (t.Equals(LLVM.PointerType(LLVM.Int8Type(), 0))) types[i] = typeof(string); //For strings we are only passing the null terminated char pointer
+                else if (t.Equals(cache.GetLLVMType(cache.Char))) types[i] = typeof(char);
                 else throw new InvalidCastException("Unknown type " + t.ToString());
             }
             return type.GetMethod(parts[2], types);

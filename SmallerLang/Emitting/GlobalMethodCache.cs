@@ -62,12 +62,13 @@ namespace SmallerLang.Emitting
             List<SmallType> arguments = new List<SmallType>();
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
-                arguments.Add(pMethod.Parameters[i].Type);
+                var parmType = pMethod.Parameters[i].Type;
+                arguments.Add(parmType);
             }
 
             SmallType ret = pMethod.Type;
             string mangledName = pMethod.External ? pName : pName + "_" + pCounter;
-            return new MethodDefinition(pMethod.Name, mangledName, arguments, ret);
+            return new MethodDefinition(pMethod.Name, mangledName, pMethod.External, arguments, ret);
         }
     }  
 }

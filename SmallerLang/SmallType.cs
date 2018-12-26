@@ -165,9 +165,9 @@ namespace SmallerLang
             _constructorSet = true;
         }
 
-        internal void SetDefaultConstructor()
+        internal void SetDefaultConstructor(List<SmallType> pArguments)
         {
-            _constructor = new Emitting.MethodDefinition(Name + ".ctor");
+            _constructor = new Emitting.MethodDefinition(Name + ".ctor", pArguments);
         }
 
         internal bool HasDefinedConstructor()

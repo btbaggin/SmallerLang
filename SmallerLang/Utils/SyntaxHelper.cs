@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using SmallerLang.Syntax;
+using SmallerLang.Emitting;
 
 namespace SmallerLang.Utils
 {
@@ -93,6 +94,30 @@ namespace SmallerLang.Utils
             var structName = new StringBuilder(pNode.Value);
             structName.Append("`").Append(pNode.GenericArguments.Count);
             return structName.ToString();
+        }
+
+        internal static bool FindMethodOnType(out MethodDefinition pDef, string pLocalNamespace, string pModuleNamespace, string pName, SmallType pType, params SmallType[] pArguments)
+        {
+
+            string ns = string.IsNullOrEmpty(pLocalNamespace) ? pModuleNamespace : pLocalNamespace;
+
+            MethodCache.FindMethod(out pDef, out bool pExact, ns, pType, pName, pArguments);
+            //If it's not an exact match, look through each traits methods until we find it
+            if (!pExact)
+            {
+                if (pType != null)
+                {
+                    foreach (var trait in pType.Implements)
+                    {
+                        MethodCache.FindMethod(out pDef, ns, trait, pName, pArguments);
+                        if (pDef.Name != null) return true;
+                    }
+                }
+
+                return false;
+            }
+
+            return true;
         }
     }
 }

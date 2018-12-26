@@ -12,6 +12,13 @@ namespace SmallerLang.Validation
     class TypeChecker : SyntaxNodeVisitor
     {
         SmallType[] _methodReturns;
+        string _moduleNamespace;
+
+        protected override void VisitModuleSyntax(ModuleSyntax pNode)
+        {
+            _moduleNamespace = pNode.Namespace;
+            base.VisitModuleSyntax(pNode);
+        }
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
@@ -111,7 +118,7 @@ namespace SmallerLang.Validation
             //Current type can be undefined if we have a method call on a type that isn't defined
             if (Type != SmallTypeCache.Undefined)
             {
-                var methodFound = FindMethod(out MethodDefinition m, pNode.Value, Type, types);
+                var methodFound = SyntaxHelper.FindMethodOnType(out MethodDefinition m, Namespace, _moduleNamespace, pNode.Value, Type, types);
                 System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
 
                 if (!methodFound)
@@ -132,26 +139,6 @@ namespace SmallerLang.Validation
             }
 
             base.VisitMethodCallSyntax(pNode);
-        }
-
-        private bool FindMethod(out MethodDefinition pDef, string pName,  SmallType pType, params SmallType[] pArguments)
-        {
-            MethodCache.FindMethod(out pDef, out bool pExact, Namespace, pType, pName, pArguments);
-            if (!pExact)
-            {
-                if (pType != null)
-                {
-                    foreach (var trait in pType.Implements)
-                    {
-                        MethodCache.FindMethod(out pDef, Namespace, trait, pName, pArguments);
-                        if (pDef.Name != null) return true;
-                    }
-                }
-                
-                return false;
-            }
-
-            return true;
         }
 
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)

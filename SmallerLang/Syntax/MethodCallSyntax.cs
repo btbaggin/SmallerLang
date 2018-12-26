@@ -56,6 +56,19 @@ namespace SmallerLang.Syntax
                     Utils.LlvmHelper.LoadIfPointer(ref arguments[start + i], pContext);
                 }
 
+                //For external methods passing strings, we only grab the char pointer
+                if(_definition.External && Arguments[i].Type == SmallTypeCache.String)
+                {
+                    if(!Utils.LlvmHelper.IsPointer(arguments[start + i]))
+                    {
+                        var v = pContext.AllocateVariable(Value + "_temp", Arguments[i].Type);
+                        LLVM.BuildStore(pContext.Builder, arguments[start + i], v);
+                        arguments[start + i] = v;
+                    }
+                    arguments[start + i] = LLVM.BuildInBoundsGEP(pContext.Builder, arguments[start + i], new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "char_pointer");
+                    Utils.LlvmHelper.LoadIfPointer(ref arguments[0], pContext);
+                }
+
                 //Implicitly cast any derived types
                 if (_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {

@@ -19,18 +19,12 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.ArrayLiteral;
 
-        public uint Size
-        {
-            get
-            {
-                uint.TryParse(Value, out uint i);
-                return i;
-            }
-        }
+        public SyntaxNode Size { get; private set; }
 
-        public ArrayLiteralSyntax(TypeSyntax pType, string pValue) : base(pValue)
+        internal ArrayLiteralSyntax(TypeSyntax pType, SyntaxNode pSize) : base("")
         {
-            TypeNode = pType; 
+            TypeNode = pType;
+            Size = pSize;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
@@ -39,13 +33,13 @@ namespace SmallerLang.Syntax
 
             var variable = pContext.AllocateVariable("array_temp", this);
 
+            var size = Size.Emit(pContext);
             var length = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
-            LLVM.BuildStore(pContext.Builder, pContext.GetInt(int.Parse(Value)), length);
+            LLVM.BuildStore(pContext.Builder, size, length);
 
-            var data = pContext.AllocateArrayLiteral(this);
-            var dataAccess = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+            var data = pContext.AllocateArrayLiteral(Type.GetElementType(), size);
             var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
-            LLVM.BuildStore(pContext.Builder, dataAccess, variableData);
+            LLVM.BuildStore(pContext.Builder, data, variableData);
 
             return variable;
         }

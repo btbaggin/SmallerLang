@@ -71,6 +71,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("int", TokenType.TypeInt);
             _keywords.Insert("long", TokenType.TypeLong);
             _keywords.Insert("string", TokenType.TypeString);
+            _keywords.Insert("char", TokenType.TypeChar);
             _keywords.Insert("bool", TokenType.TypeBool);
 
             //Various trivia

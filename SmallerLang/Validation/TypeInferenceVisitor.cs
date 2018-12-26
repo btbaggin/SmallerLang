@@ -13,6 +13,7 @@ namespace SmallerLang.Validation
     {
         VariableCache _locals;
         SmallType[] _methodReturns;
+        internal string _moduleNamespace = "";
 
         public TypeInferenceVisitor()
         {
@@ -21,6 +22,8 @@ namespace SmallerLang.Validation
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
+            _moduleNamespace = pNode.Namespace;
+
             //Infer methods
             foreach (var m in pNode.Methods)
             {
@@ -98,6 +101,11 @@ namespace SmallerLang.Validation
             for (int i = 0; i < pNode.Values.Count; i++)
             {
                 if(pNode.Values[i] is MemberAccessSyntax) Visit(pNode.Values[i]);
+            }
+
+            for (int i = 0; i < pNode.Arguments.Count; i++)
+            {
+                Visit(pNode.Arguments[i]);
             }
 
             var m = pNode.Type.GetConstructor();
@@ -192,13 +200,6 @@ namespace SmallerLang.Validation
             _locals.AddScope();
             _methodReturns = Utils.SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
             base.VisitCastDefinitionSyntax(pNode);
-            _locals.RemoveScope();
-        }
-
-        protected override void VisitForSyntax(ForSyntax pNode)
-        {
-            _locals.AddScope();
-            base.VisitForSyntax(pNode);
             _locals.RemoveScope();
         }
 
@@ -350,7 +351,7 @@ namespace SmallerLang.Validation
             }
 
             //Check to ensure this method exists
-            if (!FindMethod(out MethodDefinition m, pNode.Value, Type, types))
+            if (!SyntaxHelper.FindMethodOnType(out MethodDefinition m, Namespace, _moduleNamespace, pNode.Value, Type, types))
             {
                 if (Struct == null) CompilerErrors.MethodNotFound(pNode.Value, pNode.Span);
                 else CompilerErrors.MethodNotFound(Struct, pNode.Value, pNode.Span);
@@ -379,6 +380,36 @@ namespace SmallerLang.Validation
                 Visit(c);
             }
         }
+
+
+        protected override void VisitForSyntax(ForSyntax pNode)
+        {
+            _locals.AddScope();
+
+            if (pNode.Iterator != null)
+            {
+                Visit((dynamic)pNode.Iterator);
+                _itType = pNode.Iterator.Type.GetElementType();
+            }
+            else
+            {
+                foreach (var d in pNode.Initializer)
+                {
+                    Visit((dynamic)d);
+                }
+                Visit((dynamic)pNode.Condition);
+
+                foreach (var f in pNode.Finalizer)
+                {
+                    Visit((dynamic)f);
+                }
+            }
+
+            Visit(pNode.Body);
+
+            _locals.RemoveScope();
+        }
+
 
         protected override void VisitItSyntax(ItSyntax pNode)
         {
@@ -441,27 +472,6 @@ namespace SmallerLang.Validation
             }
 
             pType = _locals.GetVariable(pName).Type;
-            return true;
-        }
-
-        private bool FindMethod(out MethodDefinition pDef, string pName, SmallType pType, params SmallType[] pArguments)
-        {
-            MethodCache.FindMethod(out pDef, out bool pExact, Namespace, pType, pName, pArguments); 
-            //If it's not an exact match, look through each traits methods until we find it
-            if(!pExact)
-            {
-                if(pType != null)
-                {
-                    foreach (var trait in pType.Implements)
-                    {
-                        MethodCache.FindMethod(out pDef, Namespace, trait, pName, pArguments);
-                        if (pDef.Name != null) return true;
-                    }
-                }
-                
-                return false;
-            }
-
             return true;
         }
     }

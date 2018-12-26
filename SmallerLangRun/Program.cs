@@ -10,6 +10,8 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * returning strings not working
+         * constructor overloads
          * Look to make some structs ref returns
          * remove unused structs
          * Allow multiple modules to the same namespace alias
@@ -52,8 +54,8 @@ namespace SmallerLangRun
             var c = new SmallCompiler();
             var o = new CompilerOptions(output)
             {
-                OutputBytecode = false,
-                Optimizations = true,
+                OutputBytecode = true,
+                Optimizations = false,
                 SourceFile = prog,
                 Debug = false
             };

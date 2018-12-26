@@ -214,6 +214,11 @@ namespace SmallerLang.Utils
         {
             _error.WriteError($"Cast already defined for type {pType1} to {pType2}", pSpan);
         }
+
+        public static void CastDoesNotExist(SmallType pType1, SmallType pType2, TextSpan pSpan)
+        {
+            _error.WriteError($"Cast for types {pType1} to {pType2} has not been defined", pSpan);
+        }
         #endregion
 
         #region Namespace Errors
@@ -283,22 +288,22 @@ namespace SmallerLang.Utils
         #region Warnings
         public static void UnreachableCode(TextSpan pSpan)
         {
-            _error.WriteError("Unreachable code detected", pSpan);
+            _error.WriteWarning("Unreachable code detected", pSpan);
         }
 
         public static void IgnoredComplete(TextSpan pSpan)
         {
-            _error.WriteError("complete annotation is ignored on select statements with 'it'", pSpan);
+            _error.WriteWarning("complete annotation is ignored on select statements with 'it'", pSpan);
         }
 
         public static void VariableNeverUsed(string pVariable)
         {
-            _error.WriteError($"Variable {pVariable} is defined but never used");
+            _error.WriteWarning($"Variable {pVariable} is defined but never used");
         }
 
         public static void CompleteNonEnum(TextSpan pSpan)
         {
-            _error.WriteError("complete annotation can only be used with enum types", pSpan);
+            _error.WriteWarning("complete annotation can only be used with enum types", pSpan);
         }
         #endregion
     }

@@ -371,6 +371,7 @@ namespace SmallerLang.Parser
                 else if (Peek(TokenType.TypeInt)) Expect(TokenType.TypeInt, out part1);
                 else if (Peek(TokenType.TypeLong)) Expect(TokenType.TypeLong, out part1);
                 else if (Peek(TokenType.TypeString)) Expect(TokenType.TypeString, out part1);
+                else if (Peek(TokenType.TypeChar)) Expect(TokenType.TypeChar, out part1);
                 else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out part1);
                 else if (PeekAndExpect(TokenType.Identifier, out part1))
                 {
@@ -510,7 +511,14 @@ namespace SmallerLang.Parser
                 {
                     do
                     {
-                        values.Add(ParseExpression());
+                        if(Peek(TokenType.New))
+                        {
+                            values.Add(ParseInitializer(new List<IdentifierSyntax>()));
+                        }
+                        else
+                        {
+                            values.Add(ParseExpression());
+                        }
                     } while (PeekAndExpect(TokenType.Comma));
                 }
                 return SyntaxFactory.Return(values).SetSpan<ReturnSyntax>(t);
@@ -571,7 +579,7 @@ namespace SmallerLang.Parser
                     var type = ParseType(pAllowArray:false);
                     if(PeekAndExpect(TokenType.LeftBracket))
                     {
-                        Expect(TokenType.Integer, out string size);
+                        var size = ParseExpression();
                         Expect(TokenType.RightBracket);
                         type = SyntaxFactory.Type(type.Namespace, SmallTypeCache.GetArrayType(type.Value), type.GenericArguments);
                         return SyntaxFactory.ArrayLiteral(type, size);
@@ -1100,7 +1108,7 @@ namespace SmallerLang.Parser
                 {
                     var type = ParseType();
                     Expect(TokenType.Colon);
-                    Expect(TokenType.Integer, out string size);
+                    var size = ParseExpression();
                     Expect(TokenType.RightBracket);
                     e = SyntaxFactory.ArrayLiteral(type, size);
                 }
@@ -1147,6 +1155,10 @@ namespace SmallerLang.Parser
 
                     Expect(TokenType.RightBracket);
                     e = SyntaxFactory.ArrayAccess(e, index);
+                }
+                else if (PeekAndExpect(TokenType.String, out string str))
+                {
+                    e = SyntaxFactory.StringLiteral(str);
                 }
 
                 return e?.SetSpan<IdentifierSyntax>(t);

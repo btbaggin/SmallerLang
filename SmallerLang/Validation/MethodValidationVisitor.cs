@@ -99,7 +99,7 @@ namespace SmallerLang.Validation
                 }
                 else
                 {
-                    CompilerErrors.CastDuplicate(pNode.FromType, pNode.Type, pNode.Span);
+                    CompilerErrors.CastDoesNotExist(pNode.FromType, pNode.Type, pNode.Span);
                 }
             }
         }
@@ -168,7 +168,8 @@ namespace SmallerLang.Validation
                    pType == SmallTypeCache.Float ||
                    pType == SmallTypeCache.Double ||
                    pType == SmallTypeCache.String ||
-                   pType == SmallTypeCache.Boolean;
+                   pType == SmallTypeCache.Boolean ||
+                   pType == SmallTypeCache.Char;
         }
     }
 }

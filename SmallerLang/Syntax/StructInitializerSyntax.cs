@@ -29,16 +29,57 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            pContext.EmitDebugLocation(this);
+            pContext.EmitDebugLocation(this); 
 
-            LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
             var m = Type.GetConstructor();
 
-            foreach (var v in Values)
+            //Used in a return or some other expression.
+            //Not being used in an assignment
+            if(Values.Count == 0)
             {
-                v.DoNotLoad = true;
-                arguments[0] = v.Emit(pContext);
+                var variable = pContext.AllocateVariable("return_temp", Type);
+                BuildCallToConstructor(m, variable, pContext);
+                return variable;
+            }
+            else
+            {
+                foreach (var v in Values)
+                {
+                    v.DoNotLoad = true;
+                    var variable = v.Emit(pContext);
 
+                    BuildCallToConstructor(m, variable, pContext);
+                }
+            }
+
+            return default;
+        }
+
+        private void BuildCallToConstructor(MethodDefinition pDef, LLVMValueRef pType, EmittingContext pContext)
+        {
+            LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
+            arguments[0] = pType;
+
+            //TODO make this better
+            if (pDef.Name == "string.ctor")
+            {
+                var data = Arguments[0].Emit(pContext);
+
+                //Save length
+                var arrayLength = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+                var stringLength = LLVM.BuildInBoundsGEP(pContext.Builder, pType, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+
+                LLVM.BuildStore(pContext.Builder, LLVM.BuildLoad(pContext.Builder, arrayLength, ""), stringLength);
+
+                var arrayData = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
+                arrayData = LLVM.BuildLoad(pContext.Builder, arrayData, "");
+
+                //Load the data
+                var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, pType, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
+                LLVM.BuildStore(pContext.Builder, arrayData, variableData);
+            }
+            else
+            {
                 for (int i = 0; i < Arguments.Count; i++)
                 {
                     arguments[i + 1] = Arguments[i].Emit(pContext);
@@ -48,19 +89,18 @@ namespace SmallerLang.Syntax
                     if (op == LLVMOpcode.LLVMGetElementPtr) arguments[i + 1] = LLVM.BuildLoad(pContext.Builder, arguments[i + 1], "arg_" + i.ToString());
 
                     //Implicitly cast any derived types
-                    if (m.ArgumentTypes[i] != Arguments[i].Type)
+                    if (pDef.ArgumentTypes[i] != Arguments[i].Type)
                     {
-                        var t = SmallTypeCache.GetLLVMType(m.ArgumentTypes[i], pContext);
+                        var t = SmallTypeCache.GetLLVMType(pDef.ArgumentTypes[i], pContext);
                         Utils.LlvmHelper.MakePointer(arguments[i + 1], ref t);
                         arguments[i + 1] = LLVM.BuildBitCast(pContext.Builder, arguments[i + 1], t, "");
                     }
                 }
 
-                //Call constructor for all structs
-                LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "");
-            }
 
-            return default;
+                //Call constructor for all structs
+                LLVM.BuildCall(pContext.Builder, pContext.GetMethod(pDef.MangledName), arguments, "");
+            }           
         }
     }
 }

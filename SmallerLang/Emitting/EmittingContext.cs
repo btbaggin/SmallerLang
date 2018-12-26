@@ -100,11 +100,15 @@ namespace SmallerLang.Emitting
             //Get parameter types
             for (int i = 0; i < pMethod.Parameters.Count; i++)
             {
-                parmTypes[start + i] = SmallTypeCache.GetLLVMType(pMethod.Parameters[i].Type, this);
-                if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
+                var parmType = pMethod.Parameters[i].Type;
+                if (parmType.IsGenericParameter) originalTypes[i] = TypeMappings[parmType.Name];
+                else originalTypes[i] = parmType;
+                
+                //For calling external methods with strings, we want to pass the parameter array
+                if (pMethod.External && parmType == SmallTypeCache.String) parmType = parmType.GetElementType();
 
-                if (pMethod.Parameters[i].Type.IsGenericParameter) originalTypes[i] = TypeMappings[pMethod.Parameters[i].Type.Name];
-                else originalTypes[i] = pMethod.Parameters[i].Type;
+                parmTypes[start + i] = SmallTypeCache.GetLLVMType(parmType, this);
+                if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
             }
 
             //Do not mangle external calls so they are properly exported
@@ -215,12 +219,13 @@ namespace SmallerLang.Emitting
         }
         #endregion
 
-        public LLVMValueRef AllocateArrayLiteral(Syntax.ArrayLiteralSyntax pNode)
+        public LLVMValueRef AllocateArrayLiteral(SmallType pElementType, LLVMValueRef pSize)
         {
             var tempBuilder = GetTempBuilder();
             LLVM.PositionBuilder(tempBuilder, CurrentMethod.GetEntryBasicBlock(), CurrentMethod.GetEntryBasicBlock().GetFirstInstruction());
 
-            var alloc = LLVM.BuildAlloca(tempBuilder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(pNode.Type.GetElementType(), this), pNode.Size), "");
+            var alloc = LLVM.BuildArrayAlloca(Builder, SmallTypeCache.GetLLVMType(pElementType, this), pSize, "");
+            //var alloc = LLVM.BuildAlloca(tempBuilder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(pElementType, this), pSize), "");
             LLVM.DisposeBuilder(tempBuilder);
             return alloc;
         }
@@ -315,7 +320,7 @@ namespace SmallerLang.Emitting
 
         public LLVMValueRef GetString(string pString)
         {
-            return  LLVM.ConstString(pString, (uint)pString.Length, false);
+            return LLVM.ConstString(pString, (uint)pString.Length, false);
         }
 
         public LLVMValueRef GetArray(SmallType pType, int pSize, EmittingContext pContext)

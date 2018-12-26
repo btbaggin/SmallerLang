@@ -78,6 +78,14 @@ namespace SmallerLang.Syntax
                     //Float -> Int
                     ret = LLVM.BuildFPToSI(pContext.Builder, val, type, "");
                 }
+                else if (Type == SmallTypeCache.Char)
+                {
+                    ret = LLVM.BuildIntCast(pContext.Builder, val, SmallTypeCache.GetLLVMType(Type), "");
+                }
+                else if(FromType == SmallTypeCache.Char)
+                {
+                    ret = LLVM.BuildIntCast(pContext.Builder, val, SmallTypeCache.GetLLVMType(FromType), "");
+                }
                 else
                 {
                     //Trait cast, it should have been validated that it's already the proper type, just bitcast

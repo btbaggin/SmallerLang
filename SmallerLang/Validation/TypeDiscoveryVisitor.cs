@@ -16,7 +16,6 @@ namespace SmallerLang.Validation
         NamespaceContainer _namespace;
         int _order;
 
-
         public TypeDiscoveryVisitor()
         {
             _discoveryGraph = new TypeDiscoveryGraph();
@@ -119,13 +118,13 @@ namespace SmallerLang.Validation
                 for (int j = 0; j < s.Methods.Count; j++)
                 {
                     if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
-                        s.Methods[j].Annotation.Value == Utils.KeyAnnotations.Constructor)
+                        s.Methods[j].Annotation.Value == KeyAnnotations.Constructor)
                     {
                         type.SetConstructor(m);
                     }
                 }
 
-                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
+                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor(new List<SmallType>());
             }
         }
 

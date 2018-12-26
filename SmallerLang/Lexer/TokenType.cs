@@ -77,6 +77,7 @@ namespace SmallerLang.Lexer
         TypeInt,
         TypeLong,
         TypeString,
+        TypeChar,
         TypeBool,
         Hash,
 

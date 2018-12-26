@@ -39,6 +39,7 @@ namespace SmallerLang.Lowering
             }
 
             var tiv = new Validation.TypeInferenceVisitor();
+            tiv._moduleNamespace = pNode.Namespace;
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
             foreach (var m in pNode.Methods)
             {

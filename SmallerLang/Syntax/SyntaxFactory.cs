@@ -33,9 +33,9 @@ namespace SmallerLang.Syntax
             return new NumericLiteralSyntax(pValue.ToString(), NumberTypes.Integer);
         }
 
-        public static ArrayLiteralSyntax ArrayLiteral(TypeSyntax pType, string pValue)
+        public static ArrayLiteralSyntax ArrayLiteral(TypeSyntax pType, SyntaxNode pSize)
         {
-            return new ArrayLiteralSyntax(pType, pValue);
+            return new ArrayLiteralSyntax(pType, pSize);
         }
 
         public static ArrayAccessSyntax ArrayAccess(IdentifierSyntax pIdentifier, SyntaxNode pValue)

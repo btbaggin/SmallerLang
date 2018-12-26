@@ -12,23 +12,26 @@ namespace SmallerLang.Emitting
     {
         public string MangledName { get; private set; }
         public string Name { get; private set; }
+        public bool External { get; private set; }
         public List<SmallType> ArgumentTypes { get; private set; }
         public SmallType ReturnType { get; private set; }
 
-        public MethodDefinition(string pName, string pMangled, List<SmallType> pArguments, SmallType pReturn)
+        public MethodDefinition(string pName, string pMangled, bool pExternal, List<SmallType> pArguments, SmallType pReturn)
         {
             Name = pName;
             MangledName = pMangled;
+            External = pExternal;
             ArgumentTypes = pArguments;
             ReturnType = pReturn;
         }
 
-        public MethodDefinition(string pName)
+        public MethodDefinition(string pName, List<SmallType> pArguments)
         {
             Name = pName;
             MangledName = pName;
-            ArgumentTypes = new List<SmallType>();
+            ArgumentTypes = pArguments;
             ReturnType = SmallTypeCache.Undefined;
+            External = false;
         }
 
         public MethodDefinition MakeConcreteDefinition(SmallType pType)
@@ -83,7 +86,7 @@ namespace SmallerLang.Emitting
 
             SmallType ret = SmallTypeCache.GetOrCreateTuple(returnTypes.ToArray());
 
-            return new MethodDefinition(Name, MangledName, arguments, ret);
+            return new MethodDefinition(Name, MangledName, External, arguments, ret);
         }
 
         public override string ToString()
