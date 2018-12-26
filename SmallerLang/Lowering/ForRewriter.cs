@@ -43,6 +43,11 @@ namespace SmallerLang.Lowering
                 //Save itvar in case we are looping in a case body
                 var it = _itVar;
 
+                //Declare our iterator outside the for loop
+                //This will help if our iterator is complex like a function call
+                var iterVar = SyntaxFactory.Identifier("!iter");
+                var iterDecl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { iterVar }, pNode.Iterator);
+
                 if (pNode.Iterator.Type.IsArray)
                 {
                     //We are iterating over an array
@@ -50,17 +55,17 @@ namespace SmallerLang.Lowering
                     //Normal loops will start at 0 and increment to Array.Length
                     if (pNode.Reverse)
                     {
-                        var length = SyntaxFactory.UnaryExpression(pNode.Iterator, UnaryExpressionOperator.Length);
+                        var length = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
                         decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
                     else
                     {
                         decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
-                        end = SyntaxFactory.UnaryExpression(pNode.Iterator, UnaryExpressionOperator.Length);
+                        end = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
                     }
                     
-                    _itVar = SyntaxFactory.ArrayAccess(pNode.Iterator, i);
+                    _itVar = SyntaxFactory.ArrayAccess(iterVar, i);
 
                 }
                 else if (pNode.Iterator.Type.IsAssignableFrom(_enumerable))
@@ -70,20 +75,21 @@ namespace SmallerLang.Lowering
                     //Normal loops will start at 0 and increment to Count
                     if (pNode.Reverse)
                     {
-                        var count = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.Identifier("Count"));
+                        var count = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.Identifier("Count"));
                         decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(count, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
                     else
                     {
                         decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
-                        end = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.Identifier("Count"));
+                        end = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.Identifier("Count"));
                     }
 
-                    _itVar = SyntaxFactory.MemberAccess(pNode.Iterator, SyntaxFactory.MethodCall("ItemAt", new List<SyntaxNode>() { SyntaxFactory.Identifier("!i") }));
+                    _itVar = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.MethodCall("ItemAt", new List<SyntaxNode>() { SyntaxFactory.Identifier("!i") }));
                 }
                 else
                 {
+                    //Some bad type. We can't rewrite if it isn't array or enumerable
                     CompilerErrors.TypeCastError(pNode.Iterator.Type.ToString(), "array or Enumerable", pNode.Iterator.Span);
                     return base.VisitForSyntax(pNode);
                 }
@@ -91,9 +97,11 @@ namespace SmallerLang.Lowering
                 var op = pNode.Reverse ? BinaryExpressionOperator.GreaterThanOrEqual : BinaryExpressionOperator.LessThan;
                 var condition = SyntaxFactory.BinaryExpression(i, op, end);
 
-                var body = (BlockSyntax)Visit(pNode.Body);
                 _itVar = it;
-                return SyntaxFactory.For(new List<DeclarationSyntax>() { decl }, condition, new List<SyntaxNode>() { finalizer }, body);
+                var forStatement = SyntaxFactory.For(new List<DeclarationSyntax>() { decl }, condition, new List<SyntaxNode>() { finalizer }, (BlockSyntax)Visit(pNode.Body));
+
+                //Return our iterator declaration and for rewrite
+                return SyntaxFactory.Block(new List<SyntaxNode>() { iterDecl, forStatement });
             }
 
             return base.VisitForSyntax(pNode);

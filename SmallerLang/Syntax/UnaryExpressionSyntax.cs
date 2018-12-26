@@ -53,7 +53,8 @@ namespace SmallerLang.Syntax
                     return LLVM.BuildNeg(pContext.Builder, Value.Emit(pContext), "");
 
                 case UnaryExpressionOperator.Length:
-                    var l = LLVM.BuildInBoundsGEP(pContext.Builder, Value.Emit(pContext), new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
+                    var arr = Value.Emit(pContext);
+                    var l = LLVM.BuildInBoundsGEP(pContext.Builder, arr, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(0) }, "");
                     return LLVM.BuildLoad(pContext.Builder, l, "");
 
                 case UnaryExpressionOperator.PreIncrement:
