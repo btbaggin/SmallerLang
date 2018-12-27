@@ -39,14 +39,24 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
+                var module = ParseModule();
+
+                return SyntaxFactory.Workspace("module", module).SetSpan<WorkspaceSyntax>(t);
+            }
+        }
+
+        private ModuleSyntax ParseModule()
+        {
+            using (SpanTracker t = _spans.Create())
+            {
+                //Parse imports
                 IgnoreNewlines();
 
                 ITokenStream currentStream = _stream;
                 ReadOnlyMemory<char> currentSource = _source;
 
-                HashSet<string> importTest = new HashSet<string>();
-                importTest.Add("");
-                List<ModuleSyntax> imports = new List<ModuleSyntax>();
+                Dictionary<string, ModuleSyntax> imports = new Dictionary<string, ModuleSyntax>();
+
                 if (PeekAndExpect(TokenType.Import))
                 {
                     do
@@ -68,8 +78,8 @@ namespace SmallerLang.Parser
                                 _stream = stream;
                                 _source = source.AsMemory();
 
-                                if (!importTest.Add(alias)) CompilerErrors.DuplicateNamespaceAlias(alias, t);
-                                imports.Add(ParseModule(alias, path));
+                                if (imports.ContainsKey(alias)) CompilerErrors.DuplicateNamespaceAlias(alias, t);
+                                imports.Add(alias, ParseModule());
                             }
                         }
                         catch
@@ -84,16 +94,6 @@ namespace SmallerLang.Parser
                 _source = currentSource;
                 _spans.SetStream(_stream);
 
-                var module = ParseModule("", "");
-
-                return SyntaxFactory.Workspace("module", module, imports).SetSpan<WorkspaceSyntax>(t);
-            }
-        }
-
-        private ModuleSyntax ParseModule(string pNamespace, string pPath)
-        {
-            using (SpanTracker t = _spans.Create())
-            {
                 //Module content
                 List<MethodSyntax> methods = new List<MethodSyntax>();
                 List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
@@ -145,7 +145,7 @@ namespace SmallerLang.Parser
                     return null;
                 }
 
-                return SyntaxFactory.Module(pNamespace, pPath, methods, definitions, enums).SetSpan<ModuleSyntax>(t);
+                return SyntaxFactory.Module(imports, methods, definitions, enums).SetSpan<ModuleSyntax>(t);
             }
         }
 
@@ -1369,7 +1369,7 @@ namespace SmallerLang.Parser
 
         private string GetImportReference(string pFile)
         {
-            var fullPath = Path.Combine(SmallCompiler.CurrentDirectory, pFile);
+            var fullPath = Path.Combine(Compiler.SmallCompiler.CurrentDirectory, pFile);
             if (!File.Exists(fullPath)) CompilerErrors.FileNotFound(pFile);
 
             string source;

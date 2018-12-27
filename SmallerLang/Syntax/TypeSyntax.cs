@@ -10,16 +10,13 @@ namespace SmallerLang.Syntax
 {
     public class TypeSyntax : SyntaxNode
     {
+        private SmallType _type;
         public override SmallType Type
         {
             get
             {
-                var t = SmallTypeCache.FromString(SyntaxHelper.GetFullTypeName(this));
-                if(t.IsGenericType)
-                {
-                    return t.MakeConcreteType(SyntaxHelper.SelectNodeTypes(GenericArguments));
-                }
-                return t;
+                
+                return _type;
             } 
         }
 
@@ -48,6 +45,11 @@ namespace SmallerLang.Syntax
         public override string ToString()
         {
             return SyntaxHelper.GetFullTypeName(this);
+        }
+
+        public void SetType(SmallType pType)
+        {
+            _type = pType;
         }
     }
 }

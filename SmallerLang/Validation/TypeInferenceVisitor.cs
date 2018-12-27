@@ -13,17 +13,16 @@ namespace SmallerLang.Validation
     {
         VariableCache _locals;
         SmallType[] _methodReturns;
-        internal string _moduleNamespace = "";
+        readonly Compiler.CompilationUnit _unit;
 
-        public TypeInferenceVisitor()
+        public TypeInferenceVisitor(Compiler.CompilationUnit pUnit)
         {
             _locals = new VariableCache();
+            _unit = pUnit;
         }
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _moduleNamespace = pNode.Namespace;
-
             //Infer methods
             foreach (var m in pNode.Methods)
             {
@@ -32,7 +31,7 @@ namespace SmallerLang.Validation
 
             foreach (var s in pNode.Structs)
             {
-                using (var st = Store.AddValue("__Struct", s.GetApplicableType().Type))
+                using (var st = Store.AddValue("__Struct", _unit.FromString(SyntaxHelper.GetFullTypeName(s.GetApplicableType()))))
                 {
                     foreach (var m in s.Methods)
                     {
@@ -98,6 +97,8 @@ namespace SmallerLang.Validation
 
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
+            base.VisitStructInitializerSyntax(pNode);
+
             for (int i = 0; i < pNode.Values.Count; i++)
             {
                 if(pNode.Values[i] is MemberAccessSyntax) Visit(pNode.Values[i]);
@@ -214,7 +215,7 @@ namespace SmallerLang.Validation
             using (var t = Store.AddValue("__Type", pNode.Identifier.Type))
             {
                 //If field doesn't exist or something went wrong, stop checking things to reduce redundant errors
-                if (Type != SmallTypeCache.Undefined)
+                if (CurrentType != SmallTypeCache.Undefined)
                 {
                     //For methods and arrays we need to allow existing variables, but member access should only allow the struct's fields
                     if (pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
@@ -223,9 +224,9 @@ namespace SmallerLang.Validation
                         _locals = new VariableCache();
                         _locals.AddScope();
                         //Namespaces return a null type
-                        if(Type != null)
+                        if(CurrentType != null)
                         {
-                            foreach (var f in Type.GetFields())
+                            foreach (var f in CurrentType.GetFields())
                             {
                                 if (!_locals.IsVariableDefinedInScope(f.Name))
                                 {
@@ -240,7 +241,7 @@ namespace SmallerLang.Validation
             }
 
             //Restore local definitions
-            Namespace = "";
+            Namespace = null;
             _locals = l;
         }
 
@@ -252,7 +253,19 @@ namespace SmallerLang.Validation
 
         protected override void VisitTypeSyntax(TypeSyntax pNode)
         {
-            if(pNode.Namespace != null && !NamespaceManager.HasNamespace(pNode.Namespace))
+            foreach (var a in pNode.GenericArguments)
+            {
+                Visit(a);
+            }
+
+            var t = _unit.FromString(SyntaxHelper.GetFullTypeName(pNode));
+            if (t.IsGenericType)
+            {
+                t = _unit.MakeConcreteType(t, SyntaxHelper.SelectNodeTypes(pNode.GenericArguments));
+            }
+            pNode.SetType(t);
+
+            if(pNode.Namespace != null && !_unit.HasReference(pNode.Namespace))
             {
                 CompilerErrors.NamespaceNotDefined(pNode.Namespace, pNode.Span);
             }
@@ -260,6 +273,8 @@ namespace SmallerLang.Validation
 
         protected override void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
         {
+            base.VisitTypedIdentifierSyntax(pNode);
+
             if (_locals.IsVariableDefinedInScope(pNode.Value))
             {
                 CompilerErrors.IdentifierAlreadyDeclared(pNode, pNode.Span);
@@ -272,21 +287,19 @@ namespace SmallerLang.Validation
 
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            NamespaceManager.TryGetNamespace(Namespace, out NamespaceContainer container);
-            
-            if (!container.IsTypeDefinedInNamespace(pNode.Value))
+            if (CurrentType != null || !_unit.IsTypeDefined(pNode.Value))
             {
                 //Normal identifier, continue as usual
                 if (!IsVariableDefined(pNode.Value, out SmallType type))
                 {
-                    if (Type == null)
+                    if (CurrentType == null)
                     {
                         //Generate a slightly different error message if we are in a struct
                         //This can happen if we forget self
                         if (Struct != null) CompilerErrors.IdentifierNotDeclaredSelf(pNode, pNode.Span);
                         else CompilerErrors.IdentifierNotDeclared(pNode, pNode.Span);
                     }
-                    else CompilerErrors.IdentifierNotDeclared(Type, pNode, pNode.Span);
+                    else CompilerErrors.IdentifierNotDeclared(CurrentType, pNode, pNode.Span);
                 }
                 else
                 {
@@ -296,7 +309,7 @@ namespace SmallerLang.Validation
             else
             {
                 //Shared or enum value
-                var t = SmallTypeCache.FromStringInNamespace(Namespace, pNode.Value);
+                var t = SmallTypeCache.FromString(pNode.Value);
                 pNode.SetType(t);
             }
         }
@@ -329,8 +342,7 @@ namespace SmallerLang.Validation
             SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
             if (SyntaxHelper.HasUndefinedCastAsArg(pNode))
             {
-                var ns = NamespaceManager.GetNamespace(Namespace);
-                IList<MethodDefinition> matches = ns.GetAllMatches(pNode.Value, pNode.Arguments.Count);
+                IList<MethodDefinition> matches = _unit.GetAllMatches(pNode.Value, pNode.Arguments.Count);
                 if(matches.Count > 1)
                 {
                     //If multiple matches are found the implicit cast could map to either method, so we can't tell
@@ -351,7 +363,7 @@ namespace SmallerLang.Validation
             }
 
             //Check to ensure this method exists
-            if (!SyntaxHelper.FindMethodOnType(out MethodDefinition m, Namespace, _moduleNamespace, pNode.Value, Type, types))
+            if (!SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types))
             {
                 if (Struct == null) CompilerErrors.MethodNotFound(pNode.Value, pNode.Span);
                 else CompilerErrors.MethodNotFound(Struct, pNode.Value, pNode.Span);
@@ -364,7 +376,7 @@ namespace SmallerLang.Validation
             }
             
             //Poly our method definition to match any generic types
-            m = m.MakeConcreteDefinition(Type);
+            m = m.MakeConcreteDefinition(CurrentType);
             pNode.SetType(m.ReturnType);
         }
 
@@ -389,7 +401,15 @@ namespace SmallerLang.Validation
             if (pNode.Iterator != null)
             {
                 Visit((dynamic)pNode.Iterator);
-                _itType = pNode.Iterator.Type.GetElementType();
+                //Array vs Enumerable<T>
+                if (pNode.Iterator.Type.IsArray)
+                {
+                    _itType = pNode.Iterator.Type.GetElementType();
+                }
+                else
+                {
+                    _itType = pNode.Iterator.Type.GenericArguments[0];
+                }
             }
             else
             {

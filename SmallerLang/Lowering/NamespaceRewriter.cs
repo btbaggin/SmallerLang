@@ -10,21 +10,9 @@ namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
-        protected override SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
-        {
-            foreach(var i in pNode.Imports)
-            {
-                //TODO
-                NamespaceManager.AddNamespace(i.LibraryPath, i.Namespace);
-            }
-            NamespaceManager.AddNamespace("", "");
-
-            return base.VisitWorkspaceSyntax(pNode);
-        }
-
         protected override SyntaxNode VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
-            if(NamespaceManager.HasNamespace(pNode.Identifier.Value))
+            if(_unit.HasReference(pNode.Identifier.Value))
             {
                 return SyntaxFactory.MemberAccess(SyntaxFactory.Namespace(pNode.Identifier.Value), (IdentifierSyntax)Visit(pNode.Value));
             }

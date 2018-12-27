@@ -28,7 +28,7 @@ namespace SmallerLang.Validation
         {
             _locals.SetVariableReferenced(pNode.Value);
             var currentStruct = Struct;
-            var currentType = Type;
+            var currentType = CurrentType;
 
             if(currentType != null)
             {

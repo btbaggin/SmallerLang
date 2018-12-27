@@ -10,14 +10,6 @@ namespace SmallerLang.Validation
 {
     class PreTypeValidation : SyntaxNodeVisitor
     {
-        protected override void VisitMethodSyntax(MethodSyntax pNode)
-        {
-            if(pNode.External)
-            {
-                KeyAnnotations.ValidateExternalAnnotation(pNode.Annotation, pNode);
-            }
-        }
-
         protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
             if(pNode.DefinitionType != DefinitionTypes.Implement)

@@ -137,7 +137,7 @@ namespace SmallerLang.Utils
                     //Try loading from compilation directory
                     try
                     {
-                        path = SmallCompiler.CurrentDirectory;
+                        path = Compiler.SmallCompiler.CurrentDirectory;
                         if(!string.IsNullOrEmpty(path))
                         {
                             name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));

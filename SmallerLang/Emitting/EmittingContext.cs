@@ -20,13 +20,14 @@ namespace SmallerLang.Emitting
         public VariableCache Locals { get; private set; }
 
         public SmallType CurrentStruct { get; set; }
-        public string CurrentNamespace { get; set; }
 
         public AccessStack<MemberAccess> AccessStack { get; set; } //Used to emit nested member access calls
 
         public AccessStack<LLVMValueRef> BreakLocations { get; set; } //Used to control which loop to jump from when breaking
 
         public Dictionary<string, SmallType> TypeMappings { get; set; }
+
+        public Compiler.CompilationUnit Unit { get; internal set; }
 
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
@@ -79,7 +80,7 @@ namespace SmallerLang.Emitting
                     types[i] = SmallTypeCache.GetLLVMType(pMethod.ReturnValues[i].Type, this);
                 }
                 ret = LLVM.StructType(types, false);
-                SmallTypeCache.SetLLVMType(CurrentNamespace, pMethod.Type.Name, ret);
+                Unit.SetLLVMType(pMethod.Type.Name, ret);
             }
 
             //If we are emitting a struct method we need to add "self" as a parameter
@@ -112,7 +113,10 @@ namespace SmallerLang.Emitting
             }
 
             //Do not mangle external calls so they are properly exported
-            pNewName = MethodCache.GetMangledName(CurrentNamespace, CurrentStruct, pName, originalTypes);
+            Unit.FindMethod(out MethodDefinition pDefinition, out bool pExact, null, CurrentStruct, pName, originalTypes);
+            Debug.Assert(pExact);
+
+            pNewName = pDefinition.MangledName;
 
             //Method header
             var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
@@ -215,7 +219,7 @@ namespace SmallerLang.Emitting
             //Emit struct
             var t = LLVM.StructCreateNamed(_context, pName);
             t.StructSetBody(types, false);
-            SmallTypeCache.SetLLVMType(CurrentNamespace, pName, t);
+            Unit.SetLLVMType(pName, t);
         }
         #endregion
 
@@ -355,7 +359,7 @@ namespace SmallerLang.Emitting
             var type = DebugType.GetLLVMDebugType(_debugInfo, GetCurrentDebugScope(), _debugFile, pType);
             var variable = Utils.LlvmPInvokes.LLVMDIBuilderCreateAutoVariable(_debugInfo, loc, pName, _debugFile, (uint)pLine, type.Value, 0, 0);
             var expr = LLVM.DIBuilderCreateExpression(_debugInfo, IntPtr.Zero, 0);
-            //LLVM.DIBuilderInsertDeclareAtEnd(_debugInfo, pVar, variable, expr, LLVM.GetInsertBlock(pBuilder));
+            LLVM.DIBuilderInsertDeclareAtEnd(_debugInfo, pVar, variable, expr, LLVM.GetInsertBlock(pBuilder));
         }
 
         private void EmitDebugParameter(string pName, SmallType pType, int pLine, int pParmIndex)

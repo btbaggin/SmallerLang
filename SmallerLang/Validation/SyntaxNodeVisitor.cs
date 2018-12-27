@@ -10,7 +10,7 @@ namespace SmallerLang.Validation
     public abstract class SyntaxNodeVisitor
     {
         protected string Namespace { get; set;}
-        protected SmallType Type
+        protected SmallType CurrentType
         {
             get { return Store.GetValueOrDefault<SmallType>("__Type"); }
         }
@@ -25,7 +25,6 @@ namespace SmallerLang.Validation
         protected SyntaxNodeVisitor()
         {
             Store = new VisitorStore();
-            Namespace = "";
         }
 
         public void Visit(SyntaxNode pNode)
@@ -180,7 +179,10 @@ namespace SmallerLang.Validation
         }
 
         #region Visit ...
-        protected virtual void VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode) { }
+        protected virtual void VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode)
+        {
+            Visit(pNode.TypeNode);
+        }
 
         protected virtual void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
@@ -233,6 +235,7 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitCastSyntax(CastSyntax pNode)
         {
+            Visit(pNode.TypeNode);
             Visit((dynamic)pNode.Value);
         }
 
@@ -327,7 +330,7 @@ namespace SmallerLang.Validation
         protected virtual void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             var n = Namespace;
-            Namespace = "";
+            Namespace = null;
 
             using (var t = Store.AddValue<SmallType>("__Type", null))
             {
@@ -348,7 +351,7 @@ namespace SmallerLang.Validation
                 Visit((dynamic)pNode.Value);
             }
 
-            Namespace = "";
+            Namespace = null;
         }
 
         protected virtual void VisitModuleSyntax(ModuleSyntax pNode)
@@ -374,7 +377,10 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitNumericLiteralSyntax(NumericLiteralSyntax pNode) { }
 
-        protected virtual void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode) { }
+        protected virtual void VisitTypedIdentifierSyntax(TypedIdentifierSyntax pNode)
+        {
+            Visit(pNode.TypeNode);
+        }
 
         protected virtual void VisitReturnSyntax(ReturnSyntax pNode)
         {
@@ -421,10 +427,6 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            foreach(var m in pNode.Imports)
-            {
-                Visit(m);
-            }
             Visit(pNode.Module);
         }
         #endregion

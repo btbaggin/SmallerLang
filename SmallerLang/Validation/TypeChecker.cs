@@ -12,12 +12,11 @@ namespace SmallerLang.Validation
     class TypeChecker : SyntaxNodeVisitor
     {
         SmallType[] _methodReturns;
-        string _moduleNamespace;
+        readonly Compiler.CompilationUnit _unit;
 
-        protected override void VisitModuleSyntax(ModuleSyntax pNode)
+        public TypeChecker(Compiler.CompilationUnit pUnit)
         {
-            _moduleNamespace = pNode.Namespace;
-            base.VisitModuleSyntax(pNode);
+            _unit = pUnit;
         }
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
@@ -116,9 +115,9 @@ namespace SmallerLang.Validation
             SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
 
             //Current type can be undefined if we have a method call on a type that isn't defined
-            if (Type != SmallTypeCache.Undefined)
+            if (CurrentType != SmallTypeCache.Undefined)
             {
-                var methodFound = SyntaxHelper.FindMethodOnType(out MethodDefinition m, Namespace, _moduleNamespace, pNode.Value, Type, types);
+                var methodFound = SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types);
                 System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
 
                 if (!methodFound)
@@ -134,7 +133,7 @@ namespace SmallerLang.Validation
                 }
 
                 //Method calls are finally validated, set the mangled method name which we will actually call
-                m = m.MakeConcreteDefinition(Type);
+                m = m.MakeConcreteDefinition(CurrentType);
                 pNode.SetDefinition(m);
             }
 
@@ -158,8 +157,7 @@ namespace SmallerLang.Validation
             //Ensure the constructor arguments 
             else if(pNode.Struct.Type.HasDefinedConstructor())
             {
-                var ctor = pNode.Struct.Type.GetConstructor().Name;
-                MethodCache.FindMethod(out MethodDefinition m, Namespace, pNode.Struct.Type, ctor, types);
+                var m = pNode.Struct.Type.GetConstructor();
                 for (int i = 0; i < m.ArgumentTypes.Count; i++)
                 {
                     if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))

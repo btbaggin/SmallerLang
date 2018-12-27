@@ -14,26 +14,18 @@ namespace SmallerLang.Syntax
 
         public string Name { get; private set; }
 
-        public IList<ModuleSyntax> Imports { get; private set; }
-
         public ModuleSyntax Module { get; private set; }
 
         public override SyntaxType SyntaxType => SyntaxType.Workspace;
 
-        internal WorkspaceSyntax(string pName, ModuleSyntax pModule, IList<ModuleSyntax> pImports)
+        internal WorkspaceSyntax(string pName, ModuleSyntax pModule)
         {
             Name = pName;
             Module = pModule;
-            Imports = pImports;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            foreach(var i in Imports)
-            {
-                i.Emit(pContext);
-            }
-
             LLVMValueRef _main = Module.Emit(pContext);
 
             //Emit our function that the runtime will call. 

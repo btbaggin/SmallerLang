@@ -13,13 +13,6 @@ namespace SmallerLang
     {
         Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)> _cache = new Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)>();
 
-        public string Namespace { get; private set; }
-
-        public SmallTypeCache(string pNamespace)
-        {
-            Namespace = pNamespace;
-        }
-
         internal SmallType FindType(string pType)
         {
             if (pType == null) return null;
@@ -45,7 +38,7 @@ namespace SmallerLang
             else if (_cache.ContainsKey(pType)) return _cache[pType].Type;
 
             if (t == null) return Undefined;
-            return new SmallType(Namespace, pType, t);
+            return new SmallType(pType, t);
         }
 
         internal SmallType AddType(TypeDefinitionSyntax pType)
@@ -64,7 +57,7 @@ namespace SmallerLang
             var isTrait = pType.DefinitionType == DefinitionTypes.Trait;
             var isGeneric = pType.TypeParameters.Count > 0;
 
-            var st = new SmallType(Namespace, name, fields.ToArray()) {
+            var st = new SmallType(name, fields.ToArray()) {
                 IsStruct = isStruct,
                 IsTrait = isTrait,
                 IsGenericType = isGeneric,
@@ -81,16 +74,65 @@ namespace SmallerLang
             var name = pType.Name + "<" + string.Join<SmallType>(",", pGenericParameters) + ">";
             if(!_cache.ContainsKey(name))
             {
-                var st = new SmallType(pType.Namespace, pType.Name, pType.GetFields())
+                List<FieldDefinition> fields = new List<FieldDefinition>();
+
+                //Create a mapping of type parameters to index
+                Dictionary<string, int> parmMapping = new Dictionary<string, int>();
+                for(int i = 0; i < pType.GenericParameters.Count; i++)
+                {
+                    parmMapping.Add(pType.GenericParameters[i], i);
+                }
+
+                //Poly the fields
+                foreach(var f in pType.GetFields())
+                {
+                    SmallType newFieldType = f.Type;
+                    if(f.Type.IsGenericType)
+                    {
+                        newFieldType = GetConcreteType(f.Type, pGenericParameters);
+                    }
+                    else if(f.Type.IsGenericParameter)
+                    {
+                        newFieldType = pGenericParameters[parmMapping[f.Type.Name]];
+                    }
+                    fields.Add(new FieldDefinition(newFieldType, f.Name, f.Visibility));
+                }
+
+                var st = new SmallType(pType.Name, fields.ToArray())
                 {
                     GenericArguments = pGenericParameters,
                     GenericParameters = pType.GenericParameters,
                     IsTrait = pType.IsTrait,
                     IsStruct = pType.IsStruct,
                     IsTuple = pType.IsTuple,
-                    IsEnum = pType.IsEnum
+                    IsEnum = pType.IsEnum,
                 };
-                st.SetConstructor(pType.GetConstructor());
+
+                //Poly constructor
+                var existingCtor = pType.GetConstructor();
+                List<SmallType> argumentTypes = new List<SmallType>();
+                foreach(var t in existingCtor.ArgumentTypes)
+                {
+                    var argType = t;
+                    if(t.IsGenericType)
+                    {
+                        GetConcreteType(t, pGenericParameters);
+                    }
+                    else if (t.IsGenericParameter)
+                    {
+                        argType = pGenericParameters[parmMapping[t.Name]];
+                    }
+                    argumentTypes.Add(argType);
+                }
+
+                var ctor = new Emitting.MethodDefinition(existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
+                st.SetConstructor(ctor);
+
+                foreach(var i in pType.Implements)
+                {
+                    st.AddTrait(i);
+                }
+
                 _cache[name] = (st, default);
             }
 
@@ -108,7 +150,7 @@ namespace SmallerLang
                 values[j] = pType.Values[j];
             }
 
-            var st = new SmallType(Namespace, name, fields, values) { IsEnum = true };
+            var st = new SmallType(name, fields, values) { IsEnum = true };
             _cache[name] = (st, LLVMTypeRef.Int32Type());
             return st;
         }
@@ -130,7 +172,7 @@ namespace SmallerLang
             return _cache[pType].LLVMType;
         }
 
-        internal bool IsTypeDefinedInNamespace(string pType)
+        public bool TypeExists(string pType)
         {
             return _cache.ContainsKey(pType);
         }

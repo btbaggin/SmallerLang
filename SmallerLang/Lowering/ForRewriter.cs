@@ -13,18 +13,16 @@ namespace SmallerLang.Lowering
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
         SyntaxNode _itVar;
-        SmallType _enumerable;
+        SmallType _enumerable = null;
         private void GetEnumerable()
         {
-            if (NamespaceManager.TryGetStdLib(out NamespaceContainer container))
-            {
-                _enumerable = container.FindType("Enumerable`1");
-                Debug.Assert(_enumerable != SmallTypeCache.Undefined, "stdlib does not define Enumerable");
+            _enumerable = _unit.FromStringInNamespace(null, "Enumerable`1");
 #if DEBUG
+            if(_enumerable != SmallTypeCache.Undefined)
+            {
                 Debug.Assert(_enumerable.GetFieldIndex("Count") > -1, "Enumerable does not implement Count");
-#endif
             }
-            else _enumerable = SmallTypeCache.Undefined;
+#endif
         }
 
         protected override SyntaxNode VisitForSyntax(ForSyntax pNode)

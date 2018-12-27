@@ -15,6 +15,11 @@ namespace SmallerLang.Validation
 
         protected override void VisitMethodSyntax(MethodSyntax pNode)
         {
+            if (pNode.External)
+            {
+                KeyAnnotations.ValidateExternalAnnotation(pNode.Annotation, pNode);
+            }
+
             //Validate that one and only 1 method is annotated with "run"
             //This method must contain no parameters and return no values
             if (pNode.Annotation.Value == KeyAnnotations.RunMethod)

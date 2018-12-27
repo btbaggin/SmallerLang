@@ -370,7 +370,7 @@ namespace SmallerLang.Lowering
             {
                 enums.Add((EnumSyntax)Visit(e));
             }
-            return SyntaxFactory.Module(pNode.Namespace, pNode.LibraryPath, methods, definitions, enums);
+            return SyntaxFactory.Module(pNode.Imports, methods, definitions, enums);
         }
 
         protected virtual SyntaxNode VisitNamespaceSyntax(NamespaceSyntax pNode)
@@ -455,13 +455,7 @@ namespace SmallerLang.Lowering
         
         protected virtual SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)
         {
-            List<ModuleSyntax> imports = new List<ModuleSyntax>(pNode.Imports.Count);
-            foreach(var m in pNode.Imports)
-            {
-                imports.Add((ModuleSyntax)Visit(m));
-            }
-
-            return SyntaxFactory.Workspace(pNode.Name, (ModuleSyntax)Visit(pNode.Module), imports);
+            return SyntaxFactory.Workspace(pNode.Name, (ModuleSyntax)Visit(pNode.Module));
         }
     }
 }

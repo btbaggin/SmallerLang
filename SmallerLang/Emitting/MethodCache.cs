@@ -121,9 +121,8 @@ namespace SmallerLang.Emitting
         readonly Dictionary<string, int> _counter;
         internal const string CAST_METHOD = "<cast>"; //Use a normally invalid method name so we don't get collisions
 
-        private MethodCache(string pNamespace)
+        public MethodCache()
         {
-            Namespace = pNamespace;
             _methods = new Dictionary<string, List<MethodDefinition>>();
             _counter = new Dictionary<string, int>();
         }

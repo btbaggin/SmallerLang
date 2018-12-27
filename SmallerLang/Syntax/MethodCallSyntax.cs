@@ -72,6 +72,7 @@ namespace SmallerLang.Syntax
                 //Implicitly cast any derived types
                 if (_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {
+                    //TODO need to handle if _definition comes from a different reference
                     var type = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i], pContext);
                     Utils.LlvmHelper.MakePointer(arguments[start + i], ref type);
                     arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], type, "");

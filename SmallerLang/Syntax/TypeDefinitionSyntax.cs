@@ -17,7 +17,7 @@ namespace SmallerLang.Syntax
         Implement
     }
 
-    public class TypeDefinitionSyntax : SyntaxNode
+    public class TypeDefinitionSyntax : SyntaxNode, IEquatable<TypeDefinitionSyntax>
     {
         public override SmallType Type => SmallTypeCache.Undefined;
 
@@ -105,13 +105,13 @@ namespace SmallerLang.Syntax
         private void Emit(Action<SmallType> pAction, EmittingContext pContext)
         {
             var typeName = SyntaxHelper.GetFullTypeName(GetApplicableType());
-            var type = SmallTypeCache.FromStringInNamespace(pContext.CurrentNamespace, typeName);
+            var type = pContext.Unit.FromString(typeName);
 
             if(_typeMappings.Count > 0)
             {
                 foreach (var t in _typeMappings)
                 {
-                    pContext.CurrentStruct = type.MakeConcreteType(t.Values.ToArray());
+                    pContext.CurrentStruct = pContext.Unit.MakeConcreteType(type, t.Values.ToArray());
                     pContext.TypeMappings = t;
                     pAction.Invoke(type);
                     pContext.CurrentStruct = null;
@@ -196,6 +196,13 @@ namespace SmallerLang.Syntax
         public override string ToString()
         {
             return DefinitionType.ToString() + " " + DeclaredType.Value;
+        }
+
+        public bool Equals(TypeDefinitionSyntax other)
+        {
+            if (Name != other.Name) return false;
+            if (DefinitionType != other.DefinitionType) return false;
+            return true;
         }
     }
 }

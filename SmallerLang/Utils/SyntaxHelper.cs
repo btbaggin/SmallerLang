@@ -96,12 +96,9 @@ namespace SmallerLang.Utils
             return structName.ToString();
         }
 
-        internal static bool FindMethodOnType(out MethodDefinition pDef, string pLocalNamespace, string pModuleNamespace, string pName, SmallType pType, params SmallType[] pArguments)
+        internal static bool FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationUnit pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
         {
-
-            string ns = string.IsNullOrEmpty(pLocalNamespace) ? pModuleNamespace : pLocalNamespace;
-
-            MethodCache.FindMethod(out pDef, out bool pExact, ns, pType, pName, pArguments);
+            pUnit.FindMethod(out pDef, out bool pExact, pNamespace, pType, pName, pArguments);
             //If it's not an exact match, look through each traits methods until we find it
             if (!pExact)
             {
@@ -109,8 +106,9 @@ namespace SmallerLang.Utils
                 {
                     foreach (var trait in pType.Implements)
                     {
-                        MethodCache.FindMethod(out pDef, ns, trait, pName, pArguments);
-                        if (pDef.Name != null) return true;
+                        pUnit.FindMethod(out pDef, out pExact, pNamespace, trait, pName, pArguments);
+                        if (!pExact) return true;
+                        //TODO better error messages when not exact
                     }
                 }
 

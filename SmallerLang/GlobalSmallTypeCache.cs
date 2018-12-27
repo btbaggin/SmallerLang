@@ -28,16 +28,10 @@ namespace SmallerLang
             var data = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0);
             var stringType = LLVMTypeRef.StructType(new LLVMTypeRef[] { length, data }, false);
 
-            var s = new SmallType("", "string", Char);
-            s.SetDefaultConstructor(new List<SmallType>() { new SmallType("", "char[]", Char) });
+            var s = new SmallType("string", Char);
+            s.SetDefaultConstructor(new List<SmallType>() { new SmallType("char[]", Char) });
             _primitiveTypes["string"] = (s, stringType);
             return s;
-        }
-
-
-        public static SmallTypeCache Create(string pNamespace)
-        {
-            return new SmallTypeCache(pNamespace);
         }
 
         public static SmallType FromString(string pType)
@@ -48,46 +42,12 @@ namespace SmallerLang
                 return _primitiveTypes[pType].Type;
             }
 
-            var ns = GetNamespace(ref pType);
-            if(NamespaceManager.TryGetNamespace(ns, out NamespaceContainer container))
-            {
-                return container.FindType(pType);
-            }
-            return Undefined;
-        }
-
-        public static SmallType FromStringInNamespace(string pNamespace, string pType)
-        {
-            if (pType == null) return null;
-            if (_primitiveTypes.ContainsKey(pType))
-            {
-                return _primitiveTypes[pType].Type;
-            }
-
-            var ns = GetNamespace(ref pType);
-            if (string.IsNullOrEmpty(ns)) ns = pNamespace;
-
-            if(NamespaceManager.TryGetNamespace(ns, out NamespaceContainer container))
-            {
-                return container.FindType(pType);
-            }
             return Undefined;
         }
 
         public static bool IsTypeDefined(string pType)
         {
-            if (_primitiveTypes.ContainsKey(pType)) return true;
-
-            var ns = GetNamespace(ref pType);
-            if (!NamespaceManager.TryGetNamespace(ns, out NamespaceContainer container)) return false;
-
-            return container.IsTypeDefinedInNamespace(pType);
-        }
-
-        public static bool IsTypeDefined(string pNamespace, string pType)
-        {
-            if (!NamespaceManager.TryGetNamespace(pNamespace, out NamespaceContainer container)) return false;
-            return container.IsTypeDefinedInNamespace(pType);
+            return _primitiveTypes.ContainsKey(pType);
         }
 
         public static string GetArrayType(string pType)
@@ -120,12 +80,15 @@ namespace SmallerLang
 
         public static SmallType CreateGenericParameter(string pType, SmallType pElementType)
         {
-            return new SmallType("", pType, pElementType) { IsGenericParameter = true };
+            return new SmallType(pType, pElementType) { IsGenericParameter = true };
         }
 
         private static SmallType AddType(string pType, LLVMTypeRef pLLVMType)
         {
-            _primitiveTypes[pType] = (new SmallType("", pType), pLLVMType);
+            _primitiveTypes[pType] = (new SmallType(pType), pLLVMType);
+
+            var arrType = GetArrayType(pType);
+            _primitiveTypes[arrType] = (new SmallType(arrType, _primitiveTypes[pType].Type), pLLVMType);
             return _primitiveTypes[pType].Type;
         }
 
@@ -153,17 +116,11 @@ namespace SmallerLang
                     fields[i] = new FieldDefinition(pTypes[i], "");
                 }
 
-                var st = new SmallType("", name, fields) { IsTuple = true };
+                var st = new SmallType(name, fields) { IsTuple = true };
                 _primitiveTypes[name] = (st, default);
             }
 
             return _primitiveTypes[name].Type;
-        }
-
-        internal static void SetLLVMType(string pNamespace, string pType, LLVMTypeRef pLLVMType)
-        {
-            System.Diagnostics.Debug.Assert(NamespaceManager.TryGetNamespace(pNamespace, out NamespaceContainer container));
-            container.SetLLVMType(pType, pLLVMType);
         }
 
         internal static LLVMTypeRef GetLLVMType(SmallType pType)
@@ -188,7 +145,7 @@ namespace SmallerLang
                 }
                 return LLVMTypeRef.StructType(types, false);
             }
-            else if(pType.IsGenericParameter)
+            else if (pType.IsGenericParameter)
             {
                 System.Diagnostics.Debug.Assert(pContext.TypeMappings.ContainsKey(pType.Name));
 
@@ -198,9 +155,11 @@ namespace SmallerLang
             {
                 return _primitiveTypes[pType.Name].LLVMType;
             }
-            else if (NamespaceManager.TryGetNamespace(pType.Namespace, out NamespaceContainer container))
+            else
             {
-                 return container.GetLLVMTypeOfType(pType.Name);
+
+                if(pType.Name == "Test") return pContext.Unit.GetReferences().First().Module.Unit.GetLLVMTypeOfType(pType.Name);
+                return pContext.Unit.GetLLVMTypeOfType(pType.Name);
             }
 
             throw new ArgumentException("Unable to convert to LLVM type " + pType.ToString());

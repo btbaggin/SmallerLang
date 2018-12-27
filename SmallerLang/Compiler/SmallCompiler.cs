@@ -12,7 +12,7 @@ using SmallerLang.Syntax;
 using SmallerLang.Utils;
 using LLVMSharp;
 
-namespace SmallerLang
+namespace SmallerLang.Compiler
 {
     public class SmallCompiler
     {
@@ -47,35 +47,9 @@ namespace SmallerLang
             var parser = new SmallerParser(stream);
 
             var tree = parser.Parse();
-
-            //Basic transformations that can be done without type information
-            tree = (WorkspaceSyntax)new TreeRewriter().Visit(tree);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            //Info gathering passes
-            new PreTypeValidation().Visit(tree);
-            if(CompilerErrors.ErrorOccurred) return false;
-
-            new TypeDiscoveryVisitor().Visit(tree);
-            if (CompilerErrors.ErrorOccurred) return false;
-
-            //Type inference
-            new TypeInferenceVisitor().Visit(tree);
-            if (CompilerErrors.ErrorOccurred) return false;
-
-            //More advanced transformations that require type information
-            tree = (WorkspaceSyntax)new PostTypeRewriter().Visit(tree);
-            if (CompilerErrors.ErrorOccurred) return false;
-
-            //Validation passes
-            new TypeChecker().Visit(tree);
-            if (CompilerErrors.ErrorOccurred) return false;
-
-            new PostTypeValidationVisitor().Visit(tree);
-            if (CompilerErrors.ErrorOccurred) return false;
-
-            new PolyRewriter().Visit(tree);
-            if (CompilerErrors.ErrorOccurred) return false;
+            var compilationModule = ModuleBuilder.Build(tree);
 
             LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
@@ -101,7 +75,7 @@ namespace SmallerLang
 
             using (var c = new EmittingContext(module, passManager, pOptions.Debug))
             {
-                tree.Emit(c);
+                compilationModule.Emit(c);
 
                 if (LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, out string message).Value != 0)
                 {

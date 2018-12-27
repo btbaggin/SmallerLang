@@ -23,8 +23,6 @@ namespace SmallerLang
 
         public string Name { get; private set; }
 
-        public string Namespace { get; private set; }
-
         public bool IsGenericParameter { get; internal set; }
 
         public bool IsGenericType { get; internal set; }
@@ -47,41 +45,36 @@ namespace SmallerLang
 
         #region Constructors
         //Value constructor
-        internal SmallType(string pNamespace, string pName)
+        internal SmallType(string pName)
         {
-            Namespace = pNamespace;
             Name = pName;
         }
 
         //Struct constructor
-        internal SmallType(string pNamespace, string pName, FieldDefinition[] pFields)
+        internal SmallType(string pName, FieldDefinition[] pFields)
         {
-            Namespace = pNamespace;
             Name = pName;
             _fields = pFields;
             _implements = new List<SmallType>();
         }
 
         //Array constructor
-        internal SmallType(string pNamespace, string pName, SmallType pElementType)
+        internal SmallType(string pName, SmallType pElementType)
         {
-            Namespace = pNamespace;
             Name = pName;
             _elementType = pElementType;
         }
 
         //Enum constructor
-        internal SmallType(string pNamespace, string pName, string[] pFields, int[] pValues)
+        internal SmallType(string pName, string[] pFields, int[] pValues)
         {
             System.Diagnostics.Debug.Assert(pFields.Length == pValues.Length);
 
             FieldDefinition[] fields = new FieldDefinition[pFields.Length];
             for (int i = 0; i < fields.Length; i++)
             {
-                //TODO i do this here so I can reference the enum type... can I move this somewhere?
                 fields[i] = new FieldDefinition(this, pFields[i], pValues[i]);
             }
-            Namespace = pNamespace;
             Name = pName;
             _fields = fields;
             _implements = new List<SmallType>() { SmallTypeCache.Int };
@@ -143,12 +136,6 @@ namespace SmallerLang
         public int GetFieldCount()
         {
             return _fields.Length;
-        }
-
-        public SmallType MakeConcreteType(params SmallType[] pTypes)
-        {
-            var ns = Emitting.NamespaceManager.GetNamespace(Namespace);
-            return ns.GetConcreteType(this, pTypes);
         }
 
         #region Type constructor methods

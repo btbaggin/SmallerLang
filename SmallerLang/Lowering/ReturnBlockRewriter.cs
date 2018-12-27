@@ -10,6 +10,12 @@ namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
+        private Compiler.CompilationUnit _unit;
+        public TreeRewriter(Compiler.CompilationUnit pUnit)
+        {
+            _unit = pUnit;
+        }
+
         protected override SyntaxNode VisitBlockSyntax(BlockSyntax pNode)
         {
             //Rewrite any statements after the return statement to be a NOP

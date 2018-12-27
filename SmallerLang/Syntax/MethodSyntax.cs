@@ -8,7 +8,7 @@ using LLVMSharp;
 
 namespace SmallerLang.Syntax
 {
-    public class MethodSyntax : SyntaxNode
+    public class MethodSyntax : SyntaxNode, IEquatable<MethodSyntax>
     {
         public string Name { get; protected set; }
 
@@ -126,6 +126,19 @@ namespace SmallerLang.Syntax
             }
 
             return name.ToString();
+        }
+
+        public bool Equals(MethodSyntax other)
+        {
+            if (Name != other.Name) return false;
+
+            if (Parameters.Count != other.Parameters.Count) return false;
+
+            for (int i = 0; i < Parameters.Count; i++)
+            {
+                if (Parameters[i].Type != other.Parameters[i].Type) return false;
+            }
+            return true;
         }
     }
 }

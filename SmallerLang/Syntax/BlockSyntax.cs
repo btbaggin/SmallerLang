@@ -41,23 +41,20 @@ namespace SmallerLang.Syntax
 
         internal static void BuildCallToDispose(EmittingContext pContext)
         {
-            if(NamespaceManager.TryGetStdLib(out NamespaceContainer container))
+            SmallType Disposable = pContext.Unit.FromStringInNamespace(null, "Disposable");
+            if(Disposable != SmallTypeCache.Undefined)
             {
-                SmallType Disposable = container.FindType("Disposable");
-                Debug.Assert(Disposable != SmallTypeCache.Undefined, "stdlib does not define Disposable");
-
                 foreach (var v in pContext.Locals.GetVariablesInScope())
                 {
                     if (v.Type.IsAssignableFrom(Disposable))
                     {
-                        Debug.Assert(MethodCache.FindMethod(out MethodDefinition pDef, pContext.CurrentNamespace, v.Type, "Dispose", new SmallType[] { }), "Disposable does not implement Dispose");
+                        Debug.Assert(pContext.Unit.FindMethod(out MethodDefinition pDef, out bool pExact, "", v.Type, "Dispose", new SmallType[] { }), "Disposable does not implement Dispose");
 
                         var func = pContext.GetMethod(pDef.MangledName);
                         LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");
-                }
+                    }
                 }
             }
-                
         }
     }
 }

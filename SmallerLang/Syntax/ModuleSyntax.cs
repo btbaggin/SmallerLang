@@ -12,9 +12,7 @@ namespace SmallerLang.Syntax
     {
         public string Name { get; private set; }
 
-        public string Namespace { get; private set; }
-
-        public string LibraryPath { get; private set; }
+        public IDictionary<string, ModuleSyntax> Imports { get; private set; }
 
         public IList<MethodSyntax> Methods { get; private set; }
 
@@ -26,10 +24,9 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Module;
 
-        internal ModuleSyntax(string pNamespace, string pLibPath, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        internal ModuleSyntax(IDictionary<string, ModuleSyntax> pImports, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
         {
-            Namespace = pNamespace;
-            LibraryPath = pLibPath;
+            Imports = pImports;
             Methods = pMethods;
             Structs = pDefinitions;
             Enums = pEnums;
@@ -37,8 +34,6 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            pContext.CurrentNamespace = Namespace;
-
             //Emit types. Need to do it in order of dependencies so all types resolve
             foreach (var i in Structs.OrderBy((pS) => pS.EmitOrder))
             {
@@ -52,13 +47,13 @@ namespace SmallerLang.Syntax
             }
 
             //Emit method Headers
-            LLVMValueRef _main = default;
+            LLVMValueRef main = default;
             for(int i = 0; i < Methods.Count; i++)
             {
                 var m = Methods[i].EmitHeader(pContext);
                 if(Methods[i].Annotation.Value == Utils.KeyAnnotations.RunMethod)
                 {
-                    _main = m;
+                    main = m;
                 }
             }
 
@@ -76,7 +71,7 @@ namespace SmallerLang.Syntax
 
             pContext.FinishDebug();
 
-            return _main;
+            return main;
         }
     }
 }

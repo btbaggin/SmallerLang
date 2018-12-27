@@ -12,19 +12,20 @@ namespace SmallerLang.Lowering
     {
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
-        NamespaceContainer _namespace;
+        Compiler.CompilationUnit _unit;
 
-        public PostTypeRewriter()
+        public PostTypeRewriter(Compiler.CompilationUnit pUnit)
         {
             _methodsToPoly = new Dictionary<string, List<MethodSyntax>>();
             _polydMethods = new Dictionary<string, List<MethodSyntax>>();
+            _unit = pUnit;
             GetEnumerable();
         }
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _namespace = NamespaceManager.GetNamespace(pNode.Namespace);
             //Find all methods we need to polymorph
+            //A method needs to be polymorphed if any of it's parameters are traits
             foreach (var m in pNode.Methods)
             {
                 foreach(var p in m.Parameters)
@@ -38,9 +39,8 @@ namespace SmallerLang.Lowering
                 }
             }
 
-            var tiv = new Validation.TypeInferenceVisitor();
-            tiv._moduleNamespace = pNode.Namespace;
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
+            //Visit any non-poly nodes
             foreach (var m in pNode.Methods)
             {
                 if(!_methodsToPoly.ContainsKey(m.Name))
@@ -55,6 +55,7 @@ namespace SmallerLang.Lowering
             }
 
             //Retype check methods in case one was rewritten
+            var tiv = new Validation.TypeInferenceVisitor(_unit);
             foreach(var m in methods)
             {
                 //Poly'd methods are checked in TryPolyMethod
@@ -64,14 +65,14 @@ namespace SmallerLang.Lowering
                 }
             }
 
-            return SyntaxFactory.Module(pNode.Namespace, pNode.LibraryPath, methods, pNode.Structs, pNode.Enums);
+            return SyntaxFactory.Module(pNode.Imports, methods, pNode.Structs, pNode.Enums);
         }
 
         protected override SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
             if(_methodsToPoly.ContainsKey(pNode.Value))
             {
-                var method = _namespace.MatchMethod(pNode, _methodsToPoly[pNode.Value]);
+                var method = _unit.MatchMethod(pNode, _methodsToPoly[pNode.Value]);
                 if (method == null) throw new InvalidOperationException("Unable to find matching method");
 
                 if(TryPolyMethod(method, ref pNode))
@@ -122,9 +123,9 @@ namespace SmallerLang.Lowering
                 }
 
                 var method = SyntaxFactory.Method(name.ToString(), pMethod.ReturnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
-                var tiv = new Validation.TypeInferenceVisitor();
+                var tiv = new Validation.TypeInferenceVisitor(_unit);
                 tiv.Visit(method);
-                _namespace.AddMethod(method);
+                _unit.AddMethod(null, method);
 
                 if (!_polydMethods.ContainsKey(name.ToString())) _polydMethods.Add(name.ToString(), new List<MethodSyntax>());
                 _polydMethods[name.ToString()].Add(method);
