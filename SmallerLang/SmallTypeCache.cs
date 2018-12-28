@@ -41,7 +41,7 @@ namespace SmallerLang
             return new SmallType(pType, t);
         }
 
-        internal SmallType AddType(TypeDefinitionSyntax pType)
+        internal SmallType AddType(string pNamespace, TypeDefinitionSyntax pType)
         {
             var name = SyntaxHelper.GetFullTypeName(pType.DeclaredType);
 
@@ -57,11 +57,11 @@ namespace SmallerLang
             var isTrait = pType.DefinitionType == DefinitionTypes.Trait;
             var isGeneric = pType.TypeParameters.Count > 0;
 
-            var st = new SmallType(name, fields.ToArray()) {
+            var st = new SmallType(pNamespace, name, fields.ToArray()) {
                 IsStruct = isStruct,
                 IsTrait = isTrait,
                 IsGenericType = isGeneric,
-                GenericParameters = pType.TypeParameters
+                GenericParameters = pType.TypeParameters,
             };
             _cache[name] = (st, default);
             return st;
@@ -98,7 +98,7 @@ namespace SmallerLang
                     fields.Add(new FieldDefinition(newFieldType, f.Name, f.Visibility));
                 }
 
-                var st = new SmallType(pType.Name, fields.ToArray())
+                var st = new SmallType(pType.Namespace, pType.Name, fields.ToArray())
                 {
                     GenericArguments = pGenericParameters,
                     GenericParameters = pType.GenericParameters,
@@ -139,7 +139,7 @@ namespace SmallerLang
             return _cache[name].Type;
         }
 
-        internal SmallType AddType(EnumSyntax pType)
+        internal SmallType AddType(string pNamespace, EnumSyntax pType)
         {
             string name = pType.Name;
             string[] fields = new string[pType.Names.Count];
@@ -150,7 +150,7 @@ namespace SmallerLang
                 values[j] = pType.Values[j];
             }
 
-            var st = new SmallType(name, fields, values) { IsEnum = true };
+            var st = new SmallType(pNamespace, name, fields, values) { IsEnum = true };
             _cache[name] = (st, LLVMTypeRef.Int32Type());
             return st;
         }

@@ -15,8 +15,11 @@ namespace SmallerLang.Compiler
         readonly MethodCache _methods;
         readonly Dictionary<string, CompilationModule> _references;
 
-        public CompilationUnit()
+        public string Namespace { get; private set; }
+
+        public CompilationUnit(string pNamespace)
         {
+            Namespace = pNamespace;
             _types = new SmallTypeCache();
             _methods = new MethodCache();
             _references = new Dictionary<string, CompilationModule>();
@@ -33,12 +36,9 @@ namespace SmallerLang.Compiler
             return _references.ContainsKey(pAlias);
         }
 
-        internal IEnumerable<(string Alias, CompilationModule Module)> GetReferences()
+        internal CompilationModule GetReference(string pNamespace)
         {
-            foreach(var kv in _references)
-            {
-                yield return (kv.Key, kv.Value);
-            }
+            return _references[pNamespace];
         }
 
         internal int ReferenceCount()
@@ -50,12 +50,12 @@ namespace SmallerLang.Compiler
         #region Types
         public void AddType(TypeDefinitionSyntax pType)
         {
-            _types.AddType(pType);
+            _types.AddType(Namespace, pType);
         }
 
         public void AddType(EnumSyntax pEnum)
         {
-            _types.AddType(pEnum);
+            _types.AddType(Namespace, pEnum);
         }
 
         public SmallType FromString(string pType)
@@ -124,12 +124,12 @@ namespace SmallerLang.Compiler
         #region Methods
         public bool MethodExists(SmallType pType, MethodSyntax pMethod)
         {
-            return _methods.MethodExists(pType, pMethod.Name, pMethod);
+            return _methods.MethodExists(pType, pMethod);
         }
 
         public MethodDefinition AddMethod(SmallType pType, MethodSyntax pMethod)
         {
-            return _methods.AddMethod(pType, pMethod.Name, pMethod);
+            return _methods.AddMethod(pType, Namespace, pMethod);
         }
 
         public MethodSyntax MatchMethod(MethodCallSyntax pCall, IEnumerable<MethodSyntax> pCandidates)
@@ -142,13 +142,23 @@ namespace SmallerLang.Compiler
             return _methods.GetAllMatches(pName, pParameterCount);
         }
 
-        public bool FindMethod(out MethodDefinition pDefinition, out bool pExact, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
+        public bool FindMethod(out MethodDefinition pDefinition, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
         {
             if(!string.IsNullOrEmpty(pNamespace))
             {
-                return _references[pNamespace].Unit.FindMethod(out pDefinition, out pExact, "", pType, pName, pArguments);
+                return _references[pNamespace].Unit.FindMethod(out pDefinition, "", pType, pName, pArguments);
             }
-            return _methods.FindMethod(out pDefinition, out pExact, pType, pName, pArguments);
+            return _methods.FindMethod(out pDefinition, pType, pName, pArguments);
+        }
+
+        public bool CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
+        {
+            foreach(var r in _references)
+            {
+                if (r.Value.Unit._methods.FindCast(pFromType, pToType, out pDefinition)) return true;
+            }
+            pDefinition = default;
+            return false;
         }
         #endregion
     }

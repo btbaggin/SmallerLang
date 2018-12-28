@@ -13,11 +13,7 @@ namespace SmallerLang.Syntax
         private SmallType _type;
         public override SmallType Type
         {
-            get
-            {
-                
-                return _type;
-            } 
+            get { return _type; }
         }
 
         public override SyntaxType SyntaxType => SyntaxType.Type;
@@ -34,6 +30,8 @@ namespace SmallerLang.Syntax
             if (Namespace == null) Value = pValue;
             else Value = Namespace + "." + pValue;
             GenericArguments = pGenericArgs;
+
+            _type = SmallTypeCache.FromString(Value);//Get primitive types
         }
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)

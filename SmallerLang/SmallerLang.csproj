@@ -192,8 +192,8 @@
     <Compile Include="Compiler\CompilationUnit.cs" />
     <Compile Include="DebugType.cs" />
     <Compile Include="Emitting\AccessStack.cs" />
-    <Compile Include="Emitting\GlobalMethodCache.cs" />
     <Compile Include="Emitting\MethodCache.cs" />
+    <Compile Include="Emitting\TypeConstructors.cs" />
     <Compile Include="Emitting\VariableDeclarationBuilder.cs" />
     <Compile Include="FieldDefinition.cs" />
     <Compile Include="GlobalSmallTypeCache.cs" />

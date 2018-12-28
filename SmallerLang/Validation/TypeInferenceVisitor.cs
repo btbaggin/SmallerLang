@@ -258,12 +258,17 @@ namespace SmallerLang.Validation
                 Visit(a);
             }
 
-            var t = _unit.FromString(SyntaxHelper.GetFullTypeName(pNode));
-            if (t.IsGenericType)
+            var name = SyntaxHelper.GetFullTypeName(pNode);
+            var ns = SmallTypeCache.GetNamespace(ref name);
+
+            SmallType type;
+            if (string.IsNullOrEmpty(ns)) type = _unit.FromString(name);
+            else type = _unit.FromStringInNamespace(ns, name);
+            if (type.IsGenericType)
             {
-                t = _unit.MakeConcreteType(t, SyntaxHelper.SelectNodeTypes(pNode.GenericArguments));
+                type = _unit.MakeConcreteType(type, SyntaxHelper.SelectNodeTypes(pNode.GenericArguments));
             }
-            pNode.SetType(t);
+            pNode.SetType(type);
 
             if(pNode.Namespace != null && !_unit.HasReference(pNode.Namespace))
             {
@@ -365,8 +370,7 @@ namespace SmallerLang.Validation
             //Check to ensure this method exists
             if (!SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types))
             {
-                if (Struct == null) CompilerErrors.MethodNotFound(pNode.Value, pNode.Span);
-                else CompilerErrors.MethodNotFound(Struct, pNode.Value, pNode.Span);
+                CompilerErrors.MethodNotFound(m, Struct, pNode.Value, pNode.Arguments, pNode.Span);
                 return;
             }
 

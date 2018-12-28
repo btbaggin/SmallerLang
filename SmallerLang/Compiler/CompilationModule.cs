@@ -13,45 +13,45 @@ namespace SmallerLang.Compiler
 {
     public class CompilationModule
     {
-        ModuleSyntax _module;
+        public ModuleSyntax Module { get; private set; }
         public CompilationUnit Unit { get; private set; }
 
-        public CompilationModule(ModuleSyntax pModule)
+        public CompilationModule(ModuleSyntax pModule, string pNamespace)
         {
-            Unit = new CompilationUnit();
-            _module = pModule;
+            Unit = new CompilationUnit(pNamespace);
+            Module = pModule;
         }
 
         public bool Compile(CompilationUnit pCompilation)
         {
-            _module = new TreeRewriter(pCompilation).VisitModule(_module);
+            Module = new TreeRewriter(pCompilation).VisitModule(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             //Info gathering passes
-            new PreTypeValidation().Visit(_module);
+            new PreTypeValidation().Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            new TypeDiscoveryVisitor(pCompilation).Visit(_module);
+            new TypeDiscoveryVisitor(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             //Type inference
-            new TypeInferenceVisitor(pCompilation).Visit(_module);
+            new TypeInferenceVisitor(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             //TODO need to poly referenced nodes and types
 
             //More advanced transformations that require type information
-            _module = new PostTypeRewriter(pCompilation).VisitModule(_module);
+            Module = new PostTypeRewriter(pCompilation).VisitModule(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             //Validation passes
-            new TypeChecker(pCompilation).Visit(_module);
+            new TypeChecker(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            new PostTypeValidationVisitor().Visit(_module);
+            new PostTypeValidationVisitor(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            new PolyRewriter().Visit(_module);
+            new PolyRewriter().Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             return true;
@@ -62,7 +62,7 @@ namespace SmallerLang.Compiler
             EmitReferencedNodes(pContext);
 
             pContext.Unit = Unit;
-            LLVMValueRef _main = _module.Emit(pContext);
+            LLVMValueRef _main = Module.Emit(pContext);
 
             //Emit our function that the runtime will call. 
             //This will just call the method marked with "@run"
@@ -77,43 +77,38 @@ namespace SmallerLang.Compiler
 
         private void EmitReferencedNodes(Emitting.EmittingContext pContext)
         {
-            //TODO this isn't right because i need to bring the nodes all the way to the top
-            if (Unit.ReferenceCount() > 0)
+            var mrv = new ModuleReferenceVisitor(Unit, pContext);
+            mrv.Visit(Module);
+
+            //Emit types. Need to do it in order of dependencies so all types resolve
+            foreach (var i in mrv.TypeNodes.OrderBy((pS) => ((TypeDefinitionSyntax)pS.Node).EmitOrder))
             {
-                foreach (var r in Unit.GetReferences())
-                {
-                    r.Module.EmitReferencedNodes(pContext);
+                pContext.Unit = i.Unit;
+                i.Node.Emit(pContext);
+            }
 
-                    var mrv = new ModuleReferenceVisitor(r.Alias, r.Module._module);
-                    mrv.Visit(_module);
+            //Emit type methods headers
+            foreach (var m in mrv.MethodNodes)
+            {
+                pContext.Unit = m.Unit;
+                ((MethodSyntax)m.Node).EmitHeader(pContext);
+            }
+            foreach (var s in mrv.TypeNodes)
+            {
+                pContext.Unit = s.Unit;
+                ((TypeDefinitionSyntax)s.Node).EmitMethodHeaders(pContext);
+            }
 
-                    pContext.Unit = r.Module.Unit;
-                    //Emit types. Need to do it in order of dependencies so all types resolve
-                    foreach (var i in mrv.UsedTypes.OrderBy((pS) => pS.EmitOrder))
-                    {
-                        i.Emit(pContext);
-                    }
-
-                    //Emit type methods headers
-                    foreach (var m in mrv.UsedMethods)
-                    {
-                        m.EmitHeader(pContext);
-                    }
-                    foreach(var s in mrv.UsedTypes)
-                    {
-                        s.EmitMethodHeaders(pContext);
-                    }
-
-                    //Emit type methods
-                    foreach(var s in mrv.UsedTypes)
-                    {
-                        s.EmitMethods(pContext);
-                    }
-                    foreach (var m in mrv.UsedMethods)
-                    {
-                        m.Emit(pContext);
-                    }
-                }
+            //Emit type methods
+            foreach (var m in mrv.MethodNodes)
+            {
+                pContext.Unit = m.Unit;
+                ((MethodSyntax)m.Node).Emit(pContext);
+            }
+            foreach (var s in mrv.TypeNodes)
+            {
+                pContext.Unit = s.Unit;
+                ((TypeDefinitionSyntax)s.Node).EmitMethods(pContext);
             }
         }
     }

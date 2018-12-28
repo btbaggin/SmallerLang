@@ -116,7 +116,7 @@ namespace SmallerLang
                     fields[i] = new FieldDefinition(pTypes[i], "");
                 }
 
-                var st = new SmallType(name, fields) { IsTuple = true };
+                var st = new SmallType("", name, fields) { IsTuple = true };
                 _primitiveTypes[name] = (st, default);
             }
 
@@ -157,8 +157,8 @@ namespace SmallerLang
             }
             else
             {
-
-                if(pType.Name == "Test") return pContext.Unit.GetReferences().First().Module.Unit.GetLLVMTypeOfType(pType.Name);
+                if (!string.IsNullOrEmpty(pType.Namespace))
+                    return pContext.Unit.GetReference(pType.Namespace).Unit.GetLLVMTypeOfType(pType.Name);
                 return pContext.Unit.GetLLVMTypeOfType(pType.Name);
             }
 

@@ -11,20 +11,20 @@ namespace SmallerLang.Compiler
     {
         public static CompilationModule Build(WorkspaceSyntax pWorkspace)
         {
-            var module = BuildInternal(pWorkspace.Module);
+            var module = BuildInternal(pWorkspace.Module, null);
             return module;
         }
 
-        private static CompilationModule BuildInternal(ModuleSyntax pModule)
+        private static CompilationModule BuildInternal(ModuleSyntax pModule, string pNamespace)
         {
-            CompilationModule main = new CompilationModule(pModule);
+            CompilationModule main = new CompilationModule(pModule, pNamespace);
             foreach (var i in pModule.Imports)
             {
                 var alias = i.Key;
                 var node = i.Value;
                 //if (node.Imports.Count > 0)
                 //{
-                    var mod = BuildInternal(node);
+                    var mod = BuildInternal(node, alias);
                     main.Unit.AddReference(alias, mod);
                 //}
             }

@@ -48,7 +48,7 @@ namespace SmallerLang.Syntax
                 {
                     if (v.Type.IsAssignableFrom(Disposable))
                     {
-                        Debug.Assert(pContext.Unit.FindMethod(out MethodDefinition pDef, out bool pExact, "", v.Type, "Dispose", new SmallType[] { }), "Disposable does not implement Dispose");
+                        Debug.Assert(pContext.Unit.FindMethod(out MethodDefinition pDef, "", v.Type, "Dispose", new SmallType[] { }), "Disposable does not implement Dispose");
 
                         var func = pContext.GetMethod(pDef.MangledName);
                         LLVMSharp.LLVM.BuildCall(pContext.Builder, func, new LLVMSharp.LLVMValueRef[] { v.Value }, "");

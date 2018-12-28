@@ -83,7 +83,10 @@ namespace SmallerLang.Validation
                        ValidateType(ns, name, s))
                     {
                         var traitType = _unit.FromStringInNamespace(ns, name);
-                        var applyType = _unit.FromString(applyName); //TODO from string in namespace if needed
+
+                        SmallType applyType;
+                        if (string.IsNullOrEmpty(ns)) applyType = _unit.FromString(applyName);
+                        else applyType = _unit.FromStringInNamespace(applyNs, applyName);
 
                         applyType.AddTrait(traitType);
 
@@ -195,7 +198,7 @@ namespace SmallerLang.Validation
         {
             bool found = false;
             if (pMethod.SyntaxType == SyntaxType.Method) found = _unit.MethodExists(pType, pMethod);
-            else if (pMethod.SyntaxType == SyntaxType.CastDefinition) found = MethodCache.CastExists(pType, pMethod.Type);
+            else if (pMethod.SyntaxType == SyntaxType.CastDefinition) found = _unit.CastExists(pType, pMethod.Type, out MethodDefinition pDef);
             else throw new InvalidOperationException("Unknown method type " + pMethod.SyntaxType.ToString());
 
             if (found)

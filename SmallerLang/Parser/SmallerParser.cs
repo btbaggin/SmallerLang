@@ -405,8 +405,8 @@ namespace SmallerLang.Parser
                     part1 = SmallTypeCache.GetArrayType(part1);
                 }
 
-                var ns = part2 != null ? part1 : null;
-                var type = part2 != null ? part2 : part1;
+                string ns = part2 != null ? part1 : null;
+                var type = part2 ?? part1;
                 return SyntaxFactory.Type(ns, type, genericArgs).SetSpan<TypeSyntax>(t);
             }
         }

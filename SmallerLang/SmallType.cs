@@ -23,6 +23,8 @@ namespace SmallerLang
 
         public string Name { get; private set; }
 
+        public string Namespace { get; private set; }
+
         public bool IsGenericParameter { get; internal set; }
 
         public bool IsGenericType { get; internal set; }
@@ -51,8 +53,9 @@ namespace SmallerLang
         }
 
         //Struct constructor
-        internal SmallType(string pName, FieldDefinition[] pFields)
+        internal SmallType(string pNamespace, string pName, FieldDefinition[] pFields)
         {
+            Namespace = pNamespace;
             Name = pName;
             _fields = pFields;
             _implements = new List<SmallType>();
@@ -66,7 +69,7 @@ namespace SmallerLang
         }
 
         //Enum constructor
-        internal SmallType(string pName, string[] pFields, int[] pValues)
+        internal SmallType(string pNamespace, string pName, string[] pFields, int[] pValues)
         {
             System.Diagnostics.Debug.Assert(pFields.Length == pValues.Length);
 
@@ -75,6 +78,8 @@ namespace SmallerLang
             {
                 fields[i] = new FieldDefinition(this, pFields[i], pValues[i]);
             }
+
+            Namespace = pNamespace;
             Name = pName;
             _fields = fields;
             _implements = new List<SmallType>() { SmallTypeCache.Int };

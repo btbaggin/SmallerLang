@@ -98,17 +98,17 @@ namespace SmallerLang.Utils
 
         internal static bool FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationUnit pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
         {
-            pUnit.FindMethod(out pDef, out bool pExact, pNamespace, pType, pName, pArguments);
             //If it's not an exact match, look through each traits methods until we find it
-            if (!pExact)
+            if (!pUnit.FindMethod(out pDef, pNamespace, pType, pName, pArguments))
             {
                 if (pType != null)
                 {
                     foreach (var trait in pType.Implements)
                     {
-                        pUnit.FindMethod(out pDef, out pExact, pNamespace, trait, pName, pArguments);
-                        if (!pExact) return true;
-                        //TODO better error messages when not exact
+                        if(pUnit.FindMethod(out pDef, pNamespace, trait, pName, pArguments))
+                        {
+                            return true;
+                        }
                     }
                 }
 

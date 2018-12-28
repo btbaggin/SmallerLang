@@ -60,23 +60,9 @@ namespace SmallerLang.Syntax
             LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
             arguments[0] = pType;
 
-            //TODO make this better
-            if (pDef.Name == "string.ctor")
+            if (pDef.Name == TypeConstructors.StringFromCharsName)
             {
-                var data = Arguments[0].Emit(pContext);
-
-                //Save length
-                var arrayLength = pContext.GetArrayLength(data);
-                var stringLength = pContext.GetArrayLength(pType);
-
-                LLVM.BuildStore(pContext.Builder, LLVM.BuildLoad(pContext.Builder, arrayLength, ""), stringLength);
-
-                var arrayData = LLVM.BuildInBoundsGEP(pContext.Builder, data, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
-                arrayData = LLVM.BuildLoad(pContext.Builder, arrayData, "");
-
-                //Load the data
-                var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, pType, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
-                LLVM.BuildStore(pContext.Builder, arrayData, variableData);
+                TypeConstructors.StringFromChars(pType, Arguments[0], pContext);
             }
             else
             {

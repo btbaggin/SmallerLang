@@ -118,19 +118,7 @@ namespace SmallerLang.Validation
             if (CurrentType != SmallTypeCache.Undefined)
             {
                 var methodFound = SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types);
-                System.Diagnostics.Debug.Assert(methodFound, "Something went very, very wrong...");
-
-                if (!methodFound)
-                {
-                    //Parameters are type-checked in FindMethod but this will give us good error messages
-                    for (int i = 0; i < m.ArgumentTypes.Count; i++)
-                    {
-                        if (!CanCast(pNode.Arguments[i].Type, m.ArgumentTypes[i]))
-                        {
-                            CompilerErrors.TypeCastError(pNode.Arguments[i].Type, m.ArgumentTypes[i], pNode.Arguments[i].Span);
-                        }
-                    }
-                }
+                System.Diagnostics.Debug.Assert(methodFound, "This shouldn't have happened...");
 
                 //Method calls are finally validated, set the mangled method name which we will actually call
                 m = m.MakeConcreteDefinition(CurrentType);
@@ -142,8 +130,6 @@ namespace SmallerLang.Validation
 
         protected override void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
-            SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
-
             //Check if the type exists
             if(pNode.Struct.Type == SmallTypeCache.Undefined)
             {

@@ -13,6 +13,12 @@ namespace SmallerLang.Validation
     {
         VariableCache _locals; //Used to find unused variables
         ModuleSyntax _mainModule;
+        Compiler.CompilationUnit _unit;
+
+        public PostTypeValidationVisitor(Compiler.CompilationUnit pUnit)
+        {
+            _unit = pUnit;
+        }
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {

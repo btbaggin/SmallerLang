@@ -156,14 +156,27 @@ namespace SmallerLang.Utils
             _error.WriteError($"Return must produce {pCount} expressions", pSpan);
         }
 
-        public static void MethodNotFound(string pMethod, TextSpan pSpan)
+        public static void MethodNotFound(Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
         {
-            _error.WriteError($"Method '{pMethod}' not declared in the current context", pSpan);
-        }
-
-        public static void MethodNotFound(SmallType pType, string pMethod, TextSpan pSpan)
-        {
-            _error.WriteError($"Type {pType} does not declare a method '{pMethod}'", pSpan);
+            if(pDef.Name != null)
+            {
+                //If we found a method but the types are wrong, print cast errors instead
+                for (int i = 0; i < pDef.ArgumentTypes.Count; i++)
+                {
+                    if(!pArguments[i].Type.IsAssignableFrom(pDef.ArgumentTypes[i]))
+                    {
+                        TypeCastError(pArguments[i].Type, pDef.ArgumentTypes[i], pArguments[i].Span);
+                    }
+                }
+            }
+            else if(pType == null)
+            {
+                _error.WriteError($"Method '{pMethod}' not declared in the current context", pSpan);
+            }
+            else
+            {
+                _error.WriteError($"Type {pType} does not declare a method '{pMethod}'", pSpan);
+            }
         }
 
         public static void MethodDuplicate(Syntax.MethodSyntax pMethod, TextSpan pSpan)

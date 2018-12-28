@@ -113,8 +113,7 @@ namespace SmallerLang.Emitting
             }
 
             //Do not mangle external calls so they are properly exported
-            Unit.FindMethod(out MethodDefinition pDefinition, out bool pExact, null, CurrentStruct, pName, originalTypes);
-            Debug.Assert(pExact);
+            Debug.Assert(Unit.FindMethod(out MethodDefinition pDefinition, null, CurrentStruct, pName, originalTypes));
 
             pNewName = pDefinition.MangledName;
 
