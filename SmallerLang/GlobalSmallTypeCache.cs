@@ -34,6 +34,18 @@ namespace SmallerLang
             return s;
         }
 
+        public static bool TryGetEnumerable(Compiler.CompilationCache pCache, out SmallType pType)
+        {
+            pType = pCache.FromStringInNamespace(null, "Enumerable`1");
+            return pType != Undefined;
+        }
+
+        public static bool TryGetDisposable(Compiler.CompilationCache pCache, out SmallType pType)
+        {
+            pType = pCache.FromStringInNamespace(null, "Disposable");
+            return pType != Undefined;
+        }
+
         public static SmallType FromString(string pType)
         {
             if (pType == null) return null;
@@ -158,8 +170,8 @@ namespace SmallerLang
             else
             {
                 if (!string.IsNullOrEmpty(pType.Namespace))
-                    return pContext.Unit.GetReference(pType.Namespace).Unit.GetLLVMTypeOfType(pType.Name);
-                return pContext.Unit.GetLLVMTypeOfType(pType.Name);
+                    return pContext.Cache.GetReference(pType.Namespace).Cache.GetLLVMTypeOfType(pType.Name);
+                return pContext.Cache.GetLLVMTypeOfType(pType.Name);
             }
 
             throw new ArgumentException("Unable to convert to LLVM type " + pType.ToString());

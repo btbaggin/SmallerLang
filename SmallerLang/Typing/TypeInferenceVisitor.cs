@@ -13,9 +13,9 @@ namespace SmallerLang.Validation
     {
         VariableCache _locals;
         SmallType[] _methodReturns;
-        readonly Compiler.CompilationUnit _unit;
+        readonly Compiler.CompilationCache _unit;
 
-        public TypeInferenceVisitor(Compiler.CompilationUnit pUnit)
+        public TypeInferenceVisitor(Compiler.CompilationCache pUnit)
         {
             _locals = new VariableCache();
             _unit = pUnit;
@@ -405,14 +405,19 @@ namespace SmallerLang.Validation
             if (pNode.Iterator != null)
             {
                 Visit((dynamic)pNode.Iterator);
+
                 //Array vs Enumerable<T>
                 if (pNode.Iterator.Type.IsArray)
                 {
                     _itType = pNode.Iterator.Type.GetElementType();
                 }
-                else
+                else if(SmallTypeCache.TryGetEnumerable(_unit, out SmallType enumerable) && pNode.Iterator.Type.IsAssignableFrom(enumerable))
                 {
                     _itType = pNode.Iterator.Type.GenericArguments[0];
+                }
+                else
+                {
+                    _itType = pNode.Iterator.Type;
                 }
             }
             else

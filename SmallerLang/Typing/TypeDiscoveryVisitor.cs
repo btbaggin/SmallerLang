@@ -13,10 +13,10 @@ namespace SmallerLang.Validation
     {
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
         readonly TypeDiscoveryGraph _discoveryGraph;
-        readonly Compiler.CompilationUnit _unit;
+        readonly Compiler.CompilationCache _unit;
         int _order;
 
-        public TypeDiscoveryVisitor(Compiler.CompilationUnit pUnit)
+        public TypeDiscoveryVisitor(Compiler.CompilationCache pUnit)
         {
             _discoveryGraph = new TypeDiscoveryGraph();
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();

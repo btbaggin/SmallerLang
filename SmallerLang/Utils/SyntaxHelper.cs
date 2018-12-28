@@ -96,7 +96,7 @@ namespace SmallerLang.Utils
             return structName.ToString();
         }
 
-        internal static bool FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationUnit pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
+        internal static bool FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationCache pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
         {
             //If it's not an exact match, look through each traits methods until we find it
             if (!pUnit.FindMethod(out pDef, pNamespace, pType, pName, pArguments))

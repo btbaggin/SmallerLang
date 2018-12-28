@@ -9,7 +9,7 @@ using LLVMSharp;
 
 namespace SmallerLang.Compiler
 {
-    public class CompilationUnit
+    public class CompilationCache
     {
         readonly SmallTypeCache _types;
         readonly MethodCache _methods;
@@ -17,7 +17,7 @@ namespace SmallerLang.Compiler
 
         public string Namespace { get; private set; }
 
-        public CompilationUnit(string pNamespace)
+        public CompilationCache(string pNamespace)
         {
             Namespace = pNamespace;
             _types = new SmallTypeCache();
@@ -78,13 +78,13 @@ namespace SmallerLang.Compiler
             {
                 foreach (var r in _references)
                 {
-                    type = r.Value.Unit.FromString(pType);
+                    type = r.Value.Cache.FromString(pType);
                     if (type != SmallTypeCache.Undefined) return type;
                 }
             }
             else
             {
-                type = _references[pNamespace].Unit.FromString(pType);
+                type = _references[pNamespace].Cache.FromString(pType);
                 if (type != SmallTypeCache.Undefined) return type;
             }
 
@@ -102,7 +102,7 @@ namespace SmallerLang.Compiler
             if (SmallTypeCache.IsTypeDefined(pType)) return true;
 
             if(string.IsNullOrEmpty(pNamespace)) return IsTypeDefined(pType);
-            else return _references[pNamespace].Unit.IsTypeDefined(pType);
+            else return _references[pNamespace].Cache.IsTypeDefined(pType);
         }
 
         public LLVMTypeRef GetLLVMTypeOfType(string pType)
@@ -146,7 +146,7 @@ namespace SmallerLang.Compiler
         {
             if(!string.IsNullOrEmpty(pNamespace))
             {
-                return _references[pNamespace].Unit.FindMethod(out pDefinition, "", pType, pName, pArguments);
+                return _references[pNamespace].Cache.FindMethod(out pDefinition, "", pType, pName, pArguments);
             }
             return _methods.FindMethod(out pDefinition, pType, pName, pArguments);
         }
@@ -155,7 +155,7 @@ namespace SmallerLang.Compiler
         {
             foreach(var r in _references)
             {
-                if (r.Value.Unit._methods.FindCast(pFromType, pToType, out pDefinition)) return true;
+                if (r.Value.Cache._methods.FindCast(pFromType, pToType, out pDefinition)) return true;
             }
             pDefinition = default;
             return false;

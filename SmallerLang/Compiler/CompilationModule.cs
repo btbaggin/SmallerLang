@@ -14,15 +14,15 @@ namespace SmallerLang.Compiler
     public class CompilationModule
     {
         public ModuleSyntax Module { get; private set; }
-        public CompilationUnit Unit { get; private set; }
+        public CompilationCache Cache { get; private set; }
 
         public CompilationModule(ModuleSyntax pModule, string pNamespace)
         {
-            Unit = new CompilationUnit(pNamespace);
+            Cache = new CompilationCache(pNamespace);
             Module = pModule;
         }
 
-        public bool Compile(CompilationUnit pCompilation)
+        public bool Compile(CompilationCache pCompilation)
         {
             Module = new TreeRewriter(pCompilation).VisitModule(Module);
             if (CompilerErrors.ErrorOccurred) return false;
@@ -61,7 +61,7 @@ namespace SmallerLang.Compiler
         {
             EmitReferencedNodes(pContext);
 
-            pContext.Unit = Unit;
+            pContext.Cache = Cache;
             LLVMValueRef _main = Module.Emit(pContext);
 
             //Emit our function that the runtime will call. 
@@ -77,37 +77,37 @@ namespace SmallerLang.Compiler
 
         private void EmitReferencedNodes(Emitting.EmittingContext pContext)
         {
-            var mrv = new ModuleReferenceVisitor(Unit, pContext);
+            var mrv = new ModuleReferenceVisitor(Cache, pContext);
             mrv.Visit(Module);
 
             //Emit types. Need to do it in order of dependencies so all types resolve
             foreach (var i in mrv.TypeNodes.OrderBy((pS) => ((TypeDefinitionSyntax)pS.Node).EmitOrder))
             {
-                pContext.Unit = i.Unit;
+                pContext.Cache = i.Unit;
                 i.Node.Emit(pContext);
             }
 
             //Emit type methods headers
             foreach (var m in mrv.MethodNodes)
             {
-                pContext.Unit = m.Unit;
+                pContext.Cache = m.Unit;
                 ((MethodSyntax)m.Node).EmitHeader(pContext);
             }
             foreach (var s in mrv.TypeNodes)
             {
-                pContext.Unit = s.Unit;
+                pContext.Cache = s.Unit;
                 ((TypeDefinitionSyntax)s.Node).EmitMethodHeaders(pContext);
             }
 
             //Emit type methods
             foreach (var m in mrv.MethodNodes)
             {
-                pContext.Unit = m.Unit;
+                pContext.Cache = m.Unit;
                 ((MethodSyntax)m.Node).Emit(pContext);
             }
             foreach (var s in mrv.TypeNodes)
             {
-                pContext.Unit = s.Unit;
+                pContext.Cache = s.Unit;
                 ((TypeDefinitionSyntax)s.Node).EmitMethods(pContext);
             }
         }

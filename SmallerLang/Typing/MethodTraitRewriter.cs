@@ -10,11 +10,17 @@ namespace SmallerLang.Lowering
 {
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
+        /*
+         *This class will rewrite all methods with one or more trait parameter
+         *It will inspect all calling sites of the method
+         * and create copies of the method with the trait parameters replaced with their concrete types
+         */
+
         readonly Dictionary<string, List<MethodSyntax>> _methodsToPoly;
         readonly Dictionary<string, List<MethodSyntax>> _polydMethods;
-        Compiler.CompilationUnit _unit;
+        Compiler.CompilationCache _unit;
 
-        public PostTypeRewriter(Compiler.CompilationUnit pUnit)
+        public PostTypeRewriter(Compiler.CompilationCache pUnit)
         {
             _methodsToPoly = new Dictionary<string, List<MethodSyntax>>();
             _polydMethods = new Dictionary<string, List<MethodSyntax>>();

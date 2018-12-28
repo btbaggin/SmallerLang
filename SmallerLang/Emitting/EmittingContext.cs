@@ -27,7 +27,7 @@ namespace SmallerLang.Emitting
 
         public Dictionary<string, SmallType> TypeMappings { get; set; }
 
-        public Compiler.CompilationUnit Unit { get; internal set; }
+        public Compiler.CompilationCache Cache { get; internal set; }
 
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMContextRef _context;
@@ -80,7 +80,7 @@ namespace SmallerLang.Emitting
                     types[i] = SmallTypeCache.GetLLVMType(pMethod.ReturnValues[i].Type, this);
                 }
                 ret = LLVM.StructType(types, false);
-                Unit.SetLLVMType(pMethod.Type.Name, ret);
+                Cache.SetLLVMType(pMethod.Type.Name, ret);
             }
 
             //If we are emitting a struct method we need to add "self" as a parameter
@@ -105,7 +105,7 @@ namespace SmallerLang.Emitting
                 if (parmType.IsGenericParameter) originalTypes[i] = TypeMappings[parmType.Name];
                 else originalTypes[i] = parmType;
                 
-                //For calling external methods with strings, we want to pass the parameter array
+                //For calling external methods with strings, we only want to pass the character array
                 if (pMethod.External && parmType == SmallTypeCache.String) parmType = parmType.GetElementType();
 
                 parmTypes[start + i] = SmallTypeCache.GetLLVMType(parmType, this);
@@ -113,8 +113,7 @@ namespace SmallerLang.Emitting
             }
 
             //Do not mangle external calls so they are properly exported
-            Debug.Assert(Unit.FindMethod(out MethodDefinition pDefinition, null, CurrentStruct, pName, originalTypes));
-
+            Debug.Assert(Cache.FindMethod(out MethodDefinition pDefinition, null, CurrentStruct, pName, originalTypes));
             pNewName = pDefinition.MangledName;
 
             //Method header
@@ -218,7 +217,7 @@ namespace SmallerLang.Emitting
             //Emit struct
             var t = LLVM.StructCreateNamed(_context, pName);
             t.StructSetBody(types, false);
-            Unit.SetLLVMType(pName, t);
+            Cache.SetLLVMType(pName, t);
         }
         #endregion
 

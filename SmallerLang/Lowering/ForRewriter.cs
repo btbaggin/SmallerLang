@@ -16,13 +16,10 @@ namespace SmallerLang.Lowering
         SmallType _enumerable = null;
         private void GetEnumerable()
         {
-            _enumerable = _unit.FromStringInNamespace(null, "Enumerable`1");
-#if DEBUG
-            if(_enumerable != SmallTypeCache.Undefined)
+            if(SmallTypeCache.TryGetEnumerable(_unit, out _enumerable))
             {
                 Debug.Assert(_enumerable.GetFieldIndex("Count") > -1, "Enumerable does not implement Count");
             }
-#endif
         }
 
         protected override SyntaxNode VisitForSyntax(ForSyntax pNode)
@@ -88,7 +85,6 @@ namespace SmallerLang.Lowering
                 else
                 {
                     //Some bad type. We can't rewrite if it isn't array or enumerable
-                    CompilerErrors.TypeCastError(pNode.Iterator.Type.ToString(), "array or Enumerable", pNode.Iterator.Span);
                     return base.VisitForSyntax(pNode);
                 }
 

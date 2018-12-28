@@ -105,13 +105,13 @@ namespace SmallerLang.Syntax
         private void Emit(Action<SmallType> pAction, EmittingContext pContext)
         {
             var typeName = SyntaxHelper.GetFullTypeName(GetApplicableType());
-            var type = pContext.Unit.FromString(typeName);
+            var type = pContext.Cache.FromString(typeName);
 
             if(_typeMappings.Count > 0)
             {
                 foreach (var t in _typeMappings)
                 {
-                    pContext.CurrentStruct = pContext.Unit.MakeConcreteType(type, t.Values.ToArray());
+                    pContext.CurrentStruct = pContext.Cache.MakeConcreteType(type, t.Values.ToArray());
                     pContext.TypeMappings = t;
                     pAction.Invoke(type);
                     pContext.CurrentStruct = null;

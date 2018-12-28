@@ -13,9 +13,9 @@ namespace SmallerLang.Validation
     {
         VariableCache _locals; //Used to find unused variables
         ModuleSyntax _mainModule;
-        Compiler.CompilationUnit _unit;
+        Compiler.CompilationCache _unit;
 
-        public PostTypeValidationVisitor(Compiler.CompilationUnit pUnit)
+        public PostTypeValidationVisitor(Compiler.CompilationCache pUnit)
         {
             _unit = pUnit;
         }

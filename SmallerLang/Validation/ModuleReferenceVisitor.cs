@@ -11,9 +11,9 @@ namespace SmallerLang.Validation
     struct ReferencedNode
     {
         public SyntaxNode Node { get; private set; }
-        public Compiler.CompilationUnit Unit { get; private set; }
+        public Compiler.CompilationCache Unit { get; private set; }
 
-        public ReferencedNode(SyntaxNode pNode, Compiler.CompilationUnit pUnit)
+        public ReferencedNode(SyntaxNode pNode, Compiler.CompilationCache pUnit)
         {
             Node = pNode;
             Unit = pUnit;
@@ -24,11 +24,11 @@ namespace SmallerLang.Validation
     {
         readonly EmittingContext _context;
         readonly Compiler.CompilationModule _module;
-        readonly Compiler.CompilationUnit _unit;
+        readonly Compiler.CompilationCache _unit;
         public List<ReferencedNode> MethodNodes { get; private set; }
         public List<ReferencedNode> TypeNodes { get; private set; }
 
-        public ModuleReferenceVisitor(Compiler.CompilationUnit pUnit, EmittingContext pContext, Compiler.CompilationModule pModule = null)
+        public ModuleReferenceVisitor(Compiler.CompilationCache pUnit, EmittingContext pContext, Compiler.CompilationModule pModule = null)
         {
             _context = pContext;
             _module = pModule;
@@ -50,10 +50,10 @@ namespace SmallerLang.Validation
                 {
                     if (IsCalledMethod(m, pNode)) //TODO && !Nodes.Contains(m))
                     {
-                        MethodNodes.Add(new ReferencedNode(m, mod.Unit));
+                        MethodNodes.Add(new ReferencedNode(m, mod.Cache));
 
                         //Get any type/methods that this method references
-                        var mrv = new ModuleReferenceVisitor(mod.Unit, _context, mod);
+                        var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
                         mrv.Visit(m);
                         MethodNodes.AddRange(mrv.MethodNodes);
                         TypeNodes.AddRange(mrv.TypeNodes);
@@ -66,7 +66,7 @@ namespace SmallerLang.Validation
         {
             base.VisitTypeSyntax(pNode);
 
-            //TODO needs work
+            //TODO needs work due to namespace issues
             var name = pNode.Type.Name;
             var ns = SmallTypeCache.GetNamespace(ref name);
             if (_module != null || !string.IsNullOrEmpty(ns))
@@ -78,12 +78,12 @@ namespace SmallerLang.Validation
                 {
                     if (pNode.Type == t.Type)//TODO && !UsedTypes.Contains(t))
                     {
-                        TypeNodes.Add(new ReferencedNode(t, mod.Unit));
+                        TypeNodes.Add(new ReferencedNode(t, mod.Cache));
 
                         //Get any type/methods that this method references
                         foreach(var m in t.Methods)
                         {
-                            var mrv = new ModuleReferenceVisitor(mod.Unit, _context, mod);
+                            var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
                             mrv.Visit(m);
                             MethodNodes.AddRange(mrv.MethodNodes);
                             TypeNodes.AddRange(mrv.TypeNodes);

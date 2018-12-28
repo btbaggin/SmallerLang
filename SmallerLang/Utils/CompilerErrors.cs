@@ -32,6 +32,11 @@ namespace SmallerLang.Utils
         {
             _error.WriteError($"Cannot convert type {pFrom.Name} to {pTo.Name}", pSpan);
         }
+
+        public static void IteratorError(SmallType pType, TextSpan pSpan)
+        {
+            _error.WriteError($"Cannot iterate over type {pType} because it doesn't implement Enumerable", pSpan);
+        }
         #endregion
 
         #region Type Definition Errors
@@ -110,6 +115,11 @@ namespace SmallerLang.Utils
         public static void AccessPrivateMember(Syntax.IdentifierSyntax pField, TextSpan pSpan)
         {
             _error.WriteError($"Cannot access member '{pField.Value}' because it is marked as private in the stuct", pSpan);
+        }
+
+        public static void CannotIndex(SmallType pType, TextSpan pSpan)
+        {
+            _error.WriteError($"Cannot apply indexing to an exception of type {pType}", pSpan);
         }
         #endregion
 

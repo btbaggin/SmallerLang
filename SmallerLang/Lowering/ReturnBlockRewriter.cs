@@ -10,8 +10,8 @@ namespace SmallerLang.Lowering
 {
     partial class TreeRewriter : SyntaxNodeRewriter
     {
-        private Compiler.CompilationUnit _unit;
-        public TreeRewriter(Compiler.CompilationUnit pUnit)
+        private Compiler.CompilationCache _unit;
+        public TreeRewriter(Compiler.CompilationCache pUnit)
         {
             _unit = pUnit;
         }

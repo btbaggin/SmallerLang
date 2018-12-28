@@ -37,7 +37,7 @@ namespace SmallerLang.Syntax
             }
 
             //Check if this is a "static" method
-            if (!pContext.Unit.IsTypeDefined(type))//TODO namespace
+            if (!pContext.Cache.IsTypeDefined(type))//TODO namespace
             {
                 LLVMValueRef value;
                 if (Identifier.SyntaxType == SyntaxType.Namespace)

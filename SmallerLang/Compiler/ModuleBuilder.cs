@@ -25,7 +25,7 @@ namespace SmallerLang.Compiler
                 //if (node.Imports.Count > 0)
                 //{
                     var mod = BuildInternal(node, alias);
-                    main.Unit.AddReference(alias, mod);
+                    main.Cache.AddReference(alias, mod);
                 //}
             }
 
@@ -40,7 +40,7 @@ namespace SmallerLang.Compiler
             //    }
             //}
 
-            main.Compile(main.Unit);
+            main.Compile(main.Cache);
             
             return main;
         }

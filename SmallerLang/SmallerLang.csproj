@@ -199,7 +199,7 @@
     <Compile Include="GlobalSmallTypeCache.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Lowering\ForRewriter.cs" />
-    <Compile Include="Lowering\MethodTraitRewriter.cs" />
+    <Compile Include="Typing\MethodTraitRewriter.cs" />
     <Compile Include="Lowering\NamespaceRewriter.cs" />
     <Compile Include="Lowering\TraitRewriter.cs" />
     <Compile Include="Compiler\CompilationModule.cs" />
@@ -215,7 +215,7 @@
     <Compile Include="Syntax\WorkspaceSyntax.cs" />
     <Compile Include="Utils\TypeHelper.cs" />
     <Compile Include="Validation\ModuleReferenceVisitor.cs" />
-    <Compile Include="Validation\TypeDiscoveryVisitor.cs" />
+    <Compile Include="Typing\TypeDiscoveryVisitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Syntax\CaseSyntax.cs" />
     <Compile Include="Syntax\CastDefinitionSyntax.cs" />
@@ -231,7 +231,7 @@
     <Compile Include="Utils\LLVMHelper.cs" />
     <Compile Include="Validation\PreTypeValidation.cs" />
     <Compile Include="Lowering\ReturnBlockRewriter.cs" />
-    <Compile Include="Lowering\StructPolyRewriter.cs" />
+    <Compile Include="Typing\StructPolyRewriter.cs" />
     <Compile Include="Validation\SyntaxNodeVisitor.cs" />
     <Compile Include="CompilerOptions.cs" />
     <Compile Include="ConsoleErrorReporter.cs" />
@@ -283,8 +283,8 @@
     <Compile Include="Utils\SyntaxHelper.cs" />
     <Compile Include="Validation\MethodValidationVisitor.cs" />
     <Compile Include="Lowering\SelectRewriter.cs" />
-    <Compile Include="Validation\TypeChecker.cs" />
-    <Compile Include="Validation\TypeInferenceVisitor.cs" />
+    <Compile Include="Typing\TypeChecker.cs" />
+    <Compile Include="Typing\TypeInferenceVisitor.cs" />
     <Compile Include="Validation\PostTypeValidationVisitor.cs" />
     <Compile Include="VisitorStore.cs" />
   </ItemGroup>

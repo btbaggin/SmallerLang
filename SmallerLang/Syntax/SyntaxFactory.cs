@@ -70,7 +70,7 @@ namespace SmallerLang.Syntax
             return new WhileSyntax(pCondition, pBody);
         }
 
-        public static ForSyntax For(IdentifierSyntax pIterator, bool pBackwards, BlockSyntax pBody)
+        public static ForSyntax For(SyntaxNode pIterator, bool pBackwards, BlockSyntax pBody)
         {
             return new ForSyntax(pIterator, pBackwards, pBody);
         }

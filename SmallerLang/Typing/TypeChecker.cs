@@ -12,9 +12,9 @@ namespace SmallerLang.Validation
     class TypeChecker : SyntaxNodeVisitor
     {
         SmallType[] _methodReturns;
-        readonly Compiler.CompilationUnit _unit;
+        readonly Compiler.CompilationCache _unit;
 
-        public TypeChecker(Compiler.CompilationUnit pUnit)
+        public TypeChecker(Compiler.CompilationCache pUnit)
         {
             _unit = pUnit;
         }
@@ -25,10 +25,12 @@ namespace SmallerLang.Validation
             {
                 CompilerErrors.TypeCastError(pNode.Index.Type, SmallTypeCache.Int, pNode.Index.Span);
             }
+
             if(!pNode.Identifier.Type.IsArray)
             {
-                CompilerErrors.TypeCastError(pNode.Identifier.Type.ToString(), "array", pNode.Span);
+                CompilerErrors.CannotIndex(pNode.Identifier.Type, pNode.Span);
             }
+
             base.VisitArrayAccessSyntax(pNode);
         }
 
@@ -189,10 +191,19 @@ namespace SmallerLang.Validation
 
         protected override void VisitForSyntax(ForSyntax pNode)
         {
-            if (!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
+            if(pNode.Iterator != null)
+            {
+                var enumerable = _unit.FromStringInNamespace(null, "Enumerable`1");
+                if(!pNode.Iterator.Type.IsArray && !CanCast(pNode.Iterator.Type, enumerable))
+                {
+                    CompilerErrors.IteratorError(pNode.Iterator.Type, pNode.Iterator.Span);
+                }
+            }
+            else if(!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
             {
                 CompilerErrors.TypeCastError(pNode.Condition.Type, SmallTypeCache.Boolean, pNode.Condition.Span);
             }
+
             base.VisitForSyntax(pNode);
         }
 
