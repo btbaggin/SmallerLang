@@ -17,7 +17,7 @@ namespace SmallerLang.Syntax
         Implement
     }
 
-    public class TypeDefinitionSyntax : SyntaxNode, IEquatable<TypeDefinitionSyntax>
+    public class TypeDefinitionSyntax : SyntaxNode
     {
         public override SmallType Type => SmallTypeCache.Undefined;
 
@@ -81,7 +81,7 @@ namespace SmallerLang.Syntax
                     m.EmitHeader(pContext);
                 }
 
-                if (!pType.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext, pType);
+                if (!pType.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext, pType); //TODO only do this for structs? why is this different from EmitMethods
             }, pContext);
         }
 
@@ -109,11 +109,18 @@ namespace SmallerLang.Syntax
 
             if(_typeMappings.Count > 0)
             {
+                //If this is a generic type we need to go through each of the concrete definitions and emit everything
+                //Ie would emit two copies of everything
+                //T -> int, U -> bool
+                //T -> float, U -> float 
                 foreach (var t in _typeMappings)
                 {
-                    pContext.CurrentStruct = pContext.Cache.MakeConcreteType(type, t.Values.ToArray());
+                    //The type we want to pass around is the concrete definition of this generic type
+                    var concreteType = pContext.Cache.MakeConcreteType(type, t.Values.ToArray());
+
+                    pContext.CurrentStruct = concreteType;
                     pContext.TypeMappings = t;
-                    pAction.Invoke(type);
+                    pAction.Invoke(concreteType);
                     pContext.CurrentStruct = null;
                     pContext.TypeMappings = null;
                 }
@@ -134,7 +141,7 @@ namespace SmallerLang.Syntax
             {
                 Emit((pType) =>
                 {
-                    pContext.EmitDefinition(SyntaxHelper.GetFullTypeName(DeclaredType), this);
+                    pContext.EmitDefinition(this);
                 }, pContext);
             }
 
@@ -150,15 +157,13 @@ namespace SmallerLang.Syntax
             {
                 var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(pType, pContext), 0) };
 
-                var fullName = SyntaxHelper.GetFullTypeName(DeclaredType);
-                pContext.EmitMethodHeader(fullName + ".ctor", ret, parm);
+                pContext.EmitMethodHeader(TypeHelper.GetDefaultConstructorName(pType), ret, parm);
             }, pContext);
         }
 
         private void EmitGenericConstructor(EmittingContext pContext, SmallType pType)
         {
-            var fullName = SyntaxHelper.GetFullTypeName(DeclaredType);
-            var func = pContext.GetMethod(fullName + ".ctor");
+            var func = pContext.GetMethod(TypeHelper.GetDefaultConstructorName(pType));
 
             var body = LLVM.AppendBasicBlock(func, Name + "body");
             LLVM.PositionBuilderAtEnd(pContext.Builder, body);
@@ -199,13 +204,6 @@ namespace SmallerLang.Syntax
         public override string ToString()
         {
             return DefinitionType.ToString() + " " + DeclaredType.Value;
-        }
-
-        public bool Equals(TypeDefinitionSyntax other)
-        {
-            if (Name != other.Name) return false;
-            if (DefinitionType != other.DefinitionType) return false;
-            return true;
         }
     }
 }

@@ -69,14 +69,13 @@ namespace SmallerLang.Compiler
         public SmallType FromString(string pType)
         {
             //Look through primitive types
-            var type = SmallTypeCache.FromString(pType);
+            if(SmallTypeCache.TryGetPrimitive(pType, out SmallType type))
+            {
+                return type;
+            }
 
             //Look for types defined in this compilation
-            if (type == SmallTypeCache.Undefined)
-            {
-                type = _types.FindType(pType);
-            }
-            return type;
+            return _types.FindType(pType);
         }
 
         public SmallType FromString(NamespaceSyntax pNamespace, string pType)
@@ -85,22 +84,10 @@ namespace SmallerLang.Compiler
             else return FromStringInNamespace(pNamespace.Value, pType);
         }
 
-        internal SmallType FromStringInNamespace(string pNamespace, string pType)
+        private SmallType FromStringInNamespace(string pNamespace, string pType)
         {
-            SmallType type;
-            if(pNamespace == null)
-            {
-                foreach (var r in _references)
-                {
-                    type = r.Value.Cache.FromString(pType);
-                    if (type != SmallTypeCache.Undefined) return type;
-                }
-            }
-            else
-            {
-                type = _references[pNamespace].Cache.FromString(pType);
-                if (type != SmallTypeCache.Undefined) return type;
-            }
+            SmallType type = _references[pNamespace].Cache.FromString(pType);
+            if (type != SmallTypeCache.Undefined) return type;
 
             return FromString(pType);
         }
@@ -131,6 +118,10 @@ namespace SmallerLang.Compiler
 
         public SmallType MakeConcreteType(SmallType pType, params SmallType[] pGenericParameters)
         {
+            if (!string.IsNullOrEmpty(pType.Namespace) && pType.Namespace != Namespace)
+            {
+                return _references[pType.Namespace].Cache.MakeConcreteType(pType, pGenericParameters);
+            }
             return _types.GetConcreteType(pType, pGenericParameters);
         }
         #endregion
@@ -151,8 +142,12 @@ namespace SmallerLang.Compiler
             return _methods.MatchMethod(pCall, pCandidates);
         }
 
-        public IList<MethodDefinition> GetAllMatches(string pName, int pParameterCount)
+        public IList<MethodDefinition> GetAllMatches(string pNamespace, string pName, int pParameterCount)
         {
+            if (!string.IsNullOrEmpty(pNamespace))
+            {
+                return _references[pNamespace].Cache.GetAllMatches(null, pName, pParameterCount);
+            }
             return _methods.GetAllMatches(pName, pParameterCount);
         }
 

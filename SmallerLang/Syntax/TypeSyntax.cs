@@ -30,7 +30,7 @@ namespace SmallerLang.Syntax
             Value = pValue;
             GenericArguments = pGenericArgs;
 
-            _type = SmallTypeCache.FromString(Value);//Get primitive types
+            SmallTypeCache.TryGetPrimitive(Value, out _type);//Get primitive types
         }
 
         public override LLVMSharp.LLVMValueRef Emit(EmittingContext pContext)

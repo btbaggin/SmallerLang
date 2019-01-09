@@ -90,7 +90,8 @@ namespace SmallerLang
 
         public SmallType MakeArrayType()
         {
-            return SmallTypeCache.FromString(SmallTypeCache.GetArrayType(this));
+            SmallTypeCache.TryGetPrimitive(SmallTypeCache.GetArrayType(this), out SmallType t);
+            return t;
         }
 
         public SmallType GetElementType()
@@ -153,15 +154,15 @@ namespace SmallerLang
             return _constructor;
         }
 
-        internal void SetConstructor(Emitting.MethodDefinition pConstructor)
+        internal void SetConstructor(Emitting.MethodDefinition pConstructor, bool pSet = true)
         {
             _constructor = pConstructor;
-            _constructorSet = true;
+            _constructorSet = pSet;
         }
 
         internal void SetDefaultConstructor(List<SmallType> pArguments)
         {
-            _constructor = new Emitting.MethodDefinition(Name + ".ctor", pArguments);
+            _constructor = new Emitting.MethodDefinition(Utils.TypeHelper.GetDefaultConstructorName(this), pArguments);
         }
 
         internal bool HasDefinedConstructor()
@@ -186,6 +187,15 @@ namespace SmallerLang
                 if (_implements[i].IsAssignableFrom(pType)) return true;
             }
             return false;
+        }
+
+        public string GetFullName()
+        {
+            if(HasGenericArguments)
+            {
+                return SmallTypeCache.GetConcreteTypeName(Name, GenericArguments);
+            }
+            return Name;
         }
 
         public override int GetHashCode()

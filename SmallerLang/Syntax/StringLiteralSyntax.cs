@@ -22,19 +22,20 @@ namespace SmallerLang.Syntax
 
             var variable = pContext.AllocateVariable("string_temp", this);
 
+            var literal = EscapeString();
             //Save length
             var length = pContext.GetArrayLength(variable);
-            LLVM.BuildStore(pContext.Builder, pContext.GetInt(Value.Length), length);
+            LLVM.BuildStore(pContext.Builder, pContext.GetInt(literal.Length), length);
 
             //Allocate space for our string
             LLVMValueRef dataArray;
             using (var b = new VariableDeclarationBuilder(pContext))
             {
-                dataArray = LLVM.BuildAlloca(b.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(SmallTypeCache.Char, pContext), (uint)(Value.Length + 1)), ""); //Need to allocate 1 more space for the /0
+                dataArray = LLVM.BuildAlloca(b.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(SmallTypeCache.Char, pContext), (uint)(literal.Length + 1)), ""); //Need to allocate 1 more space for the /0
             }
 
             //Store the string constant in the allocated array
-            var data = pContext.GetString(Value);
+            var data = pContext.GetString(literal);
             LLVM.BuildStore(pContext.Builder, data, dataArray);
 
             //Store the allocated array in the string variable
@@ -43,6 +44,32 @@ namespace SmallerLang.Syntax
             LLVM.BuildStore(pContext.Builder, dataAccess, variableData);
 
             return variable;
+        }
+
+        private string EscapeString()
+        {
+            StringBuilder sb = new StringBuilder();
+            for(int i= 0; i < Value.Length; i++)
+            {
+                if(Value[i] == '\\')
+                {
+                    switch(Value[i + 1])
+                    {
+                        //These values need to match the values in SmallerLexer
+                        case 'n': sb.Append('\n'); break;
+                        case 'r': sb.Append('\r'); break;
+                        case '"': sb.Append('"'); break;
+                        case '\\': sb.Append('\\'); break;
+                    }
+                    i++;
+                }
+                else
+                {
+                    sb.Append(Value[i]);
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }

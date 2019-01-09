@@ -34,27 +34,45 @@ namespace SmallerLang
             return s;
         }
 
+        #region TryGet standard types
         internal static bool TryGetEnumerable(Compiler.CompilationCache pCache, out SmallType pType)
         {
-            pType = pCache.FromStringInNamespace(null, "Enumerable`1");
-            return pType != Undefined;
+            return TryGetStandardType(pCache, "Enumerable`1", out pType);
         }
 
         internal static bool TryGetDisposable(Compiler.CompilationCache pCache, out SmallType pType)
         {
-            pType = pCache.FromStringInNamespace(null, "Disposable");
-            return pType != Undefined;
+            return TryGetStandardType(pCache, "Disposable", out pType);
         }
 
-        public static SmallType FromString(string pType)
+        private static bool TryGetStandardType(Compiler.CompilationCache pCache, string pTypeName, out SmallType pType)
         {
-            if (pType == null) return null;
-            if(_primitiveTypes.ContainsKey(pType))
+            foreach (var r in pCache.GetAllReferences())
             {
-                return _primitiveTypes[pType].Type;
+                pType = r.Cache.FromString(pTypeName);
+                if (pType != Undefined) return true;
+            }
+            pType = Undefined;
+            return false;
+        }
+        #endregion
+
+        public static bool TryGetPrimitive(string pName, out SmallType pType)
+        {
+            if (pName == null)
+            {
+                pType = null;
+                return false;
             }
 
-            return Undefined;
+            if(_primitiveTypes.ContainsKey(pName))
+            {
+                pType = _primitiveTypes[pName].Type;
+                return true;
+            }
+
+            pType = Undefined;
+            return false;
         }
 
         public static bool IsTypeDefined(string pType)
@@ -167,11 +185,11 @@ namespace SmallerLang
                 if (!string.IsNullOrEmpty(pType.Namespace) && 
                     pType.Namespace != pContext.Cache.Namespace)
                 {
-                    return pContext.Cache.GetReference(pType.Namespace).Cache.GetLLVMTypeOfType(pType.Name);
+                    return pContext.Cache.GetReference(pType.Namespace).Cache.GetLLVMTypeOfType(pType.GetFullName());
                 }
 
                 //Otherwise type should be defined in the current namespace
-                return pContext.Cache.GetLLVMTypeOfType(pType.Name);
+                return pContext.Cache.GetLLVMTypeOfType(pType.GetFullName());
             }
 
             throw new ArgumentException("Unable to convert to LLVM type " + pType.ToString());

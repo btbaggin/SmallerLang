@@ -112,7 +112,6 @@ namespace SmallerLang.Emitting
                 if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
             }
 
-            //Do not mangle external calls so they are properly exported
             Debug.Assert(Cache.FindMethod(out MethodDefinition pDefinition, null, CurrentStruct, pName, originalTypes));
             pNewName = pDefinition.MangledName;
 
@@ -203,9 +202,10 @@ namespace SmallerLang.Emitting
         #endregion
 
         #region Definition functionality
-        public void EmitDefinition(string pName, Syntax.TypeDefinitionSyntax pNode)
+        public void EmitDefinition(Syntax.TypeDefinitionSyntax pNode)
         {
             //Get field types
+            var name = CurrentStruct.GetFullName();
             var fields = CurrentStruct.GetFields();
 
             LLVMTypeRef[] types = new LLVMTypeRef[fields.Length];
@@ -215,9 +215,9 @@ namespace SmallerLang.Emitting
             }
 
             //Emit struct
-            var t = LLVM.StructCreateNamed(_context, pName);
+            var t = LLVM.StructCreateNamed(_context, name);
             t.StructSetBody(types, false);
-            Cache.SetLLVMType(pName, t);
+            Cache.SetLLVMType(name, t);
         }
         #endregion
 

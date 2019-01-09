@@ -28,34 +28,21 @@ namespace SmallerLang.Lowering
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            //Add and mark structs for poly
+            //First we go through the current module to find any types that need to poly
             foreach (var s in pNode.Structs)
             {
-                //Find all implementations and generic structs
-                if (s.DefinitionType == DefinitionTypes.Implement)
-                {
-                    var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
-                    if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
-                    _implements[applies].Add(s);
-                }
-                else if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
+                MaybeQueueStructToPoly(s);
             }
 
-            foreach(var r in _compilation.GetAllReferences())
+            //After we have found all of those, we go through the imported modules and find additional types
+            //Since we could be using those types in our main module we need to poly them
+            foreach (var r in _compilation.GetAllReferences())
             {
                 foreach (var s in r.Module.Structs)
                 {
-                    //Find all implementations and generic structs
-                    if (s.DefinitionType == DefinitionTypes.Implement)
-                    {
-                        var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
-                        if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
-                        _implements[applies].Add(s);
-                    }
-                    else if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
+                    MaybeQueueStructToPoly(s);
                 }
             }
-            
 
             base.VisitModuleSyntax(pNode);
         }
@@ -69,6 +56,23 @@ namespace SmallerLang.Lowering
                 TryPolyStruct(s, pNode);
             }
             base.VisitStructInitializerSyntax(pNode);
+        }
+
+        private void MaybeQueueStructToPoly(TypeDefinitionSyntax pType)
+        {
+            //Find all implementations and generic structs
+            //We will need to know this so we can poly implements of the types
+            if (pType.DefinitionType == DefinitionTypes.Implement)
+            {
+                var applies = SyntaxHelper.GetFullTypeName(pType.AppliesTo);
+                if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
+                _implements[applies].Add(pType);
+            }
+            else if (pType.TypeParameters.Count > 0)
+            {
+                //This is a generic type, put it in the queue to be poly'd
+                _structsToPoly.Add(pType.Name, pType);
+            }
         }
 
         private void TryPolyStruct(TypeDefinitionSyntax pNode, StructInitializerSyntax pInitializer)

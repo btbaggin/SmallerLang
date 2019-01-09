@@ -12,6 +12,7 @@ namespace SmallerLangRun
     {
         /*TODO
          * Hide methods/types in modules
+         * When you put -> after a method but don't specify the type
          * returning arrays not working
          * constructor overloads
          * Look to make some structs ref returns

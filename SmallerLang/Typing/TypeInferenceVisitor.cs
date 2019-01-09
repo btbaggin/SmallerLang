@@ -313,7 +313,7 @@ namespace SmallerLang.Validation
             else
             {
                 //Shared or enum value
-                var t = SmallTypeCache.FromString(pNode.Value);
+                var t = _unit.FromString(pNode.Value);
                 pNode.SetType(t);
             }
         }
@@ -346,11 +346,12 @@ namespace SmallerLang.Validation
             SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
             if (SyntaxHelper.HasUndefinedCastAsArg(pNode))
             {
-                IList<MethodDefinition> matches = _unit.GetAllMatches(pNode.Value, pNode.Arguments.Count);
+                IList<MethodDefinition> matches = _unit.GetAllMatches(Namespace, pNode.Value, pNode.Arguments.Count);
                 if(matches.Count > 1)
                 {
                     //If multiple matches are found the implicit cast could map to either method, so we can't tell
                     CompilerErrors.InferImplicitCast(pNode.Span);
+                    return;
                 }
                 else if(matches.Count == 1)
                 {

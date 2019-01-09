@@ -69,11 +69,16 @@ namespace SmallerLang
             return st;
         }
 
+        internal static string GetConcreteTypeName(string pTypeName, params SmallType[] pGenericParameters)
+        {
+            return pTypeName + "<" + string.Join<SmallType>(",", pGenericParameters) + ">";
+        }
+
         internal SmallType GetConcreteType(SmallType pType, params SmallType[] pGenericParameters)
         {
             System.Diagnostics.Debug.Assert(pType.IsGenericType);
 
-            var name = pType.Name + "<" + string.Join<SmallType>(",", pGenericParameters) + ">";
+            var name = GetConcreteTypeName(pType.Name, pGenericParameters);
             if(!_cache.ContainsKey(name))
             {
                 List<FieldDefinition> fields = new List<FieldDefinition>();
@@ -111,24 +116,32 @@ namespace SmallerLang
                 };
 
                 //Poly constructor
-                var existingCtor = pType.GetConstructor();
-                List<SmallType> argumentTypes = new List<SmallType>();
-                foreach(var t in existingCtor.ArgumentTypes)
+                if(pType.HasDefinedConstructor())
                 {
-                    var argType = t;
-                    if(t.IsGenericType)
+                    var existingCtor = pType.GetConstructor();
+                    List<SmallType> argumentTypes = new List<SmallType>();
+                    foreach (var t in existingCtor.ArgumentTypes)
                     {
-                        GetConcreteType(t, pGenericParameters);
+                        var argType = t;
+                        if (t.IsGenericType)
+                        {
+                            GetConcreteType(t, pGenericParameters);
+                        }
+                        else if (t.IsGenericParameter)
+                        {
+                            argType = pGenericParameters[parmMapping[t.Name]];
+                        }
+                        argumentTypes.Add(argType);
                     }
-                    else if (t.IsGenericParameter)
-                    {
-                        argType = pGenericParameters[parmMapping[t.Name]];
-                    }
-                    argumentTypes.Add(argType);
-                }
 
-                var ctor = new Emitting.MethodDefinition(existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
-                st.SetConstructor(ctor);
+                    var ctor = new Emitting.MethodDefinition(existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
+                    st.SetConstructor(ctor, pType.HasDefinedConstructor());
+                }
+                else
+                {
+                    st.SetDefaultConstructor(new List<SmallType>());
+                }
+               
 
                 foreach(var i in pType.Implements)
                 {

@@ -103,7 +103,7 @@ namespace SmallerLang.Validation
                 case UnaryExpressionOperator.PostDecrement:
                 case UnaryExpressionOperator.PostIncrement:
                 case UnaryExpressionOperator.Negative:
-                    if(!TypeHelper.IsNumber(pNode.Value.Type))
+                    if(!TypeHelper.IsInt(pNode.Value.Type))
                     {
                         CompilerErrors.TypeCastError(pNode.Value.Type, SmallTypeCache.Int, pNode.Span);
                     }
@@ -193,10 +193,12 @@ namespace SmallerLang.Validation
         {
             if(pNode.Iterator != null)
             {
-                var enumerable = _unit.FromStringInNamespace(null, "Enumerable`1");
-                if(!pNode.Iterator.Type.IsArray && !CanCast(pNode.Iterator.Type, enumerable))
+                if(SmallTypeCache.TryGetEnumerable(_unit, out SmallType enumerable))
                 {
-                    CompilerErrors.IteratorError(pNode.Iterator.Type, pNode.Iterator.Span);
+                    if (!pNode.Iterator.Type.IsArray && !CanCast(pNode.Iterator.Type, enumerable))
+                    {
+                        CompilerErrors.IteratorError(pNode.Iterator.Type, pNode.Iterator.Span);
+                    }
                 }
             }
             else if(!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))

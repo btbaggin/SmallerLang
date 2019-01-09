@@ -23,5 +23,10 @@ namespace SmallerLang.Utils
             return pType == SmallTypeCache.Float || pType == SmallTypeCache.Double || pType == SmallTypeCache.Int ||
                    pType== SmallTypeCache.Long || pType== SmallTypeCache.Short;
         }
+
+        public static string GetDefaultConstructorName(SmallType pType)
+        {
+            return pType.GetFullName() + ".ctor";
+        }
     }
 }

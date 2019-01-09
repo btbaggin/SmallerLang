@@ -343,8 +343,25 @@ namespace SmallerLang.Lexer
         private Token CreateString()
         {
             Eat(); // Consume opening "
-            while(!_tokenizer.EOF && _tokenizer.Current != '"')
+            bool inEscape = false;
+            while(!_tokenizer.EOF && (_tokenizer.Current != '"' || inEscape))
             {
+                if(inEscape)
+                {
+                    switch (_tokenizer.Current)
+                    {
+                        case 'n':
+                        case 'r':
+                        case '\\':
+                        case '"':
+                            inEscape = false;
+                            break;
+                    }
+                }
+                else
+                {
+                    inEscape = _tokenizer.Current == '\\';
+                }
                 Eat();
             }
             Eat(); //Consume closing "

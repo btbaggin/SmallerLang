@@ -8,7 +8,7 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Validation
 {
-    struct ReferencedNode
+    struct ReferencedNode : IEquatable<ReferencedNode>
     {
         public SyntaxNode Node { get; private set; }
         public Compiler.CompilationCache Unit { get; private set; }
@@ -17,6 +17,39 @@ namespace SmallerLang.Validation
         {
             Node = pNode;
             Unit = pUnit;
+        }
+
+        public bool Equals(ReferencedNode other)
+        {
+            switch(other.Node)
+            {
+                case MethodSyntax m:
+                    //Check both are methods
+                    var n = Node as MethodSyntax;
+                    if (n == null) return false;
+
+                    //Methods are equal if their name and paremeters are the same
+                    if (n.Name != m.Name) return false;
+
+                    if (n.Parameters.Count != m.Parameters.Count) return false;
+
+                    for (int i = 0; i < n.Parameters.Count; i++)
+                    {
+                        if (n.Parameters[i].Type != m.Parameters[i].Type) return false;
+                    }
+                        return true;
+
+                case TypeDefinitionSyntax t:
+                    var nt = Node as TypeDefinitionSyntax;
+                    if (nt == null) return false;
+
+                    if (nt.Name != t.Name) return false;
+                    if (nt.DefinitionType != t.DefinitionType) return false;
+                    return true;
+
+                default:
+                    return false;
+            }
         }
     }
 
@@ -41,22 +74,30 @@ namespace SmallerLang.Validation
         {
             base.VisitMethodCallSyntax(pNode);
 
+            //We only care about methods that aren't in the current module
             if (_module != null || Namespace != null)
             {
                 System.Diagnostics.Debug.Assert(_module != null || _unit.HasReference(Namespace));
 
+                //Get the referenced module
                 var mod = Namespace == null ? _module : _unit.GetReference(Namespace);
+
+                //Find the method
                 foreach (var m in mod.Module.Methods)
                 {
-                    if (IsCalledMethod(m, pNode)) //TODO && !Nodes.Contains(m))
+                    if (IsCalledMethod(m, pNode))
                     {
-                        MethodNodes.Add(new ReferencedNode(m, mod.Cache));
+                        var rn = new ReferencedNode(m, mod.Cache);
+                        if(!MethodNodes.Contains(rn))
+                        {
+                            MethodNodes.Add(rn);
 
-                        //Get any type/methods that this method references
-                        var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
-                        mrv.Visit(m);
-                        MethodNodes.AddRange(mrv.MethodNodes);
-                        TypeNodes.AddRange(mrv.TypeNodes);
+                            //Get any type/methods that this method references
+                            var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
+                            mrv.Visit(m);
+                            MethodNodes.AddRange(mrv.MethodNodes);
+                            TypeNodes.AddRange(mrv.TypeNodes);
+                        }
                     }
                 }
             }
@@ -66,15 +107,21 @@ namespace SmallerLang.Validation
         {
             base.VisitTypeSyntax(pNode);
 
+            if (SmallTypeCache.TryGetPrimitive(pNode.Type.Name, out SmallType tt)) return;
+
+            //We only care about types that aren't in the current module
             if (_module != null || !string.IsNullOrEmpty(pNode.Type.Namespace))
             {
                 System.Diagnostics.Debug.Assert(_module != null || _unit.HasReference(pNode.Type.Namespace));
 
+                //Get the referenced module
                 var mod = Namespace == null ? _module : _unit.GetReference(pNode.Type.Namespace);
+
+                //Find the struct
                 foreach(var t in mod.Module.Structs)
                 {
                     bool add = false;
-                    if (pNode.Type == t.DeclaredType.Type)//TODO && !UsedTypes.Contains(t))
+                    if (pNode.Type == t.DeclaredType.Type)
                     {
                         add = true;
                     }
@@ -88,15 +135,19 @@ namespace SmallerLang.Validation
 
                     if(add)
                     {
-                        TypeNodes.Add(new ReferencedNode(t, mod.Cache));
-
-                        //Get any type/methods that this method references
-                        foreach (var m in t.Methods)
+                        var rn = new ReferencedNode(t, mod.Cache);
+                        if(!TypeNodes.Contains(rn))
                         {
-                            var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
-                            mrv.Visit(m);
-                            MethodNodes.AddRange(mrv.MethodNodes);
-                            TypeNodes.AddRange(mrv.TypeNodes);
+                            TypeNodes.Add(rn);
+
+                            //Get any type/methods that this method references
+                            foreach (var m in t.Methods)
+                            {
+                                var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
+                                mrv.Visit(m);
+                                MethodNodes.AddRange(mrv.MethodNodes);
+                                TypeNodes.AddRange(mrv.TypeNodes);
+                            }
                         }
                     }
                 }
