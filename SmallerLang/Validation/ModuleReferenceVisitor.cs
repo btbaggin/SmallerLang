@@ -66,8 +66,6 @@ namespace SmallerLang.Validation
         {
             base.VisitTypeSyntax(pNode);
 
-            //TODO needs work due to namespace issues
-            var name = pNode.Type.Name;
             if (_module != null || !string.IsNullOrEmpty(pNode.Type.Namespace))
             {
                 System.Diagnostics.Debug.Assert(_module != null || _unit.HasReference(pNode.Type.Namespace));
@@ -75,7 +73,7 @@ namespace SmallerLang.Validation
                 var mod = Namespace == null ? _module : _unit.GetReference(pNode.Type.Namespace);
                 foreach(var t in mod.Module.Structs)
                 {
-                    if (pNode.Type == t.Type)//TODO && !UsedTypes.Contains(t))
+                    if (pNode.Type == t.DeclaredType.Type)//TODO && !UsedTypes.Contains(t))
                     {
                         TypeNodes.Add(new ReferencedNode(t, mod.Cache));
 

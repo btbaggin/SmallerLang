@@ -31,6 +31,8 @@ namespace SmallerLang.Validation
 
             foreach (var s in pNode.Structs)
             {
+                Visit(s.DeclaredType);
+
                 using (var st = Store.AddValue("__Struct", _unit.FromString(SyntaxHelper.GetFullTypeName(s.GetApplicableType()))))
                 {
                     foreach (var m in s.Methods)
@@ -259,18 +261,15 @@ namespace SmallerLang.Validation
             }
 
             var name = SyntaxHelper.GetFullTypeName(pNode);
-            var ns = SmallTypeCache.GetNamespace(ref name);
+            SmallType type = _unit.FromString(pNode.Namespace, name);
 
-            SmallType type;
-            if (string.IsNullOrEmpty(ns)) type = _unit.FromString(name);
-            else type = _unit.FromStringInNamespace(ns, name);
             if (type.IsGenericType)
             {
                 type = _unit.MakeConcreteType(type, SyntaxHelper.SelectNodeTypes(pNode.GenericArguments));
             }
             pNode.SetType(type);
 
-            if(pNode.Namespace != null && !_unit.HasReference(pNode.Namespace))
+            if(pNode.Namespace != null && !_unit.HasReference(pNode.Namespace.Value))
             {
                 CompilerErrors.NamespaceNotDefined(pNode.Namespace, pNode.Span);
             }

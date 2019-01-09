@@ -71,6 +71,12 @@ namespace SmallerLang.Compiler
             return type;
         }
 
+        public SmallType FromString(NamespaceSyntax pNamespace, string pType)
+        {
+            if (pNamespace == null) return FromString(pType);
+            else return FromStringInNamespace(pNamespace.Value, pType);
+        }
+
         internal SmallType FromStringInNamespace(string pNamespace, string pType)
         {
             SmallType type;

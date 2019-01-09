@@ -245,6 +245,11 @@ namespace SmallerLang.Utils
         #endregion
 
         #region Namespace Errors
+        public static void NamespaceNotDefined(Syntax.NamespaceSyntax pNamespace, TextSpan pSpan)
+        {
+            NamespaceNotDefined(pNamespace.Value, pSpan);
+        }
+
         public static void NamespaceNotDefined(string pNamespace, TextSpan pSpan)
         {
             _error.WriteError($"Namespace {pNamespace} has not been defined", pSpan);

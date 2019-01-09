@@ -368,21 +368,22 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 //Check for system types first, then an identifier as a user defined type
-                string part1;
-                string part2 = null;
-                if (Peek(TokenType.TypeFloat)) Expect(TokenType.TypeFloat, out part1);
-                else if (Peek(TokenType.TypeDouble)) Expect(TokenType.TypeDouble, out part1);
-                else if (Peek(TokenType.TypeShort)) Expect(TokenType.TypeShort, out part1);
-                else if (Peek(TokenType.TypeInt)) Expect(TokenType.TypeInt, out part1);
-                else if (Peek(TokenType.TypeLong)) Expect(TokenType.TypeLong, out part1);
-                else if (Peek(TokenType.TypeString)) Expect(TokenType.TypeString, out part1);
-                else if (Peek(TokenType.TypeChar)) Expect(TokenType.TypeChar, out part1);
-                else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out part1);
-                else if (PeekAndExpect(TokenType.Identifier, out part1))
+                string typeName;
+                NamespaceSyntax ns = null;
+                if (Peek(TokenType.TypeFloat)) Expect(TokenType.TypeFloat, out typeName);
+                else if (Peek(TokenType.TypeDouble)) Expect(TokenType.TypeDouble, out typeName);
+                else if (Peek(TokenType.TypeShort)) Expect(TokenType.TypeShort, out typeName);
+                else if (Peek(TokenType.TypeInt)) Expect(TokenType.TypeInt, out typeName);
+                else if (Peek(TokenType.TypeLong)) Expect(TokenType.TypeLong, out typeName);
+                else if (Peek(TokenType.TypeString)) Expect(TokenType.TypeString, out typeName);
+                else if (Peek(TokenType.TypeChar)) Expect(TokenType.TypeChar, out typeName);
+                else if (Peek(TokenType.TypeBool)) Expect(TokenType.TypeBool, out typeName);
+                else if (PeekAndExpect(TokenType.Identifier, out typeName))
                 {
                     if (PeekAndExpect(TokenType.Period))
                     {
-                        Expect(TokenType.Identifier, out part2);
+                        ns = SyntaxFactory.Namespace(typeName);
+                        Expect(TokenType.Identifier, out typeName);
                     }
                 }
                 else return null;
@@ -407,12 +408,13 @@ namespace SmallerLang.Parser
                 if (pAllowArray && PeekAndExpect(TokenType.LeftBracket))
                 {
                     Expect(TokenType.RightBracket);
-                    part1 = SmallTypeCache.GetArrayType(part1);
+                    typeName = SmallTypeCache.GetArrayType(typeName);
                 }
 
-                string ns = part2 != null ? part1 : null;
-                var type = part2 ?? part1;
-                return SyntaxFactory.Type(ns, type, genericArgs).SetSpan<TypeSyntax>(t);
+                //TODO
+                //string ns = part2 != null ? typeName : null;
+                //var type = part2 ?? typeName;
+                return SyntaxFactory.Type(ns, typeName, genericArgs).SetSpan<TypeSyntax>(t);
             }
         }
 

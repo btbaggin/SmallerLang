@@ -412,7 +412,10 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitStringLiteralSyntax(StringLiteralSyntax pNode) { }
 
-        protected virtual void VisitTypeSyntax(TypeSyntax pNode) { }
+        protected virtual void VisitTypeSyntax(TypeSyntax pNode)
+        {
+            Visit(pNode.Namespace);
+        }
 
         protected virtual void VisitUnaryExpressionSyntax(UnaryExpressionSyntax pNode)
         {

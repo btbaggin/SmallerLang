@@ -135,6 +135,11 @@ namespace SmallerLang
             return _primitiveTypes[name].Type;
         }
 
+        /// <summary>
+        /// Retrieves the LLVM type from the given SmallType without a context
+        /// Should only be used to retrieve primitive types
+        /// </summary>
+        /// <param name="pType">The type for which to retrieve the corresponding LLVMTypeRef</param>
         internal static LLVMTypeRef GetLLVMType(SmallType pType)
         {
             return GetLLVMType(pType, null);
@@ -150,6 +155,7 @@ namespace SmallerLang
             }
             else if (pType.IsTuple)
             {
+                //Tuples will be composed of all 
                 LLVMTypeRef[] types = new LLVMTypeRef[pType.GetFieldCount()];
                 for (int i = 0; i < types.Length; i++)
                 {
@@ -161,6 +167,7 @@ namespace SmallerLang
             {
                 System.Diagnostics.Debug.Assert(pContext.TypeMappings.ContainsKey(pType.Name));
 
+                //Generic parameters are retrieved from the type mappings of the current struct
                 return GetLLVMType(pContext.TypeMappings[pType.Name], pContext);
             }
             else if (_primitiveTypes.ContainsKey(pType.Name))
@@ -169,8 +176,14 @@ namespace SmallerLang
             }
             else
             {
-                if (!string.IsNullOrEmpty(pType.Namespace))
+                //Only get the namespace if it's different than the one we are currently in
+                if (!string.IsNullOrEmpty(pType.Namespace) && 
+                    pType.Namespace != pContext.Cache.Namespace)
+                {
                     return pContext.Cache.GetReference(pType.Namespace).Cache.GetLLVMTypeOfType(pType.Name);
+                }
+
+                //Otherwise type should be defined in the current namespace
                 return pContext.Cache.GetLLVMTypeOfType(pType.Name);
             }
 

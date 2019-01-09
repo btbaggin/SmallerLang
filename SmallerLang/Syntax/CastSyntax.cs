@@ -80,11 +80,11 @@ namespace SmallerLang.Syntax
                 }
                 else if (Type == SmallTypeCache.Char)
                 {
-                    ret = LLVM.BuildIntCast(pContext.Builder, val, SmallTypeCache.GetLLVMType(Type), "");
+                    ret = LLVM.BuildIntCast(pContext.Builder, val, SmallTypeCache.GetLLVMType(Type, pContext), "");
                 }
                 else if(FromType == SmallTypeCache.Char)
                 {
-                    ret = LLVM.BuildIntCast(pContext.Builder, val, SmallTypeCache.GetLLVMType(FromType), "");
+                    ret = LLVM.BuildIntCast(pContext.Builder, val, SmallTypeCache.GetLLVMType(FromType, pContext), "");
                 }
                 else
                 {

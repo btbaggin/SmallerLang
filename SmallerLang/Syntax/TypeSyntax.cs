@@ -22,13 +22,12 @@ namespace SmallerLang.Syntax
 
         public string Value { get; private set; }
 
-        public string Namespace { get; private set; }
+        public NamespaceSyntax Namespace { get; private set; }
 
-        internal TypeSyntax(string pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
+        internal TypeSyntax(NamespaceSyntax pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
         {
             Namespace = pNamespace;
-            if (Namespace == null) Value = pValue;
-            else Value = Namespace + "." + pValue;
+            Value = pValue;
             GenericArguments = pGenericArgs;
 
             _type = SmallTypeCache.FromString(Value);//Get primitive types
