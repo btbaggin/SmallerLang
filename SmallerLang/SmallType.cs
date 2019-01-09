@@ -17,6 +17,8 @@ namespace SmallerLang
 
         public bool IsTrait { get; internal set; }
 
+        public bool IsImpl { get; internal set; }
+
         public bool IsEnum { get; internal set; }
 
         public bool IsTuple { get; internal set; }

@@ -55,11 +55,13 @@ namespace SmallerLang
 
             var isStruct = pType.DefinitionType == DefinitionTypes.Struct;
             var isTrait = pType.DefinitionType == DefinitionTypes.Trait;
+            var isImpl = pType.DefinitionType == DefinitionTypes.Implement;
             var isGeneric = pType.TypeParameters.Count > 0;
 
             var st = new SmallType(pNamespace, name, fields.ToArray()) {
                 IsStruct = isStruct,
                 IsTrait = isTrait,
+                IsImpl = isImpl,
                 IsGenericType = isGeneric,
                 GenericParameters = pType.TypeParameters,
             };
