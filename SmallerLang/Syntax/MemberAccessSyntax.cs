@@ -28,16 +28,16 @@ namespace SmallerLang.Syntax
         {
             pContext.EmitDebugLocation(this);
 
-            string ns = "";
+            NamespaceSyntax ns = null;
             string type = Identifier.Value;
             if (Identifier.SyntaxType == SyntaxType.Namespace)
             {
-                ns = Identifier.Value;
+                ns = (NamespaceSyntax)Identifier;
                 type = Value.Value;
             }
 
             //Check if this is a "static" method
-            if (!pContext.Cache.IsTypeDefined(type))//TODO namespace
+            if (!pContext.Cache.IsTypeDefined(ns, type))
             {
                 LLVMValueRef value;
                 if (Identifier.SyntaxType == SyntaxType.Namespace)
@@ -90,7 +90,7 @@ namespace SmallerLang.Syntax
                     return pContext.GetInt(i);
                 }
 
-                throw new NotSupportedException();
+                throw new NotSupportedException("Only static fields on Enums are supported");
             }
         }
 

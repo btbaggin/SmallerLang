@@ -50,6 +50,7 @@ namespace SmallerLang.Compiler
             if (CompilerErrors.ErrorOccurred) return false;
 
             var compilationModule = ModuleBuilder.Build(tree);
+            if (compilationModule == null) return false;
 
             LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);

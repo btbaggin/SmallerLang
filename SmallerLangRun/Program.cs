@@ -11,6 +11,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Hide methods/types in modules
          * returning arrays not working
          * constructor overloads
          * Look to make some structs ref returns

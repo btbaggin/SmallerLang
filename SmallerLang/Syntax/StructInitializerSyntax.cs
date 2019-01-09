@@ -37,6 +37,7 @@ namespace SmallerLang.Syntax
             //Not being used in an assignment
             if(Values.Count == 0)
             {
+                //We return a value here because we need to pass the value on to the rest of the expression
                 var variable = pContext.AllocateVariable("return_temp", Type);
                 BuildCallToConstructor(m, variable, pContext);
                 return variable;
@@ -50,9 +51,10 @@ namespace SmallerLang.Syntax
 
                     BuildCallToConstructor(m, variable, pContext);
                 }
-            }
 
-            return default;
+                //This isn't used in an expression so just calling the constructor on the value is enough
+                return default;
+            }
         }
 
         private void BuildCallToConstructor(MethodDefinition pDef, LLVMValueRef pType, EmittingContext pContext)
@@ -82,7 +84,6 @@ namespace SmallerLang.Syntax
                         arguments[i + 1] = LLVM.BuildBitCast(pContext.Builder, arguments[i + 1], t, "");
                     }
                 }
-
 
                 //Call constructor for all structs
                 LLVM.BuildCall(pContext.Builder, pContext.GetMethod(pDef.MangledName), arguments, "");

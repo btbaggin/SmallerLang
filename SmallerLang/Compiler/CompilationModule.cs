@@ -38,7 +38,7 @@ namespace SmallerLang.Compiler
             new TypeInferenceVisitor(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            //TODO need to poly referenced nodes and types
+            //TODO need to poly referenced nodes
 
             //More advanced transformations that require type information
             Module = new PostTypeRewriter(pCompilation).VisitModule(Module);

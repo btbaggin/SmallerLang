@@ -22,25 +22,12 @@ namespace SmallerLang.Compiler
             {
                 var alias = i.Key;
                 var node = i.Value;
-                //if (node.Imports.Count > 0)
-                //{
-                    var mod = BuildInternal(node, alias);
-                    main.Cache.AddReference(alias, mod);
-                //}
+                var mod = BuildInternal(node, alias);
+
+                if(mod != null) main.Cache.AddReference(alias, mod);
             }
 
-            //foreach (var i in pModule.Imports)
-            //{
-            //    var alias = i.Key;
-            //    var node = i.Value;
-            //    if(node.Imports.Count == 0)
-            //    {
-            //        var mod = BuildInternal(node);
-            //        main.Unit.AddReference(alias, mod);
-            //    }
-            //}
-
-            main.Compile(main.Cache);
+            if (!main.Compile(main.Cache)) return null;
             
             return main;
         }
