@@ -149,13 +149,16 @@ namespace SmallerLang.Syntax
             Emit((pT) =>
             {
                 var parm = new LLVMTypeRef[] { LLVMTypeRef.PointerType(SmallTypeCache.GetLLVMType(pType, pContext), 0) };
-                pContext.EmitMethodHeader(DeclaredType.Value + ".ctor", ret, parm);
+
+                var fullName = SyntaxHelper.GetFullTypeName(DeclaredType);
+                pContext.EmitMethodHeader(fullName + ".ctor", ret, parm);
             }, pContext);
         }
 
         private void EmitGenericConstructor(EmittingContext pContext, SmallType pType)
         {
-            var func = pContext.GetMethod(DeclaredType.Value + ".ctor");
+            var fullName = SyntaxHelper.GetFullTypeName(DeclaredType);
+            var func = pContext.GetMethod(fullName + ".ctor");
 
             var body = LLVM.AppendBasicBlock(func, Name + "body");
             LLVM.PositionBuilderAtEnd(pContext.Builder, body);

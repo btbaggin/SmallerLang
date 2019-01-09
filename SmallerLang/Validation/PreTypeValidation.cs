@@ -12,13 +12,9 @@ namespace SmallerLang.Validation
     {
         protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            if(pNode.DefinitionType != DefinitionTypes.Implement)
+            if(pNode.DefinitionType != DefinitionTypes.Implement && pNode.DeclaredType.Namespace != null)
             {
-                var name = pNode.Name;
-                if (!string.IsNullOrEmpty(SmallTypeCache.GetNamespace(ref name)))
-                {
-                    CompilerErrors.StructNamespace(pNode.Span);
-                }
+                 CompilerErrors.StructNamespace(pNode.Span);
             }
             base.VisitTypeDefinitionSyntax(pNode);
         }

@@ -411,9 +411,6 @@ namespace SmallerLang.Parser
                     typeName = SmallTypeCache.GetArrayType(typeName);
                 }
 
-                //TODO
-                //string ns = part2 != null ? typeName : null;
-                //var type = part2 ?? typeName;
                 return SyntaxFactory.Type(ns, typeName, genericArgs).SetSpan<TypeSyntax>(t);
             }
         }

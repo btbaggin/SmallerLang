@@ -51,7 +51,7 @@ namespace SmallerLang.Compiler
             new PostTypeValidationVisitor(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            new PolyRewriter().Visit(Module);
+            new PolyRewriter(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             return true;

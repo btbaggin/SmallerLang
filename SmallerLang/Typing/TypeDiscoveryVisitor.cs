@@ -73,20 +73,15 @@ namespace SmallerLang.Validation
                 {
                     //Validate that the namespace and type exist
                     var applyName = SyntaxHelper.GetFullTypeName(s.AppliesTo);
-                    var applyNs = SmallTypeCache.GetNamespace(ref applyName);
 
                     var name = SyntaxHelper.GetFullTypeName(s.DeclaredType);
-                    var ns = SmallTypeCache.GetNamespace(ref name);
 
                     //Mark any traits for types
-                    if(ValidateType(applyNs, applyName, s) && 
-                       ValidateType(ns, name, s))
+                    if(ValidateType(s.AppliesTo.Namespace, applyName, s) && 
+                       ValidateType(s.DeclaredType.Namespace, name, s))
                     {
-                        var traitType = _unit.FromStringInNamespace(ns, name);
-
-                        SmallType applyType;
-                        if (string.IsNullOrEmpty(ns)) applyType = _unit.FromString(applyName);
-                        else applyType = _unit.FromStringInNamespace(applyNs, applyName);
+                        SmallType traitType = _unit.FromString(s.DeclaredType.Namespace, name);
+                        SmallType applyType = _unit.FromString(s.AppliesTo.Namespace, applyName);
 
                         applyType.AddTrait(traitType);
 
@@ -269,11 +264,11 @@ namespace SmallerLang.Validation
             }
         }
 
-        private bool ValidateType(string pNamespace, string pType, SyntaxNode pNode)
+        private bool ValidateType(NamespaceSyntax pNamespace, string pType, SyntaxNode pNode)
         {
             //Validate that all namespaces exists
             //Validate that the trait type exists
-            if(!string.IsNullOrEmpty(pNamespace) && !_unit.HasReference(pNamespace))
+            if(pNamespace != null && !_unit.HasReference(pNamespace.Value))
             {
                 CompilerErrors.NamespaceNotDefined(pNamespace, pNode.Span);
                 return false;

@@ -35,7 +35,7 @@ namespace SmallerLang
 
         public bool HasGenericArguments
         {
-            get { return GenericArguments.Length > 0; }
+            get { return GenericArguments != null && GenericArguments.Length > 0; }
         }
 
         public IList<SmallType> Implements => _implements ?? new List<SmallType>(0);

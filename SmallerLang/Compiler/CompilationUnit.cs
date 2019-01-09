@@ -41,6 +41,14 @@ namespace SmallerLang.Compiler
             return _references[pNamespace];
         }
 
+        internal IEnumerable<CompilationModule> GetAllReferences()
+        {
+            foreach(var r in _references.Values)
+            {
+                yield return r;
+            }
+        }
+
         internal int ReferenceCount()
         {
             return _references.Count;
@@ -103,12 +111,12 @@ namespace SmallerLang.Compiler
             return _types.TypeExists(pType);
         }
 
-        public bool IsTypeDefined(string pNamespace, string pType)
+        public bool IsTypeDefined(NamespaceSyntax pNamespace, string pType)
         {
             if (SmallTypeCache.IsTypeDefined(pType)) return true;
 
-            if(string.IsNullOrEmpty(pNamespace)) return IsTypeDefined(pType);
-            else return _references[pNamespace].Cache.IsTypeDefined(pType);
+            if(pNamespace == null) return IsTypeDefined(pType);
+            else return _references[pNamespace.Value].Cache.IsTypeDefined(pType);
         }
 
         public LLVMTypeRef GetLLVMTypeOfType(string pType)

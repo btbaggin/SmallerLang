@@ -22,7 +22,7 @@ namespace SmallerLang
         internal static SmallType Char { get; private set; } = AddType("char", LLVMTypeRef.Int8Type());
         internal static SmallType String { get; private set; } = GetStringType();
 
-        internal static SmallType GetStringType()
+        private static SmallType GetStringType()
         {
             var length = LLVMTypeRef.Int32Type();
             var data = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0);
@@ -34,13 +34,13 @@ namespace SmallerLang
             return s;
         }
 
-        public static bool TryGetEnumerable(Compiler.CompilationCache pCache, out SmallType pType)
+        internal static bool TryGetEnumerable(Compiler.CompilationCache pCache, out SmallType pType)
         {
             pType = pCache.FromStringInNamespace(null, "Enumerable`1");
             return pType != Undefined;
         }
 
-        public static bool TryGetDisposable(Compiler.CompilationCache pCache, out SmallType pType)
+        internal static bool TryGetDisposable(Compiler.CompilationCache pCache, out SmallType pType)
         {
             pType = pCache.FromStringInNamespace(null, "Disposable");
             return pType != Undefined;
@@ -70,19 +70,6 @@ namespace SmallerLang
         public static string GetArrayType(SmallType pType)
         {
             return GetArrayType(pType.Name);
-        }
-
-        internal static string GetNamespace(ref string pType)
-        {
-            var idx = pType.IndexOf('.');
-            if(idx > -1)
-            {
-                var ns = pType.Substring(0, idx);
-                pType = pType.Substring(idx + 1);
-                return ns;
-            }
-
-            return "";
         }
 
         public static SmallType CreateGenericParameter(string pType)
@@ -213,6 +200,12 @@ namespace SmallerLang
                 }
                 LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "");
                 return LLVM.BuildLoad(pContext.Builder, var, "");
+            }
+            else if(pType.IsGenericParameter)
+            {
+                System.Diagnostics.Debug.Assert(pContext.TypeMappings.ContainsKey(pType.Name));
+
+                return GetLLVMDefault(pContext.TypeMappings[pType.Name], pContext);
             }
 
             throw new ArgumentException("Unknown type " + pType.ToString());

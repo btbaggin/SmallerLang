@@ -19,12 +19,10 @@ namespace SmallerLangRun
          * Contracts???
          * 
          * Range 1..10
-         * Generic traits
          * Zero out array allocations
          * Allow returning traits from methods? - No, this should be an error
          * tree shaking of methods
          * control flow analysis?
-         * strings
         */
         static void Main(string[] args)
         {

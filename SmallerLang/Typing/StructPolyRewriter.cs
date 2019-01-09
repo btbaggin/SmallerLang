@@ -17,9 +17,11 @@ namespace SmallerLang.Lowering
          */
         readonly Dictionary<string, TypeDefinitionSyntax> _structsToPoly;
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements;
+        readonly Compiler.CompilationCache _compilation;
 
-        public PolyRewriter()
+        public PolyRewriter(Compiler.CompilationCache pCompilation)
         {
+            _compilation = pCompilation;
             _structsToPoly = new Dictionary<string, TypeDefinitionSyntax>();
             _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         }
@@ -38,6 +40,23 @@ namespace SmallerLang.Lowering
                 }
                 else if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
             }
+
+            foreach(var r in _compilation.GetAllReferences())
+            {
+                foreach (var s in r.Module.Structs)
+                {
+                    //Find all implementations and generic structs
+                    if (s.DefinitionType == DefinitionTypes.Implement)
+                    {
+                        var applies = SyntaxHelper.GetFullTypeName(s.AppliesTo);
+                        if (!_implements.ContainsKey(applies)) _implements.Add(applies, new List<TypeDefinitionSyntax>());
+                        _implements[applies].Add(s);
+                    }
+                    else if (s.TypeParameters.Count > 0) _structsToPoly.Add(s.Name, s);
+                }
+            }
+            
+
             base.VisitModuleSyntax(pNode);
         }
 

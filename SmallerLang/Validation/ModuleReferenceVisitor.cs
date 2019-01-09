@@ -35,7 +35,7 @@ namespace SmallerLang.Validation
             _unit = pUnit;
             MethodNodes = new List<ReferencedNode>();
             TypeNodes = new List<ReferencedNode>();
-        }
+        } 
 
         protected override void VisitMethodCallSyntax(MethodCallSyntax pNode)
         {
@@ -73,12 +73,25 @@ namespace SmallerLang.Validation
                 var mod = Namespace == null ? _module : _unit.GetReference(pNode.Type.Namespace);
                 foreach(var t in mod.Module.Structs)
                 {
+                    bool add = false;
                     if (pNode.Type == t.DeclaredType.Type)//TODO && !UsedTypes.Contains(t))
+                    {
+                        add = true;
+                    }
+                    else if (pNode.Type != null &&
+                             pNode.Type.HasGenericArguments && 
+                             pNode.Type.Name == t.DeclaredType.Type.Name &&
+                             pNode.Type.GenericParameters.Count == t.DeclaredType.Type.GenericParameters.Count)
+                    {
+                        add = true;
+                    }
+
+                    if(add)
                     {
                         TypeNodes.Add(new ReferencedNode(t, mod.Cache));
 
                         //Get any type/methods that this method references
-                        foreach(var m in t.Methods)
+                        foreach (var m in t.Methods)
                         {
                             var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
                             mrv.Visit(m);

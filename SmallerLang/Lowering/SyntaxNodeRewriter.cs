@@ -440,7 +440,6 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitTypeSyntax(TypeSyntax pNode)
         {
-            //TODO check for null?
             return SyntaxFactory.Type((NamespaceSyntax)Visit(pNode.Namespace), pNode.Value, pNode.GenericArguments);
         }
 
