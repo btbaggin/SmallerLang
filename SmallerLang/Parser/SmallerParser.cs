@@ -80,6 +80,11 @@ namespace SmallerLang.Parser
 
                                 if (imports.ContainsKey(alias)) CompilerErrors.DuplicateNamespaceAlias(alias, t);
                                 imports.Add(alias, ParseModule());
+
+                                //We have to restore the stream so that we are looking at the current file
+                                //Rather than the module we just parsed
+                                _stream = currentStream;
+                                _source = currentSource;
                             }
                         }
                         catch

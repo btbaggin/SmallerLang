@@ -68,12 +68,11 @@ namespace SmallerLang.Validation
 
             //TODO needs work due to namespace issues
             var name = pNode.Type.Name;
-            var ns = SmallTypeCache.GetNamespace(ref name);
-            if (_module != null || !string.IsNullOrEmpty(ns))
+            if (_module != null || !string.IsNullOrEmpty(pNode.Type.Namespace))
             {
-                System.Diagnostics.Debug.Assert(_module != null || _unit.HasReference(ns));
+                System.Diagnostics.Debug.Assert(_module != null || _unit.HasReference(pNode.Type.Namespace));
 
-                var mod = Namespace == null ? _module : _unit.GetReference(ns);
+                var mod = Namespace == null ? _module : _unit.GetReference(pNode.Type.Namespace);
                 foreach(var t in mod.Module.Structs)
                 {
                     if (pNode.Type == t.Type)//TODO && !UsedTypes.Contains(t))
