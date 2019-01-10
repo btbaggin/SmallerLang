@@ -98,13 +98,19 @@ namespace SmallerLang.Validation
             if(!pNode.FromType.IsAssignableFrom(pNode.Type) &&
                (!IsStandard(pNode.FromType) || !IsStandard(pNode.Type)))
             {
-                if (_unit.CastExists(pNode.FromType, pNode.Type, out MethodDefinition d))
+                switch (_unit.CastExists(pNode.FromType, pNode.Type, out MethodDefinition d))
                 {
-                    pNode.SetMethod(d);
-                }
-                else
-                {
-                    CompilerErrors.CastDoesNotExist(pNode.FromType, pNode.Type, pNode.Span);
+                    case Compiler.FindResult.Found:
+                        pNode.SetMethod(d);
+                        break;
+
+                    case Compiler.FindResult.NotFound:
+                        CompilerErrors.CastDoesNotExist(pNode.FromType, pNode.Type, pNode.Span);
+                        break;
+
+                    case Compiler.FindResult.IncorrectScope:
+                        CompilerErrors.CastNotIsScope(pNode.FromType, pNode.Type, pNode.Span);
+                        break;
                 }
             }
         }

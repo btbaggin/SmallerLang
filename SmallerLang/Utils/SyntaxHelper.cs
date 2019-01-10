@@ -96,26 +96,25 @@ namespace SmallerLang.Utils
             return structName.ToString();
         }
 
-        internal static bool FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationCache pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
+        internal static Compiler.FindResult FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationCache pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
         {
             //If it's not an exact match, look through each traits methods until we find it
-            if (!pUnit.FindMethod(out pDef, pNamespace, pType, pName, pArguments))
+            var result = pUnit.FindMethod(out pDef, pNamespace, pType, pName, pArguments);
+            if (result != Compiler.FindResult.Found)
             {
                 if (pType != null)
                 {
                     foreach (var trait in pType.Implements)
                     {
-                        if(pUnit.FindMethod(out pDef, pNamespace, trait, pName, pArguments))
-                        {
-                            return true;
-                        }
+                        result = pUnit.FindMethod(out pDef, pNamespace, trait, pName, pArguments);
+                        if (result == Compiler.FindResult.Found) return result;
                     }
                 }
 
-                return false;
+                return result;
             }
 
-            return true;
+            return result;
         }
     }
 }

@@ -12,8 +12,8 @@ namespace SmallerLang.Syntax
     {
         public override SyntaxType SyntaxType => SyntaxType.CastDefinition;
 
-        internal CastDefinitionSyntax(TypedIdentifierSyntax pFromType, BlockSyntax pBody, TypeSyntax pToType) 
-            : base("", new List<TypeSyntax>() { pToType }, new List<TypedIdentifierSyntax>() { pFromType }, pBody, false)
+        internal CastDefinitionSyntax(FileScope pScope, TypedIdentifierSyntax pFromType, BlockSyntax pBody, TypeSyntax pToType) 
+            : base(pScope, "", new List<TypeSyntax>() { pToType }, new List<TypedIdentifierSyntax>() { pFromType }, pBody, false)
         {
             Name = MethodCache.CAST_METHOD; 
         }

@@ -9,6 +9,13 @@ using LLVMSharp;
 
 namespace SmallerLang.Compiler
 {
+    public enum FindResult
+    {
+        Found,
+        IncorrectScope,
+        NotFound
+    }
+
     public class CompilationCache
     {
         readonly SmallTypeCache _types;
@@ -66,7 +73,7 @@ namespace SmallerLang.Compiler
             _types.AddType(Namespace, pEnum);
         }
 
-        public SmallType FromString(string pType)
+        public SmallType FromString(string pType)//TODO find result?
         {
             //Look through primitive types
             if(SmallTypeCache.TryGetPrimitive(pType, out SmallType type))
@@ -127,7 +134,7 @@ namespace SmallerLang.Compiler
         #endregion
 
         #region Methods
-        public bool MethodExists(SmallType pType, MethodSyntax pMethod)
+        public FindResult MethodExists(SmallType pType, MethodSyntax pMethod)
         {
             return _methods.MethodExists(pType, pMethod);
         }
@@ -151,23 +158,26 @@ namespace SmallerLang.Compiler
             return _methods.GetAllMatches(pName, pParameterCount);
         }
 
-        public bool FindMethod(out MethodDefinition pDefinition, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
+        public FindResult FindMethod(out MethodDefinition pDefinition, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
         {
             if(!string.IsNullOrEmpty(pNamespace))
             {
-                return _references[pNamespace].Cache.FindMethod(out pDefinition, "", pType, pName, pArguments);
+                //If we are finding a method in a module we are not going to allow finding private methods
+                return _references[pNamespace].Cache._methods.FindMethod(out pDefinition, false, pType, pName, pArguments);
             }
-            return _methods.FindMethod(out pDefinition, pType, pName, pArguments);
+
+            //This is in the curret module, anything is fair game
+            return _methods.FindMethod(out pDefinition, true, pType, pName, pArguments);
         }
 
-        public bool CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
+        public FindResult CastExists(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
         {
             foreach(var r in _references)
             {
-                if (r.Value.Cache._methods.FindCast(pFromType, pToType, out pDefinition)) return true;
+                if (r.Value.Cache._methods.FindCast(pFromType, pToType, out pDefinition)) return FindResult.Found;
             }
             pDefinition = default;
-            return false;
+            return FindResult.NotFound;
         }
         #endregion
     }

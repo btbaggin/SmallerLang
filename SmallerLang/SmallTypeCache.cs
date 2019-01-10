@@ -134,7 +134,7 @@ namespace SmallerLang
                         argumentTypes.Add(argType);
                     }
 
-                    var ctor = new Emitting.MethodDefinition(existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
+                    var ctor = new Emitting.MethodDefinition(FileScope.Public, existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
                     st.SetConstructor(ctor, pType.HasDefinedConstructor());
                 }
                 else

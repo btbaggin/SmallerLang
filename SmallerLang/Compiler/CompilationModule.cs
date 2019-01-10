@@ -24,7 +24,7 @@ namespace SmallerLang.Compiler
 
         public bool Compile(CompilationCache pCompilation)
         {
-            Module = new TreeRewriter(pCompilation).VisitModule(Module);
+            Module = new PreTypeRewriter(pCompilation).VisitModule(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             //Info gathering passes

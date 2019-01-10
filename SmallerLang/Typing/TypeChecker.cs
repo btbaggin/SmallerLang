@@ -120,7 +120,7 @@ namespace SmallerLang.Validation
             if (CurrentType != SmallTypeCache.Undefined)
             {
                 var methodFound = SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types);
-                System.Diagnostics.Debug.Assert(methodFound, "This shouldn't have happened...");
+                System.Diagnostics.Debug.Assert(methodFound == Compiler.FindResult.Found, "This shouldn't have happened...");
 
                 //Method calls are finally validated, set the mangled method name which we will actually call
                 m = m.MakeConcreteDefinition(CurrentType);

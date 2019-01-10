@@ -15,9 +15,11 @@ namespace SmallerLang.Emitting
         public bool External { get; private set; }
         public List<SmallType> ArgumentTypes { get; private set; }
         public SmallType ReturnType { get; private set; }
+        public FileScope Scope { get; private set; }
 
-        public MethodDefinition(string pName, string pMangled, bool pExternal, List<SmallType> pArguments, SmallType pReturn)
+        public MethodDefinition(FileScope pScope, string pName, string pMangled, bool pExternal, List<SmallType> pArguments, SmallType pReturn)
         {
+            Scope = pScope;
             Name = pName;
             MangledName = pMangled;
             External = pExternal;
@@ -27,6 +29,7 @@ namespace SmallerLang.Emitting
 
         public MethodDefinition(string pName, List<SmallType> pArguments)
         {
+            Scope = FileScope.Public;
             Name = pName;
             MangledName = pName;
             ArgumentTypes = pArguments;
@@ -86,7 +89,7 @@ namespace SmallerLang.Emitting
 
             SmallType ret = SmallTypeCache.GetOrCreateTuple(returnTypes.ToArray());
 
-            return new MethodDefinition(Name, MangledName, External, arguments, ret);
+            return new MethodDefinition(Scope, Name, MangledName, External, arguments, ret);
         }
 
         public override string ToString()
@@ -141,17 +144,17 @@ namespace SmallerLang.Emitting
             return md;
         }
 
-        public bool MethodExists(SmallType pType, MethodSyntax pNode)
+        public Compiler.FindResult MethodExists(SmallType pType, MethodSyntax pNode)
         {
             var name = GetMethodName(pType, pNode.Name);
 
             if (_methods.ContainsKey(name))
             {
                 SmallType[] types = Utils.SyntaxHelper.SelectNodeTypes(pNode.Parameters);
-                return FindMethod(out MethodDefinition m, pType, name, types);
+                return FindMethod(out MethodDefinition m, false, pType, name, types);
             }
 
-            return false;
+            return Compiler.FindResult.NotFound;
         }
 
         internal bool FindCast(SmallType pFromType, SmallType pToType, out MethodDefinition pDefinition)
@@ -182,13 +185,13 @@ namespace SmallerLang.Emitting
             return false;
         }
 
-        public bool FindMethod(out MethodDefinition pMethod, SmallType pType, string pName, params SmallType[] pArguments)
+        public Compiler.FindResult FindMethod(out MethodDefinition pMethod, bool pAllowPrivate, SmallType pType, string pName, params SmallType[] pArguments)
         {
             var name = GetMethodName(pType, pName);
             if (!_methods.ContainsKey(name))
             {
                 pMethod = default;
-                return false;
+                return Compiler.FindResult.NotFound;
             }
 
             List<MethodDefinition> candidates = _methods[name];
@@ -216,13 +219,14 @@ namespace SmallerLang.Emitting
                     if (found)
                     {
                         pMethod = c;
-                        return true;
+                        if (pMethod.Scope == FileScope.Public || pAllowPrivate) return Compiler.FindResult.Found;
+                        return Compiler.FindResult.IncorrectScope;
                     }
                 }
             }
 
             pMethod = retval;
-            return false;
+            return Compiler.FindResult.NotFound;
         }
 
         public MethodSyntax MatchMethod(MethodCallSyntax pCallSite, IEnumerable<MethodSyntax> pMethods)
@@ -287,7 +291,7 @@ namespace SmallerLang.Emitting
 
             SmallType ret = pMethod.Type;
             string mangledName = pNamespace + "__" + pName + "_" + pCounter;
-            return new MethodDefinition(pMethod.Name, mangledName, pMethod.External, arguments, ret);
+            return new MethodDefinition(pMethod.Scope, pMethod.Name, mangledName, pMethod.External, arguments, ret);
         }
     }
 }

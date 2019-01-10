@@ -8,10 +8,15 @@ using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
-    partial class TreeRewriter : SyntaxNodeRewriter
+    /*
+     * This class will ensure that there are no statements after a return
+     * Statements after a return are invalid in LLVM
+     * We can also provide warnings that the code is unreachable
+     */
+    partial class PreTypeRewriter : SyntaxNodeRewriter
     {
         private Compiler.CompilationCache _unit;
-        public TreeRewriter(Compiler.CompilationCache pUnit)
+        public PreTypeRewriter(Compiler.CompilationCache pUnit)
         {
             _unit = pUnit;
         }

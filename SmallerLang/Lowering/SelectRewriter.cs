@@ -8,7 +8,7 @@ using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
-    partial class TreeRewriter : SyntaxNodeRewriter
+    partial class PreTypeRewriter : SyntaxNodeRewriter
     {
         IfSyntax _currentIf;
         ElseSyntax _currentElse;

@@ -222,7 +222,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitCastDefinitionSyntax(CastDefinitionSyntax pNode)
         {
-            return SyntaxFactory.CastDefinition((TypedIdentifierSyntax)Visit(pNode.Parameters[0]), (BlockSyntax)Visit(pNode.Body), (TypeSyntax)Visit(pNode.ReturnValues[0]));
+            return SyntaxFactory.CastDefinition(pNode.Scope, (TypedIdentifierSyntax)Visit(pNode.Parameters[0]), (BlockSyntax)Visit(pNode.Body), (TypeSyntax)Visit(pNode.ReturnValues[0]));
         }
 
         protected virtual SyntaxNode VisitCastSyntax(CastSyntax pNode)
@@ -259,7 +259,7 @@ namespace SmallerLang.Lowering
                 methods.Add((MethodSyntax)Visit(m));
             }
 
-            return SyntaxFactory.TypeDefinition((TypeSyntax)Visit(pNode.DeclaredType), (TypeSyntax)Visit(pNode.AppliesTo), pNode.DefinitionType, methods, fields);
+            return SyntaxFactory.TypeDefinition(pNode.Scope, (TypeSyntax)Visit(pNode.DeclaredType), (TypeSyntax)Visit(pNode.AppliesTo), pNode.DefinitionType, methods, fields);
         }
 
         protected virtual SyntaxNode VisitElseSyntax(ElseSyntax pNode)
@@ -274,7 +274,7 @@ namespace SmallerLang.Lowering
             {
                 values.Add(Visit((dynamic)v));
             }
-            return SyntaxFactory.Enum(pNode.Name, values, pNode.Values);
+            return SyntaxFactory.Enum(pNode.Scope, pNode.Name, values, pNode.Values);
         }
 
         protected virtual SyntaxNode VisitForSyntax(ForSyntax pNode)
@@ -330,7 +330,7 @@ namespace SmallerLang.Lowering
                 returns.Add((TypeSyntax)Visit(r));
             }
 
-            MethodSyntax m = SyntaxFactory.Method(pNode.Name, returns, parameters, (BlockSyntax)Visit(pNode.Body), pNode.External);
+            MethodSyntax m = SyntaxFactory.Method(pNode.Scope, pNode.Name, returns, parameters, (BlockSyntax)Visit(pNode.Body), pNode.External);
 
             m.Annotation = pNode.Annotation;
             return m;

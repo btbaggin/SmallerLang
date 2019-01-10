@@ -191,12 +191,12 @@ namespace SmallerLang.Validation
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
         {
-            bool found = false;
+            Compiler.FindResult found;
             if (pMethod.SyntaxType == SyntaxType.Method) found = _unit.MethodExists(pType, pMethod);
             else if (pMethod.SyntaxType == SyntaxType.CastDefinition) found = _unit.CastExists(pType, pMethod.Type, out MethodDefinition pDef);
             else throw new InvalidOperationException("Unknown method type " + pMethod.SyntaxType.ToString());
 
-            if (found)
+            if (found != Compiler.FindResult.NotFound)
             {
                 if (pMethod.SyntaxType == SyntaxType.Method) CompilerErrors.MethodDuplicate(pMethod, pMethod.Span);
                 else if (pMethod.SyntaxType == SyntaxType.CastDefinition) CompilerErrors.CastDuplicate(pMethod.Parameters[0].Type, pMethod.Type, pMethod.Span);

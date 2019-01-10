@@ -112,7 +112,8 @@ namespace SmallerLang.Emitting
                 if (pMethod.Parameters[i].Type.IsStruct || pMethod.Parameters[i].Type.IsArray) parmTypes[start + i] = LLVMTypeRef.PointerType(parmTypes[start + i], 0);
             }
 
-            Debug.Assert(Cache.FindMethod(out MethodDefinition pDefinition, null, CurrentStruct, pName, originalTypes));
+            var result = Cache.FindMethod(out MethodDefinition pDefinition, null, CurrentStruct, pName, originalTypes);
+            Debug.Assert(result == Compiler.FindResult.Found);
             pNewName = pDefinition.MangledName;
 
             //Method header

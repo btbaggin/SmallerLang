@@ -8,7 +8,7 @@ using SmallerLang.Emitting;
 
 namespace SmallerLang.Lowering
 {
-    partial class TreeRewriter : SyntaxNodeRewriter
+    partial class PreTypeRewriter : SyntaxNodeRewriter
     {
         protected override SyntaxNode VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {

@@ -196,12 +196,13 @@
     <Compile Include="Emitting\TypeConstructors.cs" />
     <Compile Include="Emitting\VariableDeclarationBuilder.cs" />
     <Compile Include="FieldDefinition.cs" />
+    <Compile Include="FileScope.cs" />
     <Compile Include="GlobalSmallTypeCache.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Lowering\ForRewriter.cs" />
     <Compile Include="Typing\MethodTraitRewriter.cs" />
     <Compile Include="Lowering\NamespaceRewriter.cs" />
-    <Compile Include="Lowering\TraitRewriter.cs" />
+    <Compile Include="Lowering\GenericParameterRewriter.cs" />
     <Compile Include="Compiler\CompilationModule.cs" />
     <Compile Include="Compiler\ModuleBuilder.cs" />
     <Compile Include="Syntax\Annotation.cs" />

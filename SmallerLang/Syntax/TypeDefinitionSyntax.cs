@@ -44,7 +44,10 @@ namespace SmallerLang.Syntax
             get { return DeclaredType.Value; }
         }
 
-        internal TypeDefinitionSyntax(TypeSyntax pType, 
+        public FileScope Scope { get; private set; }
+
+        internal TypeDefinitionSyntax(FileScope pScope,
+                                      TypeSyntax pType, 
                                       TypeSyntax pImplements,
                                       DefinitionTypes pDefinitionType,
                                       IList<TypedIdentifierSyntax> pFields, 
@@ -53,6 +56,7 @@ namespace SmallerLang.Syntax
             System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(pType.Value), "Define name cannot be empty");
             System.Diagnostics.Debug.Assert(pDefinitionType != DefinitionTypes.Unknown);
 
+            Scope = pScope;
             DeclaredType = pType;
             DefinitionType = pDefinitionType;
             AppliesTo = pImplements;
@@ -81,7 +85,8 @@ namespace SmallerLang.Syntax
                     m.EmitHeader(pContext);
                 }
 
-                if (!pType.HasDefinedConstructor()) EmitGenericConstructorHeader(pContext, pType); //TODO only do this for structs? why is this different from EmitMethods
+                if (!pType.HasDefinedConstructor() && DefinitionType == DefinitionTypes.Struct)
+                    EmitGenericConstructorHeader(pContext, pType);
             }, pContext);
         }
 
@@ -97,7 +102,8 @@ namespace SmallerLang.Syntax
                     m.Emit(pContext);
                 }
 
-                if (!pType.HasDefinedConstructor() && DefinitionType == DefinitionTypes.Struct) EmitGenericConstructor(pContext, pType);
+                if (!pType.HasDefinedConstructor() && DefinitionType == DefinitionTypes.Struct)
+                    EmitGenericConstructor(pContext, pType);
             }, pContext);
         }
         #endregion

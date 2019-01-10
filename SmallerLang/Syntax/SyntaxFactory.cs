@@ -80,27 +80,27 @@ namespace SmallerLang.Syntax
             return new ForSyntax(pInitializer, pCondition, pFinalizer, pBody);
         }
 
-        public static MethodSyntax ExternalMethod(string pName, TypeSyntax pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
+        public static MethodSyntax ExternalMethod(FileScope pScope, string pName, TypeSyntax pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
         {
             List<TypeSyntax> returns = new List<TypeSyntax>();
             if (pReturns != null) returns.Add(pReturns);
 
-            return new MethodSyntax(pName, returns, pParameters, pBody, true);
+            return new MethodSyntax(pScope, pName, returns, pParameters, pBody, true);
         }
 
-        public static MethodSyntax Method(string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
+        public static MethodSyntax Method(FileScope pScope, string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
         {
-            return new MethodSyntax(pName, pReturns, pParameters, pBody, false);
+            return new MethodSyntax(pScope, pName, pReturns, pParameters, pBody, false);
         }
 
-        public static MethodSyntax Method(string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
+        public static MethodSyntax Method(FileScope pScope, string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {
-            return new MethodSyntax(pName, pReturns, pParameters, pBody, pExternal);
+            return new MethodSyntax(pScope, pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static TypeDefinitionSyntax TypeDefinition(TypeSyntax pType, TypeSyntax pImplements, DefinitionTypes pDefinitionType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields)
+        public static TypeDefinitionSyntax TypeDefinition(FileScope pScope, TypeSyntax pType, TypeSyntax pImplements, DefinitionTypes pDefinitionType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields)
         {
-            return new TypeDefinitionSyntax(pType, pImplements, pDefinitionType, pFields, pMethods);
+            return new TypeDefinitionSyntax(pScope, pType, pImplements, pDefinitionType, pFields, pMethods);
         }
 
         public static StructInitializerSyntax StructInitializer(IList<IdentifierSyntax> pValues, TypeSyntax pStruct, IList<SyntaxNode> pArguments)
@@ -133,9 +133,9 @@ namespace SmallerLang.Syntax
             return new CastSyntax(pValue, pType);
         }
 
-        public static CastDefinitionSyntax CastDefinition(TypedIdentifierSyntax pFromType, BlockSyntax pBody, TypeSyntax pToType)
+        public static CastDefinitionSyntax CastDefinition(FileScope pScope, TypedIdentifierSyntax pFromType, BlockSyntax pBody, TypeSyntax pToType)
         {
-            return new CastDefinitionSyntax(pFromType, pBody, pToType);
+            return new CastDefinitionSyntax(pScope, pFromType, pBody, pToType);
         }
 
         public static DeclarationSyntax Declaration(IList<IdentifierSyntax> pVariables, SyntaxNode pRight)
@@ -213,9 +213,9 @@ namespace SmallerLang.Syntax
             return new DiscardSyntax();
         }
 
-        public static EnumSyntax Enum(string pName, IList<IdentifierSyntax> pNames, IList<int> pValues)
+        public static EnumSyntax Enum(FileScope pScope, string pName, IList<IdentifierSyntax> pNames, IList<int> pValues)
         {
-            return new EnumSyntax(pName, pNames, pValues);
+            return new EnumSyntax(pScope, pName, pNames, pValues);
         }
 
         public static BreakSyntax Break(string pCount)

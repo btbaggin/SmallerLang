@@ -368,10 +368,16 @@ namespace SmallerLang.Validation
             }
 
             //Check to ensure this method exists
-            if (!SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types))
+            var result = SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types);
+            switch(result)
             {
-                CompilerErrors.MethodNotFound(m, Struct, pNode.Value, pNode.Arguments, pNode.Span);
-                return;
+                case Compiler.FindResult.NotFound:
+                    CompilerErrors.MethodNotFound(m, Struct, pNode.Value, pNode.Arguments, pNode.Span);
+                    return;
+
+                case Compiler.FindResult.IncorrectScope:
+                    CompilerErrors.MethodNotInScope(m, Struct, pNode.Value, pNode.Arguments, pNode.Span);
+                    return;
             }
 
             for(int i = 0; i < m.ArgumentTypes.Count; i++)

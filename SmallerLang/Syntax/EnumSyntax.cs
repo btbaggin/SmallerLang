@@ -20,8 +20,11 @@ namespace SmallerLang.Syntax
 
         public IList<int> Values { get; private set; }
 
-        internal EnumSyntax(string pName, IList<IdentifierSyntax> pNames, IList<int> pValues)
+        public FileScope Scope { get; private set; }
+
+        internal EnumSyntax(FileScope pScope, string pName, IList<IdentifierSyntax> pNames, IList<int> pValues)
         {
+            Scope = pScope;
             Name = pName;
             Names = pNames;
             Values = pValues;

@@ -30,9 +30,12 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Method;
 
+        public FileScope Scope { get; private set; }
+
         string _name;
-        internal MethodSyntax(string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
+        internal MethodSyntax(FileScope pScope, string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {
+            Scope = pScope;
             Name = pName;
             ReturnValues = pReturns;
             Parameters = pParameters;

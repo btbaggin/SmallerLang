@@ -128,7 +128,7 @@ namespace SmallerLang.Lowering
                     parameters.Add(parm);
                 }
 
-                var method = SyntaxFactory.Method(name.ToString(), pMethod.ReturnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
+                var method = SyntaxFactory.Method(pMethod.Scope, name.ToString(), pMethod.ReturnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
                 var tiv = new Validation.TypeInferenceVisitor(_unit);
                 tiv.Visit(method);
                 _unit.AddMethod(null, method);

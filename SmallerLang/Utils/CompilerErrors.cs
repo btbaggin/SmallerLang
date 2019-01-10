@@ -189,6 +189,11 @@ namespace SmallerLang.Utils
             }
         }
 
+        public static void MethodNotInScope(Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
+        {
+            _error.WriteError($"Method {pMethod} is inaccessible because of it's marked as private", pSpan);
+        }
+
         public static void MethodDuplicate(Syntax.MethodSyntax pMethod, TextSpan pSpan)
         {
             _error.WriteError($"Method called '{pMethod.Name}' already defined with the same parameter types", pSpan);
@@ -241,6 +246,11 @@ namespace SmallerLang.Utils
         public static void CastDoesNotExist(SmallType pType1, SmallType pType2, TextSpan pSpan)
         {
             _error.WriteError($"Cast for types {pType1} to {pType2} has not been defined", pSpan);
+        }
+
+        public static void CastNotIsScope(SmallType pType1, SmallType pType2, TextSpan pSpan)
+        {
+            _error.WriteError($"Cast for types {pType1} to {pType2} is inaccessible because it's marked as private", pSpan);
         }
         #endregion
 

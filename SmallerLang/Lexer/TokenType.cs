@@ -30,6 +30,8 @@ namespace SmallerLang.Lexer
         On,
         Break,
         Import,
+        ScopePublic,
+        ScopePrivate,
 
         //Struct queries
         LengthOf,

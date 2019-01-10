@@ -22,6 +22,7 @@ namespace SmallerLang.Parser
         readonly SpanManager _spans;
         private bool _allowIt;
         private bool _allowSelf;
+        private FileScope _currentScope;
 
         public SmallerParser(ITokenStream pStream)
         {
@@ -98,6 +99,7 @@ namespace SmallerLang.Parser
                 _stream = currentStream;
                 _source = currentSource;
                 _spans.SetStream(_stream);
+                _currentScope = FileScope.Private;
 
                 //Module content
                 List<MethodSyntax> methods = new List<MethodSyntax>();
@@ -133,6 +135,18 @@ namespace SmallerLang.Parser
                                 break;
 
                             case TokenType.EndOfFile:
+                                break;
+
+                            case TokenType.ScopePrivate:
+                                Expect(TokenType.ScopePrivate);
+                                Expect(TokenType.Colon);
+                                _currentScope = FileScope.Private;
+                                break;
+
+                            case TokenType.ScopePublic:
+                                Expect(TokenType.ScopePublic);
+                                Expect(TokenType.Colon);
+                                _currentScope = FileScope.Public;
                                 break;
 
                             default:
@@ -182,7 +196,7 @@ namespace SmallerLang.Parser
                     i++;
                 }
 
-                return SyntaxFactory.Enum(name, names, values).SetSpan<EnumSyntax>(t);
+                return SyntaxFactory.Enum(_currentScope, name, names, values).SetSpan<EnumSyntax>(t);
             }
         }
 
@@ -249,7 +263,7 @@ namespace SmallerLang.Parser
                     IgnoreNewlines();
                 }
 
-                return SyntaxFactory.TypeDefinition(name, implementOn, type, methods, fields).SetSpan<TypeDefinitionSyntax>(t);
+                return SyntaxFactory.TypeDefinition(_currentScope, name, implementOn, type, methods, fields).SetSpan<TypeDefinitionSyntax>(t);
             }
         }
 
@@ -286,7 +300,7 @@ namespace SmallerLang.Parser
                 }
                 Ignore(TokenType.Newline);
 
-                var m = SyntaxFactory.ExternalMethod(name, r, parameters, null).SetSpan<MethodSyntax>(t);
+                var m = SyntaxFactory.ExternalMethod(_currentScope, name, r, parameters, null).SetSpan<MethodSyntax>(t);
                 m.Annotation = ParseAnnotation();
                 return m;
             }
@@ -311,7 +325,7 @@ namespace SmallerLang.Parser
 
                 //Method body
                 var body = ParseBlock(false);
-                return SyntaxFactory.CastDefinition(p, body, r).SetSpan<CastDefinitionSyntax>(t);
+                return SyntaxFactory.CastDefinition(_currentScope, p, body, r).SetSpan<CastDefinitionSyntax>(t);
             }
         }
 
@@ -355,7 +369,7 @@ namespace SmallerLang.Parser
                     body = ParseBlock(false);
                 }
                 
-                var m = SyntaxFactory.Method(name, returns, parameters, body).SetSpan<MethodSyntax>(t);
+                var m = SyntaxFactory.Method(_currentScope, name, returns, parameters, body).SetSpan<MethodSyntax>(t);
 
                 //Annotations!
                 m.Annotation = ParseAnnotation();

@@ -8,7 +8,14 @@ using SmallerLang.Utils;
 
 namespace SmallerLang.Lowering
 {
-    partial class TreeRewriter : SyntaxNodeRewriter
+    /*
+     * This class will ensure that all generic parameter types are propogated througout the type
+     * struct Test<T>
+     *   T: Field
+     *   
+     * This visitor will rewrite all instances of "T" to refer to the same type
+     */
+    partial class PreTypeRewriter : SyntaxNodeRewriter
     {
         readonly Dictionary<string, List<TypeDefinitionSyntax>> _implements = new Dictionary<string, List<TypeDefinitionSyntax>>();
         Dictionary<string, Dictionary<string, GenericTypeSyntax>> _types = new Dictionary<string, Dictionary<string, GenericTypeSyntax>>();
@@ -33,7 +40,6 @@ namespace SmallerLang.Lowering
 
         protected override SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
-            //Merge trait fields into this struct
             _currentType = SyntaxHelper.GetFullTypeName(pNode.GetApplicableType());
 
             //Create our generic parameter types
@@ -50,22 +56,22 @@ namespace SmallerLang.Lowering
                 }
             }
 
-            //Update any field identifier types to use the generic parm
+            //Update any field identifier types to use the generic parameter type
             List<TypedIdentifierSyntax> fields = new List<TypedIdentifierSyntax>(pNode.Fields.Count); 
             for (int i = 0; i < pNode.Fields.Count; i++)
             {
                 var type = pNode.Fields[i].TypeNode.Value;
 
-                var ti = pNode.Fields[i];
+                var field = pNode.Fields[i];
                 if(_types[_currentType].ContainsKey(type))
                 {
-                    ti = SyntaxFactory.TypedIdentifier(_types[_currentType][type], pNode.Fields[i].Value);
+                    field = SyntaxFactory.TypedIdentifier(_types[_currentType][type], pNode.Fields[i].Value);
                 }
 
-                fields.Add(ti);
+                fields.Add(field);
             }
 
-            //Update any trait field identifier types to use the generic parm
+            //Update any trait field identifier types to use the generic parameter types
             if (_implements.ContainsKey(_currentType) && pNode.DefinitionType != DefinitionTypes.Implement)
             {
                 foreach (var trait in _implements[_currentType])
@@ -73,17 +79,18 @@ namespace SmallerLang.Lowering
                     foreach (var field in trait.Fields)
                     {
                         var type = field.TypeNode.Value;
-                        var ti = field;
+                        var structField = field;
                         if (_types[_currentType].ContainsKey(type))
                         {
-                            ti = SyntaxFactory.TypedIdentifier(_types[_currentType][type], field.Value);
+                            structField = SyntaxFactory.TypedIdentifier(_types[_currentType][type], field.Value);
                         }
 
-                        fields.Add(ti);
+                        fields.Add(structField);
                     }
                 }
             }
 
+            //Ensure all methods are using the new generic parameter types
             List<MethodSyntax> methods = new List<MethodSyntax>(pNode.Methods.Count);
             foreach (var m in pNode.Methods)
             {
@@ -111,11 +118,12 @@ namespace SmallerLang.Lowering
             }
 
             _currentType = null;
-            return SyntaxFactory.TypeDefinition(pNode.DeclaredType, appliesTo, pNode.DefinitionType, methods, fields);
+            return SyntaxFactory.TypeDefinition(pNode.Scope, pNode.DeclaredType, appliesTo, pNode.DefinitionType, methods, fields);
         }
 
         protected override SyntaxNode VisitMethodSyntax(MethodSyntax pNode)
         {
+            //Ensure that this is a method on a generic struct
             if(_currentType != null && _types[_currentType].Count > 0)
             {
                 //Poly any parameters
@@ -146,7 +154,7 @@ namespace SmallerLang.Lowering
                     }
                 }
 
-                return SyntaxFactory.Method(pNode.Name, returnValues, parameters, (BlockSyntax)Visit(pNode.Body));
+                return SyntaxFactory.Method(pNode.Scope, pNode.Name, returnValues, parameters, (BlockSyntax)Visit(pNode.Body));
             }
 
             return base.VisitMethodSyntax(pNode);
