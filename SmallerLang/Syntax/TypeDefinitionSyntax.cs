@@ -111,7 +111,9 @@ namespace SmallerLang.Syntax
         private void Emit(Action<SmallType> pAction, EmittingContext pContext)
         {
             var typeName = SyntaxHelper.GetFullTypeName(GetApplicableType());
-            var type = pContext.Cache.FromString(typeName);
+            var result = pContext.Cache.FromString(typeName, out SmallType type);
+
+            System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);
 
             if(_typeMappings.Count > 0)
             {

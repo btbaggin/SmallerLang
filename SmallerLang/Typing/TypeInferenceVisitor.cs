@@ -33,7 +33,8 @@ namespace SmallerLang.Validation
             {
                 Visit(s.DeclaredType);
 
-                using (var st = Store.AddValue("__Struct", _unit.FromString(SyntaxHelper.GetFullTypeName(s.GetApplicableType()))))
+                _unit.FromString(SyntaxHelper.GetFullTypeName(s.GetApplicableType()), out SmallType type);
+                using (var st = Store.AddValue("__Struct", type))
                 {
                     foreach (var m in s.Methods)
                     {
@@ -261,7 +262,18 @@ namespace SmallerLang.Validation
             }
 
             var name = SyntaxHelper.GetFullTypeName(pNode);
-            SmallType type = _unit.FromString(pNode.Namespace, name);
+            var result = _unit.FromString(pNode.Namespace, name, out SmallType type);
+            switch(result)
+            {
+                //TODO I can't check this right now because generic types won't be found. Can I fix that?
+                //case Compiler.FindResult.NotFound:
+                //    CompilerErrors.UndeclaredType(name, pNode.Span);
+                //    break;
+
+                case Compiler.FindResult.IncorrectScope:
+                    CompilerErrors.TypeNotInScope(name, pNode.Span);
+                    break;
+            }
 
             if (type.IsGenericType)
             {
@@ -313,8 +325,21 @@ namespace SmallerLang.Validation
             else
             {
                 //Shared or enum value
-                var t = _unit.FromString(pNode.Value);
-                pNode.SetType(t);
+                var result = _unit.FromString(pNode.Value, out SmallType t);
+                switch(result)
+                {
+                    case Compiler.FindResult.Found:
+                        pNode.SetType(t);
+                        break;
+
+                    case Compiler.FindResult.IncorrectScope:
+                        CompilerErrors.TypeNotInScope(pNode.Value, pNode.Span);
+                        break;
+
+                    case Compiler.FindResult.NotFound:
+                        CompilerErrors.UndeclaredType(pNode.Value, pNode.Span);
+                        break;
+                }
             }
         }
 

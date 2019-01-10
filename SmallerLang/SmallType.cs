@@ -35,6 +35,8 @@ namespace SmallerLang
 
         public IList<string> GenericParameters { get; internal set; }
 
+        public FileScope Scope { get; internal set; }
+
         public bool HasGenericArguments
         {
             get { return GenericArguments != null && GenericArguments.Length > 0; }

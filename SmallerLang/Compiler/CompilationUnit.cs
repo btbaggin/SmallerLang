@@ -73,30 +73,39 @@ namespace SmallerLang.Compiler
             _types.AddType(Namespace, pEnum);
         }
 
-        public SmallType FromString(string pType)//TODO find result?
+        public FindResult FromString(string pName, out SmallType pType)
         {
             //Look through primitive types
-            if(SmallTypeCache.TryGetPrimitive(pType, out SmallType type))
+            if(SmallTypeCache.TryGetPrimitive(pName, out pType))
             {
-                return type;
+                return FindResult.Found;
             }
 
             //Look for types defined in this compilation
-            return _types.FindType(pType);
+            pType = _types.FindType(pName);
+            if (pType == SmallTypeCache.Undefined) return FindResult.NotFound;
+            return FindResult.Found;
         }
 
-        public SmallType FromString(NamespaceSyntax pNamespace, string pType)
+        public FindResult FromString(NamespaceSyntax pNamespace, string pName, out SmallType pType)
         {
-            if (pNamespace == null) return FromString(pType);
-            else return FromStringInNamespace(pNamespace.Value, pType);
-        }
-
-        private SmallType FromStringInNamespace(string pNamespace, string pType)
-        {
-            SmallType type = _references[pNamespace].Cache.FromString(pType);
-            if (type != SmallTypeCache.Undefined) return type;
-
-            return FromString(pType);
+            if (pNamespace == null)
+            {
+                return FromString(pName, out pType);
+            }
+            else
+            {
+                var result  = _references[pNamespace.Value].Cache.FromString(pName, out pType);
+                if (result == FindResult.NotFound)
+                {
+                    return FromString(pName, out pType);
+                }
+                else if(pType.Scope == FileScope.Private)
+                {
+                    return FindResult.IncorrectScope;
+                }
+                return result;
+            }
         }
 
         public bool IsTypeDefined(string pType)

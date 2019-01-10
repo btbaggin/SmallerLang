@@ -49,8 +49,8 @@ namespace SmallerLang
         {
             foreach (var r in pCache.GetAllReferences())
             {
-                pType = r.Cache.FromString(pTypeName);
-                if (pType != Undefined) return true;
+                var result = r.Cache.FromString(pTypeName, out pType);
+                if (result == Compiler.FindResult.Found) return true;
             }
             pType = Undefined;
             return false;

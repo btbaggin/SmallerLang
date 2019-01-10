@@ -64,6 +64,7 @@ namespace SmallerLang
                 IsImpl = isImpl,
                 IsGenericType = isGeneric,
                 GenericParameters = pType.TypeParameters,
+                Scope = pType.Scope
             };
             _cache[name] = (st, default);
             return st;
@@ -165,7 +166,10 @@ namespace SmallerLang
                 values[j] = pType.Values[j];
             }
 
-            var st = new SmallType(pNamespace, name, fields, values) { IsEnum = true };
+            var st = new SmallType(pNamespace, name, fields, values) {
+                IsEnum = true,
+                Scope = pType.Scope
+            };
             _cache[name] = (st, LLVMTypeRef.Int32Type());
             return st;
         }

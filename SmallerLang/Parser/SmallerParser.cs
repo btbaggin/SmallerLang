@@ -357,7 +357,10 @@ namespace SmallerLang.Parser
                 {
                     do
                     {
-                        returns.Add(ParseType());
+                        var returnType = ParseType();
+                        if (returnType == null) throw ReportError("Expecting return type", t);
+
+                        returns.Add(returnType);
                     } while (PeekAndExpect(TokenType.Comma));
                 }
 

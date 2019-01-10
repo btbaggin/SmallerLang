@@ -23,6 +23,11 @@ namespace SmallerLang.Utils
             _error.WriteError($"Use of undeclared type {pType}", pSpan);
         }
 
+        public static void TypeNotInScope(string pType, TextSpan pSpan)
+        {
+            _error.WriteError($"Type {pType} is inaccessible because it's marked private", pSpan);
+        }
+
         public static void TypeCastError(string pFrom, string pTo, TextSpan pSpan)
         {
             _error.WriteError($"Cannot convert type {pFrom} to {pTo}", pSpan);

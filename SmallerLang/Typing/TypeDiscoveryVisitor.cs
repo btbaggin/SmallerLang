@@ -80,8 +80,11 @@ namespace SmallerLang.Validation
                     if(ValidateType(s.AppliesTo.Namespace, applyName, s) && 
                        ValidateType(s.DeclaredType.Namespace, name, s))
                     {
-                        SmallType traitType = _unit.FromString(s.DeclaredType.Namespace, name);
-                        SmallType applyType = _unit.FromString(s.AppliesTo.Namespace, applyName);
+                        var result = _unit.FromString(s.DeclaredType.Namespace, name, out SmallType traitType);
+                        System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);
+
+                        result = _unit.FromString(s.AppliesTo.Namespace, applyName, out SmallType applyType);
+                        System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);
 
                         applyType.AddTrait(traitType);
 
@@ -100,10 +103,10 @@ namespace SmallerLang.Validation
             //Add struct methods to MethodCache
             foreach (var s in pNode.Structs)
             {
-                var t = s.GetApplicableType();
+                var typeName = SyntaxHelper.GetFullTypeName(s.GetApplicableType());
+                var result = _unit.FromString(typeName, out SmallType type);
 
-                var typeName = SyntaxHelper.GetFullTypeName(t);
-                SmallType type = _unit.FromString(typeName);
+                System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found, "We just added all our types, but a type doesn't exist?");
 
                 for (int j = 0; j < s.Methods.Count; j++)
                 {
@@ -173,8 +176,8 @@ namespace SmallerLang.Validation
                 var typeName = SyntaxHelper.GetFullTypeName(f.TypeNode);
                 if (!pDefinition.TypeParameters.Contains(typeName))
                 {
-                    var fieldType = _unit.FromString(typeName);
-                    if (fieldType == SmallTypeCache.Undefined) return false;
+                    var result = _unit.FromString(typeName, out SmallType fieldType);
+                    if (result != Compiler.FindResult.Found) return false;
 
                     f.TypeNode.SetType(fieldType);
                 }
@@ -213,11 +216,13 @@ namespace SmallerLang.Validation
 
                 foreach (var p in pMethod.Parameters)
                 {
-                    p.TypeNode.SetType(_unit.FromString(Utils.SyntaxHelper.GetFullTypeName(p.TypeNode)));
+                    _unit.FromString(SyntaxHelper.GetFullTypeName(p.TypeNode), out SmallType t);
+                    p.TypeNode.SetType(t);
                 }
                 foreach (var r in pMethod.ReturnValues)
                 {
-                    r.SetType(_unit.FromString(SyntaxHelper.GetFullTypeName(r)));
+                    _unit.FromString(SyntaxHelper.GetFullTypeName(r), out SmallType t);
+                    r.SetType(t);
                 }
 
                 pDefinition = _unit.AddMethod(pType, pMethod);
