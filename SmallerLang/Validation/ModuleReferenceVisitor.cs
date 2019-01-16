@@ -103,6 +103,34 @@ namespace SmallerLang.Validation
             }
         }
 
+        protected override void VisitCastSyntax(CastSyntax pNode)
+        {
+            base.VisitCastSyntax(pNode);
+
+            //We only care about methods that aren't in the current module
+            foreach(var mod in _unit.GetAllReferences())
+            {
+                //Find the method
+                foreach (var m in mod.Module.Methods)
+                {
+                    if (m is CastDefinitionSyntax c && IsCalledCast(c, pNode))
+                    {
+                        var rn = new ReferencedNode(m, mod.Cache);
+                        if (!MethodNodes.Contains(rn))
+                        {
+                            MethodNodes.Add(rn);
+
+                            //Get any type/methods that this method references
+                            var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
+                            mrv.Visit(m);
+                            MethodNodes.AddRange(mrv.MethodNodes);
+                            TypeNodes.AddRange(mrv.TypeNodes);
+                        }
+                    }
+                }
+            }
+        }
+
         protected override void VisitTypeSyntax(TypeSyntax pNode)
         {
             base.VisitTypeSyntax(pNode);
@@ -163,6 +191,12 @@ namespace SmallerLang.Validation
                 if (!pMethod.Parameters[i].Type.IsAssignableFrom(pCall.Arguments[i].Type)) return false;
             }
             return true;
+        }
+
+        private bool IsCalledCast(CastDefinitionSyntax pMethod, CastSyntax pCall)
+        {
+            return pMethod.Parameters[0].Type == pCall.FromType &&
+                   pMethod.ReturnValues[0].Type == pCall.Type;
         }
     }
 }

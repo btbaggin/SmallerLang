@@ -178,7 +178,6 @@ namespace SmallerLang.Validation
                    pType == SmallTypeCache.Long ||
                    pType == SmallTypeCache.Float ||
                    pType == SmallTypeCache.Double ||
-                   pType == SmallTypeCache.String ||
                    pType == SmallTypeCache.Boolean ||
                    pType == SmallTypeCache.Char;
         }

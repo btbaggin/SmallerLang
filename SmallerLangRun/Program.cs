@@ -13,7 +13,6 @@ namespace SmallerLangRun
         /*TODO
          * returning arrays not working
          * constructor overloads
-         * Allow multiple modules to the same namespace alias
          * Contracts???
          * 
          * Range 1..10

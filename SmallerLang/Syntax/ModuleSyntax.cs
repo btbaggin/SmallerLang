@@ -12,7 +12,7 @@ namespace SmallerLang.Syntax
     {
         public string Name { get; private set; }
 
-        public IDictionary<string, ModuleSyntax> Imports { get; private set; }
+        public Dictionary<string, ModuleSyntax> Imports { get; private set; }
 
         public List<MethodSyntax> Methods { get; private set; }
 
@@ -24,7 +24,7 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Module;
 
-        internal ModuleSyntax(IDictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
+        internal ModuleSyntax(Dictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
         {
             Imports = pImports;
             Methods = pMethods;

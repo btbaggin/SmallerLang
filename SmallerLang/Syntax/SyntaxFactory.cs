@@ -8,7 +8,7 @@ namespace SmallerLang.Syntax
 {
     public static class SyntaxFactory
     {
-        public static ModuleSyntax Module(IDictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
+        public static ModuleSyntax Module(Dictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
         {
             return new ModuleSyntax(pImports, pMethods, pDefinitions, pEnums);
         }
