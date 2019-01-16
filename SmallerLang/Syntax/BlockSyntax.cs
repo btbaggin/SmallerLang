@@ -10,13 +10,13 @@ namespace SmallerLang.Syntax
 {
     public class BlockSyntax : SyntaxNode
     {
-        public IList<SyntaxNode> Statements { get; private set; }
+        public List<SyntaxNode> Statements { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
         public override SyntaxType SyntaxType => SyntaxType.Block;
 
-        public BlockSyntax(IList<SyntaxNode> pStatements)
+        public BlockSyntax(List<SyntaxNode> pStatements)
         {
             Statements = pStatements;
         }

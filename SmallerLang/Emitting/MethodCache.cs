@@ -8,14 +8,14 @@ using System.Diagnostics;
 
 namespace SmallerLang.Emitting
 {
-    public struct MethodDefinition
+    public readonly struct MethodDefinition
     {
-        public string MangledName { get; private set; }
-        public string Name { get; private set; }
-        public bool External { get; private set; }
-        public List<SmallType> ArgumentTypes { get; private set; }
-        public SmallType ReturnType { get; private set; }
-        public FileScope Scope { get; private set; }
+        public string MangledName { get; }
+        public string Name { get; }
+        public bool External { get; }
+        public List<SmallType> ArgumentTypes { get; }
+        public SmallType ReturnType { get; }
+        public FileScope Scope { get; }
 
         public MethodDefinition(FileScope pScope, string pName, string pMangled, bool pExternal, List<SmallType> pArguments, SmallType pReturn)
         {

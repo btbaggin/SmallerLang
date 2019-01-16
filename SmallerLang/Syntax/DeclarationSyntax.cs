@@ -10,7 +10,7 @@ namespace SmallerLang.Syntax
 {
     public class DeclarationSyntax : SyntaxNode
     {
-        public IList<IdentifierSyntax> Variables { get; private set; }
+        public List<IdentifierSyntax> Variables { get; private set; }
 
         public SyntaxNode Value { get; private set; }
 
@@ -18,7 +18,7 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Declaration;
 
-        internal DeclarationSyntax(IList<IdentifierSyntax> pVariables, SyntaxNode pValue)
+        internal DeclarationSyntax(List<IdentifierSyntax> pVariables, SyntaxNode pValue)
         {
             Variables = pVariables;
             Value = pValue;

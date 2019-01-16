@@ -10,17 +10,17 @@ namespace SmallerLang.Syntax
 {
     public class StructInitializerSyntax : SyntaxNode
     {
-        public IList<IdentifierSyntax> Values { get; private set; }
+        public List<IdentifierSyntax> Values { get; private set; }
 
         public TypeSyntax Struct { get; private set; }
 
-        public IList<SyntaxNode> Arguments { get; private set; }
+        public List<SyntaxNode> Arguments { get; private set; }
 
         public override SmallType Type => Struct.Type;
 
         public override SyntaxType SyntaxType => SyntaxType.StructInitializer;
 
-        internal StructInitializerSyntax(IList<IdentifierSyntax> pValue, TypeSyntax pStruct, IList<SyntaxNode> pArguments)
+        internal StructInitializerSyntax(List<IdentifierSyntax> pValue, TypeSyntax pStruct, List<SyntaxNode> pArguments)
         {
             Values = pValue;
             Struct = pStruct;
@@ -57,7 +57,7 @@ namespace SmallerLang.Syntax
             }
         }
 
-        private void BuildCallToConstructor(MethodDefinition pDef, LLVMValueRef pType, EmittingContext pContext)
+        private void BuildCallToConstructor(in MethodDefinition pDef, LLVMValueRef pType, EmittingContext pContext)
         {
             LLVMValueRef[] arguments = new LLVMValueRef[Arguments.Count + 1];
             arguments[0] = pType;

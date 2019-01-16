@@ -12,13 +12,13 @@ namespace SmallerLang.Syntax
     {
         public SyntaxNode Condition { get; private set; }
 
-        public IList<CaseSyntax> Cases { get; private set; }
+        public List<CaseSyntax> Cases { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
         public override SyntaxType SyntaxType => SyntaxType.Select;
 
-        internal SelectSyntax(SyntaxNode pCondition, IList<CaseSyntax> pCases)
+        internal SelectSyntax(SyntaxNode pCondition, List<CaseSyntax> pCases)
         {
             Condition = pCondition;
             Cases = pCases;

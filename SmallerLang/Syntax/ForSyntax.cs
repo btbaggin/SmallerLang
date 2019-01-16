@@ -12,13 +12,13 @@ namespace SmallerLang.Syntax
     {
         public SyntaxNode Iterator { get; private set; }
 
-        public IList<DeclarationSyntax> Initializer { get; private set; }
+        public List<DeclarationSyntax> Initializer { get; private set; }
 
         public bool Reverse { get; private set; }
 
         public SyntaxNode Condition { get; private set; }
 
-        public IList<SyntaxNode> Finalizer { get; private set; }
+        public List<SyntaxNode> Finalizer { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
@@ -33,7 +33,7 @@ namespace SmallerLang.Syntax
             Body = pBody;
         }
 
-        internal ForSyntax(IList<DeclarationSyntax> pInitializer, SyntaxNode pCondition, IList<SyntaxNode> pFinalizer, BlockSyntax pBody)
+        internal ForSyntax(List<DeclarationSyntax> pInitializer, SyntaxNode pCondition, List<SyntaxNode> pFinalizer, BlockSyntax pBody)
         {
             Initializer = pInitializer;
             Condition = pCondition;

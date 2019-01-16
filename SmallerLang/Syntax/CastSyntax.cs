@@ -105,7 +105,7 @@ namespace SmallerLang.Syntax
             return ret;
         }
 
-        internal void SetMethod(MethodDefinition pMethod)
+        internal void SetMethod(in MethodDefinition pMethod)
         {
             _method = pMethod;
         }

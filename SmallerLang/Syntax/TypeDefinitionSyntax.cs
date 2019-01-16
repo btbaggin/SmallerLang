@@ -29,11 +29,11 @@ namespace SmallerLang.Syntax
 
         public TypeSyntax AppliesTo { get; private set; }
 
-        public IList<TypedIdentifierSyntax> Fields { get; private set; }
+        public List<TypedIdentifierSyntax> Fields { get; private set; }
 
-        public IList<MethodSyntax> Methods { get; private set; }
+        public List<MethodSyntax> Methods { get; private set; }
 
-        public IList<string> TypeParameters { get; private set; }
+        public List<string> TypeParameters { get; private set; }
 
         internal int EmitOrder { get; set; }
 
@@ -50,8 +50,8 @@ namespace SmallerLang.Syntax
                                       TypeSyntax pType, 
                                       TypeSyntax pImplements,
                                       DefinitionTypes pDefinitionType,
-                                      IList<TypedIdentifierSyntax> pFields, 
-                                      IList<MethodSyntax> pMethods)
+                                      List<TypedIdentifierSyntax> pFields, 
+                                      List<MethodSyntax> pMethods)
         {
             System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(pType.Value), "Define name cannot be empty");
             System.Diagnostics.Debug.Assert(pDefinitionType != DefinitionTypes.Unknown);
@@ -110,7 +110,13 @@ namespace SmallerLang.Syntax
 
         private void Emit(Action<SmallType> pAction, EmittingContext pContext)
         {
-            var typeName = SyntaxHelper.GetFullTypeName(GetApplicableType());
+            var applicableType = GetApplicableType();
+            //If the type is generic, but we didn't get any poly members for it, ignore it
+            //This means there were no references to it so it's ok to not emit it
+            //This is kinda hacky but it works
+            if (applicableType.Type.HasGenericArguments && _typeMappings.Count == 0) return;
+
+            var typeName = SyntaxHelper.GetFullTypeName(applicableType);
             var result = pContext.Cache.FromString(typeName, out SmallType type);
 
             System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);

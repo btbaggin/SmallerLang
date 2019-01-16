@@ -16,13 +16,13 @@ namespace SmallerLang.Syntax
 
         public string Name { get; private set; }
 
-        public IList<IdentifierSyntax> Names { get; private set; }
+        public List<IdentifierSyntax> Names { get; private set; }
 
-        public IList<int> Values { get; private set; }
+        public List<int> Values { get; private set; }
 
         public FileScope Scope { get; private set; }
 
-        internal EnumSyntax(FileScope pScope, string pName, IList<IdentifierSyntax> pNames, IList<int> pValues)
+        internal EnumSyntax(FileScope pScope, string pName, List<IdentifierSyntax> pNames, List<int> pValues)
         {
             Scope = pScope;
             Name = pName;
@@ -32,8 +32,6 @@ namespace SmallerLang.Syntax
 
         public override LLVMValueRef Emit(EmittingContext pContext)
         {
-            pContext.EmitDebugLocation(this);
-
             //Enums are emitted by MemberAccessSyntax
             throw new NotImplementedException();
         }

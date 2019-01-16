@@ -10,13 +10,13 @@ namespace SmallerLang.Syntax
 {
     public class MethodCallSyntax : IdentifierSyntax
     {
-        public IList<SyntaxNode> Arguments { get; private set; }
+        public List<SyntaxNode> Arguments { get; private set; }
 
         public override SyntaxType SyntaxType => SyntaxType.MethodCall;
 
         MethodDefinition _definition;
 
-        internal MethodCallSyntax(string pName, IList<SyntaxNode> pArguments) : base(pName)
+        internal MethodCallSyntax(string pName, List<SyntaxNode> pArguments) : base(pName)
         {
             Arguments = pArguments;
         }
@@ -82,7 +82,7 @@ namespace SmallerLang.Syntax
             return LLVM.BuildCall(pContext.Builder, pContext.GetMethod(_definition.MangledName), arguments, "");
         }
 
-        internal void SetDefinition(MethodDefinition pDef)
+        internal void SetDefinition(in MethodDefinition pDef)
         {
             _definition = pDef;
         }

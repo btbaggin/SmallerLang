@@ -8,7 +8,7 @@ namespace SmallerLang.Syntax
 {
     public static class SyntaxFactory
     {
-        public static ModuleSyntax Module(IDictionary<string, ModuleSyntax> pImports, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        public static ModuleSyntax Module(IDictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
         {
             return new ModuleSyntax(pImports, pMethods, pDefinitions, pEnums);
         }
@@ -43,7 +43,7 @@ namespace SmallerLang.Syntax
             return new ArrayAccessSyntax(pIdentifier, pValue);
         }
 
-        public static BlockSyntax Block(IList<SyntaxNode> pStatements)
+        public static BlockSyntax Block(List<SyntaxNode> pStatements)
         {
             return new BlockSyntax(pStatements);
         }
@@ -75,12 +75,12 @@ namespace SmallerLang.Syntax
             return new ForSyntax(pIterator, pBackwards, pBody);
         }
 
-        public static ForSyntax For(IList<DeclarationSyntax> pInitializer, SyntaxNode pCondition, IList<SyntaxNode> pFinalizer, BlockSyntax pBody)
+        public static ForSyntax For(List<DeclarationSyntax> pInitializer, SyntaxNode pCondition, List<SyntaxNode> pFinalizer, BlockSyntax pBody)
         {
             return new ForSyntax(pInitializer, pCondition, pFinalizer, pBody);
         }
 
-        public static MethodSyntax ExternalMethod(FileScope pScope, string pName, TypeSyntax pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
+        public static MethodSyntax ExternalMethod(FileScope pScope, string pName, TypeSyntax pReturns, List<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
         {
             List<TypeSyntax> returns = new List<TypeSyntax>();
             if (pReturns != null) returns.Add(pReturns);
@@ -88,27 +88,27 @@ namespace SmallerLang.Syntax
             return new MethodSyntax(pScope, pName, returns, pParameters, pBody, true);
         }
 
-        public static MethodSyntax Method(FileScope pScope, string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
+        public static MethodSyntax Method(FileScope pScope, string pName, List<TypeSyntax> pReturns, List<TypedIdentifierSyntax> pParameters, BlockSyntax pBody)
         {
             return new MethodSyntax(pScope, pName, pReturns, pParameters, pBody, false);
         }
 
-        public static MethodSyntax Method(FileScope pScope, string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
+        public static MethodSyntax Method(FileScope pScope, string pName, List<TypeSyntax> pReturns, List<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {
             return new MethodSyntax(pScope, pName, pReturns, pParameters, pBody, pExternal);
         }
 
-        public static TypeDefinitionSyntax TypeDefinition(FileScope pScope, TypeSyntax pType, TypeSyntax pImplements, DefinitionTypes pDefinitionType, IList<MethodSyntax> pMethods, IList<TypedIdentifierSyntax> pFields)
+        public static TypeDefinitionSyntax TypeDefinition(FileScope pScope, TypeSyntax pType, TypeSyntax pImplements, DefinitionTypes pDefinitionType, List<MethodSyntax> pMethods, List<TypedIdentifierSyntax> pFields)
         {
             return new TypeDefinitionSyntax(pScope, pType, pImplements, pDefinitionType, pFields, pMethods);
         }
 
-        public static StructInitializerSyntax StructInitializer(IList<IdentifierSyntax> pValues, TypeSyntax pStruct, IList<SyntaxNode> pArguments)
+        public static StructInitializerSyntax StructInitializer(List<IdentifierSyntax> pValues, TypeSyntax pStruct, List<SyntaxNode> pArguments)
         {
             return new StructInitializerSyntax(pValues, pStruct, pArguments);
         }
 
-        public static MethodCallSyntax MethodCall(string pName, IList<SyntaxNode> pArguments)
+        public static MethodCallSyntax MethodCall(string pName, List<SyntaxNode> pArguments)
         {
             return new MethodCallSyntax(pName, pArguments);
         }
@@ -138,12 +138,12 @@ namespace SmallerLang.Syntax
             return new CastDefinitionSyntax(pScope, pFromType, pBody, pToType);
         }
 
-        public static DeclarationSyntax Declaration(IList<IdentifierSyntax> pVariables, SyntaxNode pRight)
+        public static DeclarationSyntax Declaration(List<IdentifierSyntax> pVariables, SyntaxNode pRight)
         {
             return new DeclarationSyntax(pVariables, pRight);
         }
 
-        public static AssignmentSyntax Assignment(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
+        public static AssignmentSyntax Assignment(List<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
         {
             return new AssignmentSyntax(pVariables, pOp, pValue);
         }
@@ -168,17 +168,17 @@ namespace SmallerLang.Syntax
             return Type(null, pValue, new List<TypeSyntax>());
         }
 
-        public static TypeSyntax Type(string pValue, IList<TypeSyntax> pGenericArgs)
+        public static TypeSyntax Type(string pValue, List<TypeSyntax> pGenericArgs)
         {
             return Type(null, pValue, pGenericArgs);
         }
 
-        public static TypeSyntax Type(NamespaceSyntax pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
+        public static TypeSyntax Type(NamespaceSyntax pNamespace, string pValue, List<TypeSyntax> pGenericArgs)
         {
             return new TypeSyntax(pNamespace, pValue, pGenericArgs);
         }
 
-        public static ReturnSyntax Return(IList<SyntaxNode> pValue)
+        public static ReturnSyntax Return(List<SyntaxNode> pValue)
         {
             return new ReturnSyntax(pValue);
         }
@@ -188,12 +188,12 @@ namespace SmallerLang.Syntax
             return new MemberAccessSyntax(pIdentifier, pValue);
         }
 
-        public static SelectSyntax Select(SyntaxNode pCondition, IList<CaseSyntax> pCases)
+        public static SelectSyntax Select(SyntaxNode pCondition, List<CaseSyntax> pCases)
         {
             return new SelectSyntax(pCondition, pCases);
         }
 
-        public static CaseSyntax Case(IList<SyntaxNode> pConditions, BlockSyntax pBody)
+        public static CaseSyntax Case(List<SyntaxNode> pConditions, BlockSyntax pBody)
         {
             return new CaseSyntax(pConditions, pBody);
         }
@@ -213,7 +213,7 @@ namespace SmallerLang.Syntax
             return new DiscardSyntax();
         }
 
-        public static EnumSyntax Enum(FileScope pScope, string pName, IList<IdentifierSyntax> pNames, IList<int> pValues)
+        public static EnumSyntax Enum(FileScope pScope, string pName, List<IdentifierSyntax> pNames, List<int> pValues)
         {
             return new EnumSyntax(pScope, pName, pNames, pValues);
         }

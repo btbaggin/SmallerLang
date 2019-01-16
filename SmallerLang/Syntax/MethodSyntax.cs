@@ -12,11 +12,11 @@ namespace SmallerLang.Syntax
     {
         public string Name { get; protected set; }
 
-        public IList<TypedIdentifierSyntax> Parameters { get; private set; }
+        public List<TypedIdentifierSyntax> Parameters { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
-        public IList<TypeSyntax> ReturnValues { get; private set; }
+        public List<TypeSyntax> ReturnValues { get; private set; }
 
         public bool External { get; private set; }
 
@@ -33,7 +33,7 @@ namespace SmallerLang.Syntax
         public FileScope Scope { get; private set; }
 
         string _name;
-        internal MethodSyntax(FileScope pScope, string pName, IList<TypeSyntax> pReturns, IList<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
+        internal MethodSyntax(FileScope pScope, string pName, List<TypeSyntax> pReturns, List<TypedIdentifierSyntax> pParameters, BlockSyntax pBody, bool pExternal)
         {
             Scope = pScope;
             Name = pName;

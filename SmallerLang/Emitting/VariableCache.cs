@@ -9,10 +9,10 @@ namespace SmallerLang.Emitting
 {
     public struct LocalDefinition
     {
-        public string Name { get; private set; }
-        public bool IsParameter { get; private set; }
-        public LLVMValueRef Value { get; private set; }
-        public SmallType Type { get; private set; }
+        public string Name { get; }
+        public bool IsParameter { get; }
+        public LLVMValueRef Value { get; }
+        public SmallType Type { get; }
         public bool IsReferenced { get; set; }
 
         public LocalDefinition(string pName, bool pIsParameter, LLVMValueRef pValue, SmallType pType)

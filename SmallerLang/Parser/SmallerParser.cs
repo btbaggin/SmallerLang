@@ -591,7 +591,7 @@ namespace SmallerLang.Parser
             }
         }
 
-        private SyntaxNode ParseInitializer(IList<IdentifierSyntax> pIdentifier)
+        private SyntaxNode ParseInitializer(List<IdentifierSyntax> pIdentifier)
         {
             using (SpanTracker t = _spans.Create())
             {

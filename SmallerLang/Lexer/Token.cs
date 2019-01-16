@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace SmallerLang.Lexer
 {
-    public struct Token
+    public readonly struct Token
     {
-        public TokenType Type { get; private set; }
+        public TokenType Type { get; }
 
-        public int Length { get; private set; }
+        public int Length { get; }
 
-        public ReadOnlyMemory<char> Value { get; private set; }
+        public ReadOnlyMemory<char> Value { get; }
 
         public Token(TokenType pType, int pLength)
         {

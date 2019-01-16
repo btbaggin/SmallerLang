@@ -14,17 +14,17 @@ namespace SmallerLang.Syntax
 
         public IDictionary<string, ModuleSyntax> Imports { get; private set; }
 
-        public IList<MethodSyntax> Methods { get; private set; }
+        public List<MethodSyntax> Methods { get; private set; }
 
-        public IList<TypeDefinitionSyntax> Structs { get; private set; }
+        public List<TypeDefinitionSyntax> Structs { get; private set; }
 
-        public IList<EnumSyntax> Enums { get; private set; }
+        public List<EnumSyntax> Enums { get; private set; }
 
         public override SmallType Type => SmallTypeCache.Undefined;
 
         public override SyntaxType SyntaxType => SyntaxType.Module;
 
-        internal ModuleSyntax(IDictionary<string, ModuleSyntax> pImports, IList<MethodSyntax> pMethods, IList<TypeDefinitionSyntax> pDefinitions, IList<EnumSyntax> pEnums)
+        internal ModuleSyntax(IDictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
         {
             Imports = pImports;
             Methods = pMethods;

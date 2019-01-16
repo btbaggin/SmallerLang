@@ -18,13 +18,13 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Type;
 
-        public IList<TypeSyntax> GenericArguments { get; private set; }
+        public List<TypeSyntax> GenericArguments { get; private set; }
 
         public string Value { get; private set; }
 
         public NamespaceSyntax Namespace { get; private set; }
 
-        internal TypeSyntax(NamespaceSyntax pNamespace, string pValue, IList<TypeSyntax> pGenericArgs)
+        internal TypeSyntax(NamespaceSyntax pNamespace, string pValue, List<TypeSyntax> pGenericArgs)
         {
             Namespace = pNamespace;
             Value = pValue;

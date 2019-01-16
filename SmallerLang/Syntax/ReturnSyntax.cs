@@ -10,7 +10,7 @@ namespace SmallerLang.Syntax
 {
     public class ReturnSyntax : SyntaxNode
     {
-        public IList<SyntaxNode> Values { get; private set; }
+        public List<SyntaxNode> Values { get; private set; }
 
         public override SmallType Type
         {
@@ -29,7 +29,7 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Return;
 
-        internal ReturnSyntax(IList<SyntaxNode> pValues)
+        internal ReturnSyntax(List<SyntaxNode> pValues)
         {
             Values = pValues;
         }

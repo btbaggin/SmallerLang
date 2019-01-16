@@ -13,8 +13,6 @@ namespace SmallerLangRun
         /*TODO
          * returning arrays not working
          * constructor overloads
-         * Look to make some structs ref returns
-         * remove unused structs
          * Allow multiple modules to the same namespace alias
          * Contracts???
          * 

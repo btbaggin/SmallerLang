@@ -258,6 +258,7 @@ namespace SmallerLang.Validation
         {
             foreach (var a in pNode.GenericArguments)
             {
+                //TODO do something so generic arguments aren't undefined?
                 Visit(a);
             }
 

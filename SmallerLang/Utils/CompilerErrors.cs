@@ -171,7 +171,7 @@ namespace SmallerLang.Utils
             _error.WriteError($"Return must produce {pCount} expressions", pSpan);
         }
 
-        public static void MethodNotFound(Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
+        public static void MethodNotFound(in Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
         {
             if(pDef.Name != null)
             {
@@ -194,7 +194,7 @@ namespace SmallerLang.Utils
             }
         }
 
-        public static void MethodNotInScope(Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
+        public static void MethodNotInScope(in Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
         {
             _error.WriteError($"Method {pMethod} is inaccessible because of it's marked as private", pSpan);
         }

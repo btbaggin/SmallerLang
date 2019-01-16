@@ -156,7 +156,7 @@ namespace SmallerLang
             return _constructor;
         }
 
-        internal void SetConstructor(Emitting.MethodDefinition pConstructor, bool pSet = true)
+        internal void SetConstructor(in Emitting.MethodDefinition pConstructor, bool pSet = true)
         {
             _constructor = pConstructor;
             _constructorSet = pSet;

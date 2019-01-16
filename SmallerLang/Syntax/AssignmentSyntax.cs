@@ -24,13 +24,13 @@ namespace SmallerLang.Syntax
 
         public AssignmentOperator Operator { get; private set; }
 
-        public IList<IdentifierSyntax> Variables { get; private set; }
+        public List<IdentifierSyntax> Variables { get; private set; }
 
         public override SmallType Type => Value.Type;
 
         public override SyntaxType SyntaxType => SyntaxType.Assignment;
 
-        internal AssignmentSyntax(IList<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
+        internal AssignmentSyntax(List<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
         {
             Variables = pVariables;
             Operator = pOp;

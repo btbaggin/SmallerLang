@@ -10,7 +10,7 @@ namespace SmallerLang.Syntax
 {
     public class CaseSyntax : SyntaxNode
     {
-        public IList<SyntaxNode> Conditions { get; private set; }
+        public List<SyntaxNode> Conditions { get; private set; }
 
         public BlockSyntax Body { get; private set; }
 
@@ -20,7 +20,7 @@ namespace SmallerLang.Syntax
 
         public override SyntaxType SyntaxType => SyntaxType.Case;
 
-        internal CaseSyntax(IList<SyntaxNode> pConditions, BlockSyntax pBody)
+        internal CaseSyntax(List<SyntaxNode> pConditions, BlockSyntax pBody)
         {
             Conditions = pConditions;
             Body = pBody;
