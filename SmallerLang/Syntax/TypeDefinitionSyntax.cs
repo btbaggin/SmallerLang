@@ -212,6 +212,12 @@ namespace SmallerLang.Syntax
 
         internal void AddTypeMapping(Dictionary<string, SmallType> pTypes)
         {
+            //Only add a new type mapping if we don't have one already
+            foreach (var tm in _typeMappings)
+            {
+                if (pTypes.SequenceEqual(tm)) return;
+            }
+
             _typeMappings.Add(pTypes);
         }
 

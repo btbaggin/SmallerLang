@@ -91,7 +91,6 @@ namespace SmallerLang.Lowering
             {
                 types.Add(pNode.TypeParameters[i], pInitializer.Struct.GenericArguments[i].Type);
             }
-            //TODO does this handle unique types at different call sites
             pNode.AddTypeMapping(types);
 
             //We also need to add the same type mappings for any trait implementations
