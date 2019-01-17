@@ -37,7 +37,7 @@ namespace SmallerLang.Syntax
             }
 
             //Check if this is a "static" method
-            if (!pContext.Cache.IsTypeDefined(ns, type))
+            if (!pContext.Cache.IsTypeDefined(ns, type) || Value.SyntaxType == SyntaxType.MethodCall)
             {
                 LLVMValueRef value;
                 if (Identifier.SyntaxType == SyntaxType.Namespace)
