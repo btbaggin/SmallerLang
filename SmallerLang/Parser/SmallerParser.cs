@@ -399,7 +399,7 @@ namespace SmallerLang.Parser
                 {
                     if (PeekAndExpect(TokenType.Period))
                     {
-                        ns = SyntaxFactory.Namespace(typeName);
+                        ns = SyntaxFactory.Namespace(typeName).SetSpan<NamespaceSyntax>(t);
                         Expect(TokenType.Identifier, out typeName);
                     }
                 }
@@ -989,10 +989,28 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
-                SyntaxNode e = ParseAddition();
+                SyntaxNode e = ParseBitOperators();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
                                  TokenType.LessThan, TokenType.LessThanOrEqual, TokenType.GreaterThan, TokenType.GreaterThanOrEqual))
+                {
+                    IgnoreNewlines();
+                    SyntaxNode right = ParseBitOperators();
+                    e = SyntaxFactory.BinaryExpression(e, tt.ToBinaryExpression(), right);
+                }
+
+                return e?.SetSpan<SyntaxNode>(t);
+            }
+        }
+
+        private SyntaxNode ParseBitOperators()
+        {
+            using (SpanTracker t = _spans.Create())
+            {
+                SyntaxNode e = ParseAddition();
+
+                while (PeekAndExpectOneOf(out TokenType tt,
+                                              TokenType.LeftShift, TokenType.RightShift, TokenType.BitwiseAnd, TokenType.BitwiseOr))
                 {
                     IgnoreNewlines();
                     SyntaxNode right = ParseAddition();
@@ -1028,7 +1046,7 @@ namespace SmallerLang.Parser
                 SyntaxNode e = ParseUnary();
 
                 while (PeekAndExpectOneOf(out TokenType tt, 
-                                 TokenType.Star, TokenType.Division, TokenType.Percent))
+                                 TokenType.Star, TokenType.Division, TokenType.Percent, TokenType.Mod))
                 {
                     IgnoreNewlines();
                     SyntaxNode right = ParseUnary();

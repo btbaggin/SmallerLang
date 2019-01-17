@@ -65,6 +65,28 @@ namespace SmallerLang.Validation
                     }
                     break;
 
+                case BinaryExpressionOperator.BitwiseAnd:
+                case BinaryExpressionOperator.BitwiseOr:
+                    if (!CanCast(pNode.Left.Type, SmallTypeCache.Int))
+                    {
+                        CompilerErrors.TypeCastError(pNode.Left.Type, SmallTypeCache.Int, pNode.Span);
+                    }
+                    if (!CanCast(pNode.Right.Type, SmallTypeCache.Int))
+                    {
+                        CompilerErrors.TypeCastError(pNode.Right.Type, SmallTypeCache.Int, pNode.Span);
+                    }
+                    break;
+
+                case BinaryExpressionOperator.LeftBitShift:
+                case BinaryExpressionOperator.RightBitShift:
+                    if(pNode.Left.Type != SmallTypeCache.Undefined &&
+                       pNode.Right.Type != SmallTypeCache.Undefined && 
+                       !CanCast(pNode.Left.Type, pNode.Right.Type))
+                    {
+                        CompilerErrors.TypeCastError(pNode.Left.Type, pNode.Right.Type, pNode.Span);
+                    }
+                    break;
+
                 default:
                     //Types can be undefined if the type was not found.
                     //These errors will be reported when the type is first found

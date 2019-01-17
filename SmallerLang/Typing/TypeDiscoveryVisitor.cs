@@ -73,17 +73,16 @@ namespace SmallerLang.Validation
                 {
                     //Validate that the namespace and type exist
                     var applyName = SyntaxHelper.GetFullTypeName(s.AppliesTo);
-
                     var name = SyntaxHelper.GetFullTypeName(s.DeclaredType);
 
                     //Mark any traits for types
                     if(ValidateType(s.AppliesTo.Namespace, applyName, s) && 
                        ValidateType(s.DeclaredType.Namespace, name, s))
                     {
-                        var result = _unit.FromString(s.DeclaredType.Namespace, name, out SmallType traitType);
+                        var result = _unit.FromString(s.DeclaredType, out SmallType traitType);
                         System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);
 
-                        result = _unit.FromString(s.AppliesTo.Namespace, applyName, out SmallType applyType);
+                        result = _unit.FromString(s.AppliesTo, out SmallType applyType);
                         System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);
 
                         applyType.AddTrait(traitType);
@@ -103,8 +102,7 @@ namespace SmallerLang.Validation
             //Add struct methods to MethodCache
             foreach (var s in pNode.Structs)
             {
-                var typeName = SyntaxHelper.GetFullTypeName(s.GetApplicableType());
-                var result = _unit.FromString(typeName, out SmallType type);
+                var result = _unit.FromString(s.GetApplicableType(), out SmallType type);
 
                 System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found, "We just added all our types, but a type doesn't exist?");
 
@@ -216,12 +214,12 @@ namespace SmallerLang.Validation
 
                 foreach (var p in pMethod.Parameters)
                 {
-                    _unit.FromString(SyntaxHelper.GetFullTypeName(p.TypeNode), out SmallType t);
+                    _unit.FromString(p.TypeNode, out SmallType t);
                     p.TypeNode.SetType(t);
                 }
                 foreach (var r in pMethod.ReturnValues)
                 {
-                    _unit.FromString(SyntaxHelper.GetFullTypeName(r), out SmallType t);
+                    _unit.FromString(r, out SmallType t);
                     r.SetType(t);
                 }
 

@@ -94,6 +94,8 @@ namespace SmallerLang.Validation
 
                             //Get any type/methods that this method references
                             var mrv = new ModuleReferenceVisitor(mod.Cache, _context, mod);
+                            mrv.MethodNodes.Add(rn);
+
                             mrv.Visit(m);
                             MethodNodes.AddRange(mrv.MethodNodes);
                             TypeNodes.AddRange(mrv.TypeNodes);

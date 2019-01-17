@@ -61,6 +61,11 @@ namespace SmallerLang.Lexer
         StarEquals,
         DivisionEquals,
         ConcatenateEquals,
+        LeftShift,
+        RightShift,
+        BitwiseAnd,
+        BitwiseOr,
+        Mod,
 
         //Types
         Integer,

@@ -33,7 +33,7 @@ namespace SmallerLang.Validation
             {
                 Visit(s.DeclaredType);
 
-                _unit.FromString(SyntaxHelper.GetFullTypeName(s.GetApplicableType()), out SmallType type);
+                _unit.FromString(s.GetApplicableType(), out SmallType type);
                 using (var st = Store.AddValue("__Struct", type))
                 {
                     foreach (var m in s.Methods)
@@ -134,6 +134,16 @@ namespace SmallerLang.Validation
                 case BinaryExpressionOperator.Division:
                 case BinaryExpressionOperator.Mod:
                     pNode.SetType(BinaryExpressionSyntax.GetResultType(pNode.Left.Type, pNode.Operator, pNode.Right.Type));
+                    break;
+
+                case BinaryExpressionOperator.BitwiseAnd:
+                case BinaryExpressionOperator.BitwiseOr:
+                    pNode.SetType(pNode.Left.Type);
+                    break;
+
+                case BinaryExpressionOperator.LeftBitShift:
+                case BinaryExpressionOperator.RightBitShift:
+                    pNode.SetType(SmallTypeCache.Int);
                     break;
 
                 case BinaryExpressionOperator.Equals:
@@ -262,8 +272,7 @@ namespace SmallerLang.Validation
                 Visit(a);
             }
 
-            var name = SyntaxHelper.GetFullTypeName(pNode);
-            var result = _unit.FromString(pNode.Namespace, name, out SmallType type);
+            var result = _unit.FromString(pNode, out SmallType type);
             switch(result)
             {
                 //TODO I can't check this right now because generic types won't be found. Can I fix that?
@@ -272,7 +281,7 @@ namespace SmallerLang.Validation
                 //    break;
 
                 case Compiler.FindResult.IncorrectScope:
-                    CompilerErrors.TypeNotInScope(name, pNode.Span);
+                    CompilerErrors.TypeNotInScope(SyntaxHelper.GetFullTypeName(pNode), pNode.Span);
                     break;
             }
 

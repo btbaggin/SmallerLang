@@ -114,6 +114,11 @@ namespace SmallerLang.Lexer
             _keywords.Insert("||", TokenType.Or);
             _keywords.Insert("_", TokenType.Underscore);
             _keywords.Insert("#", TokenType.Hash);
+            _keywords.Insert("<<", TokenType.LeftShift);
+            _keywords.Insert(">>", TokenType.RightShift);
+            _keywords.Insert("%", TokenType.Mod);
+            _keywords.Insert("&", TokenType.BitwiseAnd);
+            _keywords.Insert("|", TokenType.BitwiseOr);
         }
 
         public ITokenStream StartTokenStream(string pstrSource, string pPath)

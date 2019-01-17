@@ -53,6 +53,21 @@ namespace SmallerLang.Utils
                 case TokenType.Or:
                     return BinaryExpressionOperator.Or;
 
+                case TokenType.LeftShift:
+                    return BinaryExpressionOperator.LeftBitShift;
+
+                case TokenType.RightShift:
+                    return BinaryExpressionOperator.RightBitShift;
+
+                case TokenType.BitwiseAnd:
+                    return BinaryExpressionOperator.BitwiseAnd;
+
+                case TokenType.BitwiseOr:
+                    return BinaryExpressionOperator.BitwiseOr;
+
+                case TokenType.Mod:
+                    return BinaryExpressionOperator.Mod;
+
                 default:
                     throw new ArgumentException("Not a supported binary expression token " + pToken.ToString());
             }

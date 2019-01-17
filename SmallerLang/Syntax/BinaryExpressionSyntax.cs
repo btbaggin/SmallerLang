@@ -23,7 +23,11 @@ namespace SmallerLang.Syntax
         Division,
         Mod,
         And,
-        Or
+        Or,
+        LeftBitShift,
+        RightBitShift,
+        BitwiseAnd,
+        BitwiseOr
     }
 
     public class BinaryExpressionSyntax : SyntaxNode
@@ -134,10 +138,18 @@ namespace SmallerLang.Syntax
                     else return LLVM.BuildICmp(pContext.Builder, LLVMIntPredicate.LLVMIntSLE, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.And:
+                case BinaryExpressionOperator.BitwiseAnd:
                     return LLVM.BuildAnd(pContext.Builder, pLeft, pRight, "");
 
                 case BinaryExpressionOperator.Or:
+                case BinaryExpressionOperator.BitwiseOr:
                     return LLVM.BuildOr(pContext.Builder, pLeft, pRight, "");
+
+                case BinaryExpressionOperator.LeftBitShift:
+                    return LLVM.BuildLShr(pContext.Builder, pLeft, pRight, "");
+
+                case BinaryExpressionOperator.RightBitShift:
+                    return LLVM.BuildAShr(pContext.Builder, pLeft, pRight, "");
 
                 default:
                     throw new NotImplementedException();

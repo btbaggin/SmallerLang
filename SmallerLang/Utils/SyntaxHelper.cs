@@ -98,6 +98,8 @@ namespace SmallerLang.Utils
 
         internal static Compiler.FindResult FindMethodOnType(out MethodDefinition pDef, Compiler.CompilationCache pUnit, string pNamespace, string pName, SmallType pType, params SmallType[] pArguments)
         {
+            if (pType != null) pNamespace = pType.Namespace;
+
             //If it's not an exact match, look through each traits methods until we find it
             var result = pUnit.FindMethod(out pDef, pNamespace, pType, pName, pArguments);
             if (result != Compiler.FindResult.Found)

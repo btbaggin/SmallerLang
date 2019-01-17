@@ -35,6 +35,15 @@ namespace SmallerLang.Lexer
         {
             var current = Prefix(s.AsSpan());
 
+            //This allows items that are substrings of already added items to work
+            //This ensures we don't need to be careful about how we add the items to the Trie
+            if(current.Depth == s.Length)
+            {
+                current.MakeLeaf(pType);
+                return;
+            }
+
+            //We still have characters we need to add to the Trie, add the levels until we reach the end
             TrieNode newNode;
             for (var i = current.Depth; i < s.Length - 1; i++)
             {
@@ -68,10 +77,17 @@ namespace SmallerLang.Lexer
         public TrieNode FindChild(char pC)
         {
             foreach (var c in Children)
-                if(c.Value == pC)
-                    return c;
-
+            {
+                if(c.Value == pC) return c;
+            }
+                
             return null;
+        }
+
+        internal void MakeLeaf(TokenType pType)
+        {
+            Leaf = true;
+            Type = pType;
         }
     }
 }

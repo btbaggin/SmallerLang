@@ -116,9 +116,7 @@ namespace SmallerLang.Syntax
             //This is kinda hacky but it works
             if (applicableType.Type.HasGenericArguments && _typeMappings.Count == 0) return;
 
-            var typeName = SyntaxHelper.GetFullTypeName(applicableType);
-            var result = pContext.Cache.FromString(typeName, out SmallType type);
-
+            var result = pContext.Cache.FromString(applicableType, out SmallType type);
             System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found);
 
             if(_typeMappings.Count > 0)

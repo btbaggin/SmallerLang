@@ -18,5 +18,14 @@ namespace SmallerLang.Lowering
             }
             return base.VisitMemberAccessSyntax(pNode);
         }
+
+        protected override SyntaxNode VisitNamespaceSyntax(NamespaceSyntax pNode)
+        {
+            if (!_unit.HasReference(pNode.Value))
+            {
+                Utils.CompilerErrors.NamespaceNotDefined(pNode, pNode.Span);
+            }
+            return base.VisitNamespaceSyntax(pNode);
+        }
     }
 }

@@ -87,18 +87,19 @@ namespace SmallerLang.Compiler
             return FindResult.Found;
         }
 
-        public FindResult FromString(NamespaceSyntax pNamespace, string pName, out SmallType pType)
+        public FindResult FromString(TypeSyntax pNode, out SmallType pType)
         {
-            if (pNamespace == null)
+            var name = Utils.SyntaxHelper.GetFullTypeName(pNode);
+            if (pNode.Namespace == null)
             {
-                return FromString(pName, out pType);
+                return FromString(name, out pType);
             }
             else
             {
-                var result  = _references[pNamespace.Value].Cache.FromString(pName, out pType);
+                var result  = _references[pNode.Namespace.Value].Cache.FromString(name, out pType);
                 if (result == FindResult.NotFound)
                 {
-                    return FromString(pName, out pType);
+                    return FromString(name, out pType);
                 }
                 else if(pType.Scope == FileScope.Private)
                 {

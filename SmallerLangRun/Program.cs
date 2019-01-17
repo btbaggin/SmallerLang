@@ -11,6 +11,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * Exception when you have a method named the same as a type
          * returning arrays not working
          * constructor overloads
          * Contracts???
