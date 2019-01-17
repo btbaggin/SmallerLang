@@ -266,16 +266,15 @@ namespace SmallerLang.Validation
 
         protected override void VisitTypeSyntax(TypeSyntax pNode)
         {
+            //TODO i need to have <T> after methods so we can define our generic types and propagate them
             foreach (var a in pNode.GenericArguments)
             {
-                //TODO do something so generic arguments aren't undefined?
                 Visit(a);
             }
 
             var result = _unit.FromString(pNode, out SmallType type);
             switch(result)
             {
-                //TODO I can't check this right now because generic types won't be found. Can I fix that?
                 //case Compiler.FindResult.NotFound:
                 //    CompilerErrors.UndeclaredType(name, pNode.Span);
                 //    break;
