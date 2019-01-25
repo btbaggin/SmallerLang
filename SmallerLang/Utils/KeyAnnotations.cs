@@ -56,12 +56,14 @@ namespace SmallerLang.Utils
                     else if (t == cache.Boolean) types[i] = typeof(bool);
                     else if (t == cache.String) types[i] = typeof(string);
                     else if (t == cache.Char) types[i] = typeof(char);
+                    else if (t.IsEnum) types[i] = typeof(Enum);
                     else throw new InvalidCastException("Unknown type " + t.ToString());
                 }
 
-                MethodInfo method = type.GetMethod(parts[2], types);
-
-                if (method == null) CompilerErrors.UnknownExternalMethod(parts[2], pAnnotation.Span);
+                if (!TryResolveMethod(type, parts[2], types, out MethodInfo method))
+                {
+                    CompilerErrors.UnknownExternalMethod(parts[2], pAnnotation.Span);
+                }
                 else
                 {
                     //Method must be a static and double check argument types. Primitive types can be implicitly casted in GetMethod
@@ -73,7 +75,10 @@ namespace SmallerLang.Utils
                     var parmTypes = method.GetParameters();
                     for (int i = 0; i < parmTypes.Length; i++)
                     {
-                        if (parmTypes[i].ParameterType != types[i])
+                        //We will allow use of SmallType Enums to System.Enum
+                        //This works because we just emit the integer value
+                        if (parmTypes[i].ParameterType != types[i] &&
+                            parmTypes[i].ParameterType.IsEnum && types[i] != typeof(Enum))
                         {
                             CompilerErrors.TypeCastError(types[i].ToString(), parmTypes[i].ParameterType.ToString(), pAnnotation.Span);
                         }
@@ -109,7 +114,8 @@ namespace SmallerLang.Utils
                 else if (t.Equals(cache.GetLLVMType(cache.Char))) types[i] = typeof(char);
                 else throw new InvalidCastException("Unknown type " + t.ToString());
             }
-            return type.GetMethod(parts[2], types);
+            System.Diagnostics.Debug.Assert(TryResolveMethod(type, parts[2], types, out MethodInfo m));
+            return m;
         }
 
         private static Assembly TryResolveAssembly(string pAssembly)
@@ -134,24 +140,45 @@ namespace SmallerLang.Utils
                 }
                 catch(System.IO.FileNotFoundException)
                 {
-                    //Try loading from compilation directory
+                    //Try loading from the reference assembly directory
                     try
                     {
-                        path = Compiler.SmallCompiler.CurrentDirectory;
-                        if(!string.IsNullOrEmpty(path))
-                        {
-                            name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));
-                            assembly = Assembly.Load(name);
-                        }
+                        path = Microsoft.Build.Utilities.ToolLocationHelper.GetPathToDotNetFrameworkReferenceAssemblies(Microsoft.Build.Utilities.TargetDotNetFrameworkVersion.VersionLatest);// @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.1\";
+                        name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));
+                        assembly = Assembly.Load(name);
                     }
-                    catch(Exception)
+                    catch
                     {
-                        //We have tried all possibilities, just return a null assembly and let the calling function handle it
+                        //Try loading from compilation directory
+                        try
+                        {
+                            path = Compiler.SmallCompiler.CurrentDirectory;
+                            if (!string.IsNullOrEmpty(path))
+                            {
+                                name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));
+                                assembly = Assembly.Load(name);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            //We have tried all possibilities, just return a null assembly and let the calling function handle it
+                        }
                     }
                 }
             }
 
             return assembly;
+        }
+
+        private static bool TryResolveMethod(Type pType, string pName, Type[] pArguments, out MethodInfo pMethod)
+        {
+            pMethod = pType.GetMethod(pName, pArguments);
+            if (pMethod != null) return true;
+
+            pMethod = pType.GetMethod(pName);
+            if(pMethod != null) return true;
+
+            return false;
         }
     }
 }

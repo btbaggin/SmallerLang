@@ -17,11 +17,13 @@ namespace SmallerLang
 
         LLVMExecutionEngineRef _engine;
         readonly List<Type> _dynamicTypes;
+        readonly List<Delegate> _delegates;
 
         public SmallLangExecutionEngine()
         {
             //Need to keep a reference to the dynamic types so they don't GC while we are in SmallerLang
             _dynamicTypes = new List<Type>();
+            _delegates = new List<Delegate>();
         }
 
         public void Run(string pPath)
@@ -59,7 +61,9 @@ namespace SmallerLang
                 IntPtr i = (IntPtr)LLVM.GetGlobalValueAddress(_engine, "_main");
                 var main = (MainMethod)Marshal.GetDelegateForFunctionPointer(i, typeof(MainMethod));
 
+                GC.TryStartNoGCRegion(100000);
                 main();
+                GC.EndNoGCRegion();
             }
             catch (Exception e)
             {
@@ -91,6 +95,7 @@ namespace SmallerLang
                     _dynamicTypes.Add(type);
 
                     var del = methodInfo.CreateDelegate(type);
+                    _delegates.Add(del);
                     LLVM.AddGlobalMapping(_engine, func, Marshal.GetFunctionPointerForDelegate(del));
                 }
                 func = func.GetNextFunction();
@@ -103,7 +108,7 @@ namespace SmallerLang
             AssemblyName name = new AssemblyName
             {
                 Version = new Version(1, 0, 0, 0),
-                Name = "DynamicDelegateEmit"
+                Name = "DynamicDelegateEmit_" + pMethod.Name
             };
             AssemblyBuilder assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(name, AssemblyBuilderAccess.RunAndSave);
             ModuleBuilder module = assembly.DefineDynamicModule("DynamicDelegates", "DynamicDelegateEmit.dll");
@@ -132,7 +137,7 @@ namespace SmallerLang
 
             //bake it!
             Type t = type.CreateType();
-            assembly.Save("DynamicDelegateEmit.dll");
+            assembly.Save("DynamicDelegateEmit_" + pMethod.Name + ".dll");
             return t;
         }
 

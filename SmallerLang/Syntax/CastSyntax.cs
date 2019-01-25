@@ -52,6 +52,7 @@ namespace SmallerLang.Syntax
                     Utils.LlvmHelper.MakePointer(val, ref t);
                     val = LLVM.BuildBitCast(pContext.Builder, val, t, "");
                 }
+                Utils.LlvmHelper.LoadIfPointer(ref val, pContext);
                 ret = LLVM.BuildCall(pContext.Builder, pContext.GetMethod(_method.MangledName), new LLVMValueRef[] { val }, "user_cast");
             }
             else

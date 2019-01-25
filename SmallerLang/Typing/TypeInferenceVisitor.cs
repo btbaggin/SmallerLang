@@ -312,7 +312,7 @@ namespace SmallerLang.Validation
 
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            if (CurrentType != null || !_unit.IsTypeDefined(pNode.Value))
+            if (CurrentType != null || !_unit.IsTypeDefined(Namespace, pNode.Value))
             {
                 //Normal identifier, continue as usual
                 if (!IsVariableDefined(pNode.Value, out SmallType type))
@@ -334,7 +334,7 @@ namespace SmallerLang.Validation
             else
             {
                 //Shared or enum value
-                var result = _unit.FromString(pNode.Value, out SmallType t);
+                var result = _unit.FromString(Namespace, pNode.Value, out SmallType t);
                 switch(result)
                 {
                     case Compiler.FindResult.Found:

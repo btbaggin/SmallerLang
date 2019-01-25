@@ -283,7 +283,7 @@ namespace SmallerLang.Validation
         {
             //Undefined types are caused by non-existent types
             //These errors will be caught when the type is first encountered
-            return pFrom == SmallTypeCache.Undefined || pTo == SmallTypeCache.Undefined || pFrom.IsAssignableFrom(pTo);
+            return pFrom.IsAssignableFrom(pTo);
         }
     }
 }

@@ -29,15 +29,15 @@ namespace SmallerLang.Syntax
             pContext.EmitDebugLocation(this);
 
             NamespaceSyntax ns = null;
-            string type = Identifier.Value;
+            IdentifierSyntax access = Identifier;
             if (Identifier.SyntaxType == SyntaxType.Namespace)
             {
                 ns = (NamespaceSyntax)Identifier;
-                type = Value.Value;
+                access = Value;
             }
 
             //Check if this is a "static" method
-            if (!pContext.Cache.IsTypeDefined(ns, type) || Value.SyntaxType == SyntaxType.MethodCall)
+            if (!pContext.Cache.IsTypeDefined(ns, access.Value) || Value.SyntaxType == SyntaxType.MethodCall)
             {
                 LLVMValueRef value;
                 if (Identifier.SyntaxType == SyntaxType.Namespace)
@@ -84,9 +84,17 @@ namespace SmallerLang.Syntax
             else
             {
                 //Only this way while fields are allow to be accessed
-                if(Identifier.Type.IsEnum)
+                if(access.Type.IsEnum)
                 {
-                    var i = Identifier.Type.GetEnumValue(Value.Value);
+                    int i = 0;
+                    if(access.SyntaxType == SyntaxType.MemberAccess)
+                    {
+                        i = access.Type.GetEnumValue(((MemberAccessSyntax)access).Value.Value);
+                    }
+                    else
+                    {
+                        i = access.Type.GetEnumValue(Value.Value);
+                    }
                     return pContext.GetInt(i);
                 }
 

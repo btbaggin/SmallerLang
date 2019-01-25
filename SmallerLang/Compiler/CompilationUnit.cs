@@ -89,19 +89,23 @@ namespace SmallerLang.Compiler
 
         public FindResult FromString(TypeSyntax pNode, out SmallType pType)
         {
-            var name = Utils.SyntaxHelper.GetFullTypeName(pNode);
-            if (pNode.Namespace == null)
+            return FromString(pNode.Namespace?.Value, Utils.SyntaxHelper.GetFullTypeName(pNode), out pType);
+        }
+
+        public FindResult FromString(string pNamespace, string pName, out SmallType pType)
+        {
+            if (pNamespace == null)
             {
-                return FromString(name, out pType);
+                return FromString(pName, out pType);
             }
             else
             {
-                var result  = _references[pNode.Namespace.Value].Cache.FromString(name, out pType);
+                var result = _references[pNamespace].Cache.FromString(pName, out pType);
                 if (result == FindResult.NotFound)
                 {
-                    return FromString(name, out pType);
+                    return FromString(pName, out pType);
                 }
-                else if(pType.Scope == FileScope.Private)
+                else if (pType.Scope == FileScope.Private)
                 {
                     return FindResult.IncorrectScope;
                 }
@@ -117,10 +121,15 @@ namespace SmallerLang.Compiler
 
         public bool IsTypeDefined(NamespaceSyntax pNamespace, string pType)
         {
+            return IsTypeDefined(pNamespace?.Value, pType);
+        }
+
+        public bool IsTypeDefined(string pNamespace, string pType)
+        {
             if (SmallTypeCache.IsTypeDefined(pType)) return true;
 
-            if(pNamespace == null) return IsTypeDefined(pType);
-            else return _references[pNamespace.Value].Cache.IsTypeDefined(pType);
+            if (pNamespace == null) return IsTypeDefined(pType);
+            else return _references[pNamespace].Cache.IsTypeDefined(pType);
         }
 
         public LLVMTypeRef GetLLVMTypeOfType(string pType)

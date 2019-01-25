@@ -173,7 +173,7 @@ namespace SmallerLang.Utils
 
         public static void MethodNotFound(in Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
         {
-            if(pDef.Name != null)
+            if(pDef.ArgumentTypes.Count == pArguments.Count)
             {
                 //If we found a method but the types are wrong, print cast errors instead
                 for (int i = 0; i < pDef.ArgumentTypes.Count; i++)
