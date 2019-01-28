@@ -174,7 +174,7 @@ namespace SmallerLang.Compiler
             {
                 return _references[pNamespace].Cache.GetAllMatches(null, pName, pParameterCount);
             }
-            return _methods.GetAllMatches(pName, pParameterCount);
+            return _methods.GetPossibleMatches(pName, pParameterCount);
         }
 
         public FindResult FindMethod(out MethodDefinition pDefinition, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)

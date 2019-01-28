@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Typing
 {
-    class PolyRewriter : Validation.SyntaxNodeVisitor
+    class PolyRewriter : SyntaxNodeVisitor
     {
         /*
          * This class will rewrite all structs with any generic type parameters

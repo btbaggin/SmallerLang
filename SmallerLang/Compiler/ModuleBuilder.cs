@@ -18,14 +18,14 @@ namespace SmallerLang.Compiler
         private static CompilationModule BuildInternal(ModuleSyntax pModule, string pNamespace)
         {
             CompilationModule main = new CompilationModule(pModule, pNamespace);
-            foreach (var i in pModule.Imports)
+            Parallel.ForEach(pModule.Imports, (i) =>
             {
                 var alias = i.Key;
                 var node = i.Value;
                 var mod = BuildInternal(node, alias);
 
-                if(mod != null) main.Cache.AddReference(alias, mod);
-            }
+                if (mod != null) main.Cache.AddReference(alias, mod);
+            });
 
             if (!main.Compile(main.Cache)) return null;
             

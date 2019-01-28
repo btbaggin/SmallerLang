@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations
 {
     struct ReferencedNode : IEquatable<ReferencedNode>
     {

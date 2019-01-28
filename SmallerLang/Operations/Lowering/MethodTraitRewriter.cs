@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Lowering
 {
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
@@ -30,6 +30,9 @@ namespace SmallerLang.Lowering
 
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
+            _locals.AddScope();
+            FindConstants(pNode);
+
             //Find all methods we need to polymorph
             //A method needs to be polymorphed if any of it's parameters are traits
             foreach (var m in pNode.Methods)
@@ -60,18 +63,9 @@ namespace SmallerLang.Lowering
                 methods.AddRange(v);
             }
 
-            //Retype check methods in case one was rewritten
-            var tiv = new Validation.TypeInferenceVisitor(_unit);
-            foreach(var m in methods)
-            {
-                //Poly'd methods are checked in TryPolyMethod
-                if(!_polydMethods.ContainsKey(m.Name))
-                {
-                    tiv.Visit(m);
-                }
-            }
+            _locals.RemoveScope();
 
-            return SyntaxFactory.Module(pNode.Imports, methods, pNode.Structs, pNode.Enums);
+            return SyntaxFactory.Module(pNode.Imports, methods, pNode.Structs, pNode.Enums, pNode.Fields);
         }
 
         protected override SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)
@@ -129,7 +123,7 @@ namespace SmallerLang.Lowering
                 }
 
                 var method = SyntaxFactory.Method(pMethod.Scope, name.ToString(), pMethod.ReturnValues, parameters, (BlockSyntax)Visit(pMethod.Body)).FromNode(pMethod);
-                var tiv = new Validation.TypeInferenceVisitor(_unit);
+                var tiv = new Typing.TypeInferenceVisitor(_unit);
                 tiv.Visit(method);
                 _unit.AddMethod(null, method);
 
@@ -141,7 +135,7 @@ namespace SmallerLang.Lowering
             List<SyntaxNode> arguments = new List<SyntaxNode>(pCallSite.Arguments.Count);
             foreach (var a in pCallSite.Arguments)
             {
-                arguments.Add(Visit((dynamic)a));
+                arguments.Add(Visit(a));
             }
 
             pCallSite = SyntaxFactory.MethodCall(name.ToString(), arguments);

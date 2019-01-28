@@ -14,12 +14,15 @@ namespace SmallerLang.Syntax
 
         public SyntaxNode Value { get; private set; }
 
+        public bool IsConst { get; private set; }
+
         public override SmallType Type => SmallTypeCache.Undefined;
 
         public override SyntaxType SyntaxType => SyntaxType.Declaration;
 
-        internal DeclarationSyntax(List<IdentifierSyntax> pVariables, SyntaxNode pValue)
+        internal DeclarationSyntax(bool pIsConst, List<IdentifierSyntax> pVariables, SyntaxNode pValue)
         {
+            IsConst = pIsConst;
             Variables = pVariables;
             Value = pValue;
         }
@@ -36,7 +39,7 @@ namespace SmallerLang.Syntax
                     System.Diagnostics.Debug.Assert(!pContext.Locals.IsVariableDefinedInScope(v.Value), "Variable " + v.Value + " already defined");
 
                     LLVMValueRef var = pContext.AllocateVariable(v.Value, v.Type);
-                    pContext.Locals.DefineVariableInScope(v.Value, v.Type, var);
+                    pContext.Locals.DefineVariableInScope(v.Value, LocalDefinition.Create(var, v.Type));
                 }
             }
 

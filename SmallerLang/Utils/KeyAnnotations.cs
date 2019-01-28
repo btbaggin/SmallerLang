@@ -114,7 +114,8 @@ namespace SmallerLang.Utils
                 else if (t.Equals(cache.GetLLVMType(cache.Char))) types[i] = typeof(char);
                 else throw new InvalidCastException("Unknown type " + t.ToString());
             }
-            System.Diagnostics.Debug.Assert(TryResolveMethod(type, parts[2], types, out MethodInfo m));
+            bool resolved = TryResolveMethod(type, parts[2], types, out MethodInfo m);
+            System.Diagnostics.Debug.Assert(resolved);
             return m;
         }
 

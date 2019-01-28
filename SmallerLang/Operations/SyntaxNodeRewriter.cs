@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations
 {
     public abstract class SyntaxNodeRewriter
     {
@@ -172,7 +172,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            return SyntaxFactory.ArrayAccess(pNode.Identifier, Visit((dynamic)pNode.Index));
+            return SyntaxFactory.ArrayAccess(pNode.Identifier, Visit(pNode.Index));
         }
 
         protected virtual SyntaxNode VisitAssignmentSyntax(AssignmentSyntax pNode)
@@ -180,14 +180,14 @@ namespace SmallerLang.Lowering
             List<IdentifierSyntax> variables = new List<IdentifierSyntax>(pNode.Variables.Count);
             foreach(var v in pNode.Variables)
             {
-                variables.Add(Visit((dynamic)v));
+                variables.Add((IdentifierSyntax)Visit(v));
             }
-            return SyntaxFactory.Assignment(variables, pNode.Operator, Visit((dynamic)pNode.Value));
+            return SyntaxFactory.Assignment(variables, pNode.Operator, Visit(pNode.Value));
         }
 
         protected virtual SyntaxNode VisitBinaryExpressionSyntax(BinaryExpressionSyntax pNode)
         {
-            return SyntaxFactory.BinaryExpression(Visit((dynamic)pNode.Left), pNode.Operator, Visit((dynamic)pNode.Right));
+            return SyntaxFactory.BinaryExpression(Visit(pNode.Left), pNode.Operator, Visit(pNode.Right));
         }
 
         protected virtual SyntaxNode VisitBlockSyntax(BlockSyntax pNode)
@@ -195,7 +195,7 @@ namespace SmallerLang.Lowering
             List<SyntaxNode> statements = new List<SyntaxNode>(pNode.Statements.Count);
             foreach (var s in pNode.Statements)
             {
-                statements.Add(Visit((dynamic)s));
+                statements.Add(Visit(s));
             }
             return SyntaxFactory.Block(statements);
         }
@@ -215,7 +215,7 @@ namespace SmallerLang.Lowering
             List<SyntaxNode> conditions = new List<SyntaxNode>(pNode.Conditions.Count);
             foreach(var c in pNode.Conditions)
             {
-                conditions.Add(Visit((dynamic)c));
+                conditions.Add(Visit(c));
             }
             return SyntaxFactory.Case(conditions, (BlockSyntax)Visit(pNode.Body));
         }
@@ -227,7 +227,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitCastSyntax(CastSyntax pNode)
         {
-            return SyntaxFactory.Cast(Visit((dynamic)pNode.Value), (TypeSyntax)Visit(pNode.TypeNode));
+            return SyntaxFactory.Cast(Visit(pNode.Value), (TypeSyntax)Visit(pNode.TypeNode));
         }
 
         protected virtual SyntaxNode VisitDiscardSyntax(DiscardSyntax pNode)
@@ -240,9 +240,9 @@ namespace SmallerLang.Lowering
             List<IdentifierSyntax> variables = new List<IdentifierSyntax>(pNode.Variables.Count);
             foreach (var v in pNode.Variables)
             {
-                variables.Add(Visit((dynamic)v));
+                variables.Add((IdentifierSyntax)Visit(v));
             }
-            return SyntaxFactory.Declaration(variables, Visit((dynamic)pNode.Value));
+            return SyntaxFactory.Declaration(pNode.IsConst, variables, Visit(pNode.Value));
         }
 
         protected virtual SyntaxNode VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
@@ -272,7 +272,7 @@ namespace SmallerLang.Lowering
             List<IdentifierSyntax> values = new List<IdentifierSyntax>(pNode.Values.Count);
             foreach(var v in pNode.Names)
             {
-                values.Add(Visit((dynamic)v));
+                values.Add((IdentifierSyntax)Visit(v));
             }
             return SyntaxFactory.Enum(pNode.Scope, pNode.Name, values, pNode.Values);
         }
@@ -281,24 +281,24 @@ namespace SmallerLang.Lowering
         {
             if(pNode.Iterator != null)
             {
-                return SyntaxFactory.For(Visit((dynamic)pNode.Iterator), pNode.Reverse, (BlockSyntax)Visit(pNode.Body));
+                return SyntaxFactory.For(Visit(pNode.Iterator), pNode.Reverse, (BlockSyntax)Visit(pNode.Body));
             }
 
             List<DeclarationSyntax> initializer = new List<DeclarationSyntax>(pNode.Initializer.Count);
             foreach (var d in pNode.Initializer)
             {
-                initializer.Add(Visit((dynamic)d));
+                initializer.Add((DeclarationSyntax)Visit(d));
             }
-            Visit((dynamic)pNode.Condition);
+            var cond = Visit(pNode.Condition);
 
             List<SyntaxNode> finalizer = new List<SyntaxNode>(pNode.Finalizer.Count);
             foreach (var f in pNode.Finalizer)
             {
-                finalizer.Add(Visit((dynamic)f));
+                finalizer.Add(Visit(f));
             }
             Visit(pNode.Body);
 
-            return SyntaxFactory.For(initializer, Visit((dynamic)pNode.Condition), finalizer, (BlockSyntax)Visit(pNode.Body));
+            return SyntaxFactory.For(initializer, cond, finalizer, (BlockSyntax)Visit(pNode.Body));
         }
 
         protected virtual SyntaxNode VisitIdentifierSyntax(IdentifierSyntax pNode)
@@ -308,7 +308,7 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitIfSyntax(IfSyntax pNode)
         {
-            return SyntaxFactory.If(Visit((dynamic)pNode.Condition), (BlockSyntax)Visit(pNode.Body), (ElseSyntax)Visit(pNode.Else));
+            return SyntaxFactory.If(Visit(pNode.Condition), (BlockSyntax)Visit(pNode.Body), (ElseSyntax)Visit(pNode.Else));
         }
 
         protected virtual SyntaxNode VisitItSyntax(ItSyntax pNode)
@@ -321,7 +321,7 @@ namespace SmallerLang.Lowering
             List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>(pNode.Parameters.Count);
             foreach (var p in pNode.Parameters)
             {
-                parameters.Add(Visit((dynamic)p));
+                parameters.Add((TypedIdentifierSyntax)Visit(p));
             }
 
             List<TypeSyntax> returns = new List<TypeSyntax>(pNode.ReturnValues.Count);
@@ -341,14 +341,14 @@ namespace SmallerLang.Lowering
             List<SyntaxNode> arguments = new List<SyntaxNode>(pNode.Arguments.Count);
             foreach (var a in pNode.Arguments)
             {
-                arguments.Add(Visit((dynamic)a));
+                arguments.Add(Visit(a));
             }
             return SyntaxFactory.MethodCall(pNode.Value, arguments);
         }
 
         protected virtual SyntaxNode VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
-            return SyntaxFactory.MemberAccess(Visit((dynamic)pNode.Identifier), Visit((dynamic)pNode.Value));
+            return SyntaxFactory.MemberAccess((IdentifierSyntax)Visit(pNode.Identifier), (IdentifierSyntax)Visit(pNode.Value));
         }
 
         protected virtual SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
@@ -362,7 +362,7 @@ namespace SmallerLang.Lowering
             List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>(pNode.Structs.Count);
             foreach (var d in pNode.Structs)
             {
-                definitions.Add(Visit((dynamic)d));
+                definitions.Add((TypeDefinitionSyntax)Visit(d));
             }
 
             List<EnumSyntax> enums = new List<EnumSyntax>(pNode.Enums.Count);
@@ -370,7 +370,13 @@ namespace SmallerLang.Lowering
             {
                 enums.Add((EnumSyntax)Visit(e));
             }
-            return SyntaxFactory.Module(pNode.Imports, methods, definitions, enums);
+
+            List<DeclarationSyntax> fields = new List<DeclarationSyntax>(pNode.Fields.Count);
+            foreach(var f in pNode.Fields)
+            {
+                fields.Add((DeclarationSyntax)Visit(f));
+            }
+            return SyntaxFactory.Module(pNode.Imports, methods, definitions, enums, fields);
         }
 
         protected virtual SyntaxNode VisitNamespaceSyntax(NamespaceSyntax pNode)
@@ -393,14 +399,14 @@ namespace SmallerLang.Lowering
             List<SyntaxNode> values = new List<SyntaxNode>(pNode.Values.Count);
             foreach(var v in pNode.Values)
             {
-                values.Add(Visit((dynamic)v));
+                values.Add(Visit(v));
             }
             return SyntaxFactory.Return(values);
         }
 
         protected virtual SyntaxNode VisitSelectSyntax(SelectSyntax pNode)
         {
-            var cond = Visit((dynamic)pNode.Condition);
+            var cond = Visit(pNode.Condition);
 
             List<CaseSyntax> cases = new List<CaseSyntax>(pNode.Cases.Count);
             foreach (var c in pNode.Cases)
@@ -420,7 +426,7 @@ namespace SmallerLang.Lowering
             List<IdentifierSyntax> variables = new List<IdentifierSyntax>(pNode.Values.Count);
             foreach(var v in pNode.Values)
             {
-                variables.Add(Visit((dynamic)v));
+                variables.Add((IdentifierSyntax)Visit(v));
             }
 
             var t = (TypeSyntax)Visit(pNode.Struct);
@@ -428,7 +434,7 @@ namespace SmallerLang.Lowering
             List<SyntaxNode> arguments = new List<SyntaxNode>(pNode.Arguments.Count);
             foreach(var a in pNode.Arguments)
             {
-                arguments.Add(Visit((dynamic)a));
+                arguments.Add(Visit(a));
             }
             return SyntaxFactory.StructInitializer(variables, t, arguments);
         }
@@ -445,12 +451,12 @@ namespace SmallerLang.Lowering
 
         protected virtual SyntaxNode VisitUnaryExpressionSyntax(UnaryExpressionSyntax pNode)
         {
-            return SyntaxFactory.UnaryExpression(Visit((dynamic)pNode.Value), pNode.Operator);
+            return SyntaxFactory.UnaryExpression(Visit(pNode.Value), pNode.Operator);
         }
 
         protected virtual SyntaxNode VisitWhileSyntax(WhileSyntax pNode)
         {
-            return SyntaxFactory.While(Visit((dynamic)pNode.Condition), (BlockSyntax)Visit(pNode.Body));
+            return SyntaxFactory.While(Visit(pNode.Condition), (BlockSyntax)Visit(pNode.Body));
         }
         
         protected virtual SyntaxNode VisitWorkspaceSyntax(WorkspaceSyntax pNode)

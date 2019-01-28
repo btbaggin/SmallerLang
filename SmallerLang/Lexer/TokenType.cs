@@ -32,6 +32,7 @@ namespace SmallerLang.Lexer
         Import,
         ScopePublic,
         ScopePrivate,
+        Const,
 
         //Struct queries
         LengthOf,

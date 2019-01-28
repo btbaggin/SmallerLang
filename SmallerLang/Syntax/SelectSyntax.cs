@@ -29,6 +29,7 @@ namespace SmallerLang.Syntax
             pContext.EmitDebugLocation(this);
 
             var cond = Condition.Emit(pContext);
+            Utils.LlvmHelper.LoadIfPointer(ref cond, pContext);
 
             var endBlock = LLVM.AppendBasicBlock(pContext.CurrentMethod, "endswitch");
             LLVMBasicBlockRef elseBlock;

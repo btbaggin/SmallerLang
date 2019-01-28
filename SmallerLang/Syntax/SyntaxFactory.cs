@@ -8,9 +8,13 @@ namespace SmallerLang.Syntax
 {
     public static class SyntaxFactory
     {
-        public static ModuleSyntax Module(Dictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
+        public static ModuleSyntax Module(Dictionary<string, ModuleSyntax> pImports, 
+                                          List<MethodSyntax> pMethods, 
+                                          List<TypeDefinitionSyntax> pDefinitions, 
+                                          List<EnumSyntax> pEnums,
+                                          List<DeclarationSyntax> pFields)
         {
-            return new ModuleSyntax(pImports, pMethods, pDefinitions, pEnums);
+            return new ModuleSyntax(pImports, pMethods, pDefinitions, pEnums, pFields);
         }
 
         public static StringLiteralSyntax StringLiteral(string pValue)
@@ -138,9 +142,9 @@ namespace SmallerLang.Syntax
             return new CastDefinitionSyntax(pScope, pFromType, pBody, pToType);
         }
 
-        public static DeclarationSyntax Declaration(List<IdentifierSyntax> pVariables, SyntaxNode pRight)
+        public static DeclarationSyntax Declaration(bool pIsConst, List<IdentifierSyntax> pVariables, SyntaxNode pRight)
         {
-            return new DeclarationSyntax(pVariables, pRight);
+            return new DeclarationSyntax(pIsConst, pVariables, pRight);
         }
 
         public static AssignmentSyntax Assignment(List<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)

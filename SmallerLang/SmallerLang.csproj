@@ -38,6 +38,7 @@
     <Reference Include="LLVMSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LLVMSharp.5.0.0\lib\netstandard1.1\LLVMSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="Microsoft.Win32.Primitives, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Primitives.4.3.0\lib\net46\Microsoft.Win32.Primitives.dll</HintPath>
       <Private>True</Private>
@@ -194,30 +195,32 @@
     <Compile Include="DebugType.cs" />
     <Compile Include="Emitting\AccessStack.cs" />
     <Compile Include="Emitting\MethodCache.cs" />
+    <Compile Include="Emitting\MethodDefinition.cs" />
     <Compile Include="Emitting\TypeConstructors.cs" />
     <Compile Include="Emitting\VariableDeclarationBuilder.cs" />
-    <Compile Include="FieldDefinition.cs" />
+    <Compile Include="Emitting\FieldDefinition.cs" />
     <Compile Include="FileScope.cs" />
     <Compile Include="GlobalSmallTypeCache.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Lowering\ForRewriter.cs" />
-    <Compile Include="Typing\MethodTraitRewriter.cs" />
-    <Compile Include="Lowering\NamespaceRewriter.cs" />
-    <Compile Include="Lowering\GenericParameterRewriter.cs" />
+    <Compile Include="Operations\Lowering\ConstantRewriter.cs" />
+    <Compile Include="Operations\Lowering\ForRewriter.cs" />
+    <Compile Include="Operations\Lowering\MethodTraitRewriter.cs" />
+    <Compile Include="Operations\Lowering\NamespaceRewriter.cs" />
+    <Compile Include="Operations\Lowering\GenericParameterRewriter.cs" />
     <Compile Include="Compiler\CompilationModule.cs" />
     <Compile Include="Compiler\ModuleBuilder.cs" />
     <Compile Include="Syntax\Annotation.cs" />
     <Compile Include="Syntax\GenericTypeSyntax.cs" />
     <Compile Include="Syntax\NamespaceSyntax.cs" />
-    <Compile Include="TypeDiscoveryGraph.cs" />
+    <Compile Include="Operations\Typing\TypeDiscoveryGraph.cs" />
     <Compile Include="Utils\CompilerErrors.cs" />
     <Compile Include="Utils\LLVMPInvokes.cs" />
     <Compile Include="Syntax\BreakSyntax.cs" />
     <Compile Include="Syntax\SyntaxType.cs" />
     <Compile Include="Syntax\WorkspaceSyntax.cs" />
     <Compile Include="Utils\TypeHelper.cs" />
-    <Compile Include="Validation\ModuleReferenceVisitor.cs" />
-    <Compile Include="Typing\TypeDiscoveryVisitor.cs" />
+    <Compile Include="Operations\ModuleReferenceVisitor.cs" />
+    <Compile Include="Operations\Typing\TypeDiscoveryVisitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Syntax\CaseSyntax.cs" />
     <Compile Include="Syntax\CastDefinitionSyntax.cs" />
@@ -231,14 +234,14 @@
     <Compile Include="Syntax\TypeDefinitionSyntax.cs" />
     <Compile Include="Utils\KeyAnnotations.cs" />
     <Compile Include="Utils\LLVMHelper.cs" />
-    <Compile Include="Validation\PreTypeValidation.cs" />
-    <Compile Include="Lowering\ReturnBlockRewriter.cs" />
-    <Compile Include="Typing\StructPolyRewriter.cs" />
-    <Compile Include="Validation\SyntaxNodeVisitor.cs" />
+    <Compile Include="Operations\Validation\PreTypeValidation.cs" />
+    <Compile Include="Operations\Lowering\ReturnBlockRewriter.cs" />
+    <Compile Include="Operations\Typing\StructPolyRewriter.cs" />
+    <Compile Include="Operations\SyntaxNodeVisitor.cs" />
     <Compile Include="CompilerOptions.cs" />
     <Compile Include="ConsoleErrorReporter.cs" />
     <Compile Include="Emitting\EmittingContext.cs" />
-    <Compile Include="Emitting\VariableCache.cs" />
+    <Compile Include="Emitting\ScopeCache.cs" />
     <Compile Include="Lexer\BufferedTokenStream.cs" />
     <Compile Include="Lexer\ITokenSource.cs" />
     <Compile Include="Lexer\ITokenStream.cs" />
@@ -252,7 +255,7 @@
     <Compile Include="SmallLangExecutionEngine.cs" />
     <Compile Include="SmallType.cs" />
     <Compile Include="SmallTypeCache.cs" />
-    <Compile Include="Lowering\SyntaxNodeRewriter.cs" />
+    <Compile Include="Operations\SyntaxNodeRewriter.cs" />
     <Compile Include="Syntax\ArrayAccessSyntax.cs" />
     <Compile Include="Syntax\ArrayLiteralSyntax.cs" />
     <Compile Include="Syntax\AssignmentSyntax.cs" />
@@ -283,12 +286,12 @@
     <Compile Include="Lexer\Trie.cs" />
     <Compile Include="Utils\EnumExtensions.cs" />
     <Compile Include="Utils\SyntaxHelper.cs" />
-    <Compile Include="Validation\MethodValidationVisitor.cs" />
-    <Compile Include="Lowering\SelectRewriter.cs" />
-    <Compile Include="Typing\TypeChecker.cs" />
-    <Compile Include="Typing\TypeInferenceVisitor.cs" />
-    <Compile Include="Validation\PostTypeValidationVisitor.cs" />
-    <Compile Include="VisitorStore.cs" />
+    <Compile Include="Operations\Validation\MethodValidationVisitor.cs" />
+    <Compile Include="Operations\Lowering\SelectRewriter.cs" />
+    <Compile Include="Operations\Typing\TypeChecker.cs" />
+    <Compile Include="Operations\Typing\TypeInferenceVisitor.cs" />
+    <Compile Include="Operations\Validation\PostTypeValidationVisitor.cs" />
+    <Compile Include="Operations\VisitorStore.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

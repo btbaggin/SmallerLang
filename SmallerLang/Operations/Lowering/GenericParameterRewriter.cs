@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Lowering
 {
     /*
      * This class will ensure that all generic parameter types are propagated throughout the type

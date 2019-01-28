@@ -7,22 +7,30 @@ using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations.Typing
 {
     class TypeInferenceVisitor : SyntaxNodeVisitor
     {
-        VariableCache _locals;
+        ScopeCache<LocalDefinition> _locals;
         SmallType[] _methodReturns;
         readonly Compiler.CompilationCache _unit;
 
         public TypeInferenceVisitor(Compiler.CompilationCache pUnit)
         {
-            _locals = new VariableCache();
+            _locals = new ScopeCache<LocalDefinition>();
             _unit = pUnit;
         }
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
+            //Global scope
+            _locals.AddScope();
+
+            foreach(var f in pNode.Fields)
+            {
+                Visit(f);
+            }
+
             //Infer methods
             foreach (var m in pNode.Methods)
             {
@@ -42,11 +50,13 @@ namespace SmallerLang.Validation
                     }
                 }
             }
+
+            _locals.RemoveScope();
         }
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
-            Visit((dynamic)pNode.Value);
+            Visit(pNode.Value);
             var isTuple = pNode.Value.Type.IsTuple;
 
             for (int i = 0; i < pNode.Variables.Count; i++)
@@ -71,7 +81,7 @@ namespace SmallerLang.Validation
                             var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
                             pNode.Variables[i].SetType(t);
-                            _locals.DefineVariableInScope(pNode.Variables[i].Value, pNode.Variables[i].Type);
+                            _locals.DefineVariableInScope(pNode.Variables[i].Value, LocalDefinition.Create(pNode.IsConst, pNode.Variables[i].Type));
                         }
                     }
                 }
@@ -91,6 +101,12 @@ namespace SmallerLang.Validation
             var isTuple = pNode.Value.Type.IsTuple;
             for (int i = 0; i < pNode.Variables.Count; i++)
             {
+                //Check if we are assigning to a const variable
+                if(_locals.TryGetVariable(pNode.Variables[i].Value, out LocalDefinition ld) && ld.IsConst)
+                {
+                    CompilerErrors.CannotAssignCost(pNode.Variables[i], pNode.Variables[i].Span);
+                }
+
                 var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
                 //We have to set the type of discards so the tuple is created properly
@@ -105,11 +121,6 @@ namespace SmallerLang.Validation
             for (int i = 0; i < pNode.Values.Count; i++)
             {
                 if(pNode.Values[i] is MemberAccessSyntax) Visit(pNode.Values[i]);
-            }
-
-            for (int i = 0; i < pNode.Arguments.Count; i++)
-            {
-                Visit(pNode.Arguments[i]);
             }
 
             var m = pNode.Type.GetConstructor();
@@ -204,7 +215,7 @@ namespace SmallerLang.Validation
         protected override void VisitMethodSyntax(MethodSyntax pNode)
         {
             _locals.AddScope();
-            _methodReturns = Utils.SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
+            _methodReturns = SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
             base.VisitMethodSyntax(pNode);
             _locals.RemoveScope();
         }
@@ -212,14 +223,14 @@ namespace SmallerLang.Validation
         protected override void VisitCastDefinitionSyntax(CastDefinitionSyntax pNode)
         {
             _locals.AddScope();
-            _methodReturns = Utils.SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
+            _methodReturns = SyntaxHelper.SelectNodeTypes(pNode.ReturnValues);
             base.VisitCastDefinitionSyntax(pNode);
             _locals.RemoveScope();
         }
 
         protected override void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
-            Visit((dynamic)pNode.Identifier);
+            Visit(pNode.Identifier);
             
             //Save current local definitions
             //Mark the current type we are on so error messages can be more descriptive
@@ -234,7 +245,7 @@ namespace SmallerLang.Validation
                     if (pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
                     else
                     {
-                        _locals = new VariableCache();
+                        _locals = new ScopeCache<LocalDefinition>();
                         _locals.AddScope();
                         //Namespaces return a null type
                         if(CurrentType != null)
@@ -243,13 +254,13 @@ namespace SmallerLang.Validation
                             {
                                 if (!_locals.IsVariableDefinedInScope(f.Name))
                                 {
-                                    _locals.DefineVariableInScope(f.Name, f.Type);
+                                    _locals.DefineVariableInScope(f.Name, LocalDefinition.Create(false, f.Type));
                                 }
                             }
                         }
                     }
 
-                    Visit((dynamic)pNode.Value);
+                    Visit(pNode.Value);
                 }
             }
 
@@ -306,7 +317,7 @@ namespace SmallerLang.Validation
             }
             else
             {
-                _locals.DefineVariableInScope(pNode.Value, pNode.Type);
+                _locals.DefineVariableInScope(pNode.Value, LocalDefinition.Create(false, pNode.Type));
             }
         }
 
@@ -354,11 +365,11 @@ namespace SmallerLang.Validation
 
         protected override void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            Visit((dynamic)pNode.Identifier);
+            Visit(pNode.Identifier);
             pNode.SetType(pNode.Identifier.Type);
 
             TrySetImplicitCastType(pNode.Index, SmallTypeCache.Int);
-            Visit((dynamic)pNode.Index);
+            Visit(pNode.Index);
         }
 
         protected override void VisitIfSyntax(IfSyntax pNode)
@@ -428,7 +439,7 @@ namespace SmallerLang.Validation
         SmallType _itType;
         protected override void VisitSelectSyntax(SelectSyntax pNode)
         {
-            Visit((dynamic)pNode.Condition);
+            Visit(pNode.Condition);
             _itType = pNode.Condition.Type;
 
             foreach(var c in pNode.Cases)
@@ -444,7 +455,7 @@ namespace SmallerLang.Validation
 
             if (pNode.Iterator != null)
             {
-                Visit((dynamic)pNode.Iterator);
+                Visit(pNode.Iterator);
 
                 //Array vs Enumerable<T>
                 if (pNode.Iterator.Type.IsArray)
@@ -464,13 +475,13 @@ namespace SmallerLang.Validation
             {
                 foreach (var d in pNode.Initializer)
                 {
-                    Visit((dynamic)d);
+                    Visit(d);
                 }
-                Visit((dynamic)pNode.Condition);
+                Visit(pNode.Condition);
 
                 foreach (var f in pNode.Finalizer)
                 {
-                    Visit((dynamic)f);
+                    Visit(f);
                 }
             }
 

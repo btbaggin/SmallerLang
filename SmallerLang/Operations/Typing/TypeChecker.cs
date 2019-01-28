@@ -7,7 +7,7 @@ using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations.Typing
 {
     class TypeChecker : SyntaxNodeVisitor
     {
@@ -32,6 +32,15 @@ namespace SmallerLang.Validation
             }
 
             base.VisitArrayAccessSyntax(pNode);
+        }
+
+        protected override void VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode)
+        {
+            if(pNode.Type == SmallTypeCache.Undefined)
+            {
+                CompilerErrors.UndeclaredType(pNode.TypeNode.Value, pNode.Span);
+            }
+            base.VisitArrayLiteralSyntax(pNode);
         }
 
         protected override void VisitAssignmentSyntax(AssignmentSyntax pNode)

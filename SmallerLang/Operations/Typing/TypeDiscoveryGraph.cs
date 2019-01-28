@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
 
-namespace SmallerLang
+namespace SmallerLang.Operations.Typing
 {
     class DiscoveryNode
     {

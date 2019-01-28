@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Lowering
 {
     partial class PreTypeRewriter : SyntaxNodeRewriter
     {
@@ -14,6 +14,7 @@ namespace SmallerLang.Lowering
         ElseSyntax _currentElse;
         SyntaxNode _itVar;
         bool _rewrite;
+        //TODO move me to PostTypeRewriter?
         protected override SyntaxNode VisitSelectSyntax(SelectSyntax pNode)
         {
             _rewrite = false;
@@ -77,7 +78,7 @@ namespace SmallerLang.Lowering
 
             _itVar = it;
             return retval;
-        } 
+        }
 
         protected override SyntaxNode VisitItSyntax(ItSyntax pNode)
         {

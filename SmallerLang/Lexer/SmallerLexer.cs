@@ -65,6 +65,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("break", TokenType.Break);
             _keywords.Insert("public", TokenType.ScopePublic);
             _keywords.Insert("private", TokenType.ScopePrivate);
+            _keywords.Insert("const", TokenType.Const);
 
             //Types
             _keywords.Insert("float", TokenType.TypeFloat);

@@ -126,6 +126,16 @@ namespace SmallerLang.Utils
         {
             _error.WriteError($"Cannot apply indexing to an exception of type {pType}", pSpan);
         }
+
+        public static void CannotAssignCost(Syntax.IdentifierSyntax pIdentifier, TextSpan pSpan)
+        {
+            _error.WriteError($"Cannot assign value to {pIdentifier.Value} because it is declared as const", pSpan);
+        }
+
+        public static void ConstantNotConstantValue(TextSpan pSpan)
+        {
+            _error.WriteError($"Value cannot be assigned because it is not a constant value", pSpan);
+        }
         #endregion
 
         #region External Methods Errors
@@ -173,24 +183,34 @@ namespace SmallerLang.Utils
 
         public static void MethodNotFound(in Emitting.MethodDefinition pDef, SmallType pType, string pMethod, IList<Syntax.SyntaxNode> pArguments, TextSpan pSpan)
         {
-            if(pDef.ArgumentTypes.Count == pArguments.Count)
+            if (pDef.Name != null)
             {
-                //If we found a method but the types are wrong, print cast errors instead
-                for (int i = 0; i < pDef.ArgumentTypes.Count; i++)
+                if (pDef.ArgumentTypes.Count == pArguments.Count)
                 {
-                    if(!pArguments[i].Type.IsAssignableFrom(pDef.ArgumentTypes[i]))
+                    //If we found a method but the types are wrong, print cast errors instead
+                    for (int i = 0; i < pDef.ArgumentTypes.Count; i++)
                     {
-                        TypeCastError(pArguments[i].Type, pDef.ArgumentTypes[i], pArguments[i].Span);
+                        if (!pArguments[i].Type.IsAssignableFrom(pDef.ArgumentTypes[i]))
+                        {
+                            TypeCastError(pArguments[i].Type, pDef.ArgumentTypes[i], pArguments[i].Span);
+                        }
                     }
                 }
-            }
-            else if(pType == null)
-            {
-                _error.WriteError($"Method '{pMethod}' not declared in the current context", pSpan);
+                else
+                {
+                    _error.WriteError($"No overload of method {pMethod} takes {pArguments.Count} arguments", pSpan);
+                }
             }
             else
             {
-                _error.WriteError($"Type {pType} does not declare a method '{pMethod}'", pSpan);
+                if (pType == null)
+                {
+                    _error.WriteError($"Method '{pMethod}' not declared in the current context", pSpan);
+                }
+                else
+                {
+                    _error.WriteError($"Type {pType} does not declare a method '{pMethod}'", pSpan);
+                }
             }
         }
 
@@ -339,9 +359,9 @@ namespace SmallerLang.Utils
             _error.WriteWarning("complete annotation is ignored on select statements with 'it'", pSpan);
         }
 
-        public static void VariableNeverUsed(string pVariable)
+        public static void VariableNeverUsed(string pVariable, TextSpan pSpan)
         {
-            _error.WriteWarning($"Variable {pVariable} is defined but never used");
+            _error.WriteWarning($"Variable {pVariable} is defined but never used", pSpan);
         }
 
         public static void CompleteNonEnum(TextSpan pSpan)

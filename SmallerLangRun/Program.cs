@@ -18,9 +18,10 @@ namespace SmallerLangRun
          * Range 1..10
          * Zero out array allocations
          * Allow returning traits from methods? - No, this should be an error
-         * tree shaking of methods
+         * tree shaking of methods - kinda done
          * control flow analysis?
         */
+        [STAThread]
         static void Main(string[] args)
         {
             var prog = @"C:\Test\SML\simple.sml";
@@ -34,8 +35,10 @@ namespace SmallerLangRun
                 Debug = false
             };
 
+            var t = System.Environment.TickCount;
             if (c.Compile(o))
             {
+                System.Console.WriteLine(Environment.TickCount - t);
                 var e = new SmallLangExecutionEngine();
                 e.Run(output);
             }

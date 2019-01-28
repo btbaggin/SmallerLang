@@ -7,7 +7,7 @@ using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations.Typing
 {
     class TypeDiscoveryVisitor : SyntaxNodeVisitor 
     {
@@ -93,19 +93,24 @@ namespace SmallerLang.Validation
                 }
             }
 
-            //Add all methods to the MethodCache
+            //
+            // Add all methods to the MethodCache
+            //
             for (int j = 0; j < pNode.Methods.Count; j++)
             {
                 AddMethodToCache(null, pNode.Methods[j], out MethodDefinition m);
             }
 
-            //Add struct methods to MethodCache
+            //
+            // Add struct methods to MethodCache
+            //
             foreach (var s in pNode.Structs)
             {
                 var result = _unit.FromString(s.GetApplicableType(), out SmallType type);
 
                 System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found, "We just added all our types, but a type doesn't exist?");
 
+                //Add each method to the cache and set type constructors if necessary
                 for (int j = 0; j < s.Methods.Count; j++)
                 {
                     if (AddMethodToCache(type, s.Methods[j], out MethodDefinition m) && 
@@ -115,18 +120,22 @@ namespace SmallerLang.Validation
                     }
                 }
 
-                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor(new List<SmallType>());
+                if (!type.HasDefinedConstructor()) type.SetDefaultConstructor();
             }
         }
 
+        //TODO need to change this over to TypeSyntax so I can reference an imported type in a struct
         private bool DiscoverTypes(string pType, TextSpan pSpan)
         {
+            //If a node doesn't exist the type hasn't been declared
             if(!_discoveryGraph.NodeExists(pType))
             {
                 CompilerErrors.UndeclaredType(pType, pSpan);
                 return false;
             }
 
+            //If we have been here already we have a circular reference in our types
+            //ie Type1 has a field of Type2; Type2 has a field of Type1
             var item = _discoveryGraph.GetNode(pType);
             if (item.Permanent) return true;
             if (item.Temporary)
@@ -145,7 +154,7 @@ namespace SmallerLang.Validation
 
                 //Only look through user defined types which should be undefined at this point
                 if(!item.Node.TypeParameters.Contains(nt) && 
-                   !SmallTypeCache.IsTypeDefined(nt) &&
+                   !_unit.IsTypeDefined(type.Namespace, nt) &&
                    !DiscoverTypes(nt, type.Span))
                 {
                     return false;
@@ -174,7 +183,7 @@ namespace SmallerLang.Validation
                 var typeName = SyntaxHelper.GetFullTypeName(f.TypeNode);
                 if (!pDefinition.TypeParameters.Contains(typeName))
                 {
-                    var result = _unit.FromString(typeName, out SmallType fieldType);
+                    var result = _unit.FromString(f.TypeNode, out SmallType fieldType);
                     if (result != Compiler.FindResult.Found) return false;
 
                     f.TypeNode.SetType(fieldType);

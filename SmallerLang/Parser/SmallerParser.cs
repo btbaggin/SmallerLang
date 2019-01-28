@@ -104,6 +104,7 @@ namespace SmallerLang.Parser
                 //Module content
                 List<MethodSyntax> methods = new List<MethodSyntax>();
                 List<TypeDefinitionSyntax> definitions = new List<TypeDefinitionSyntax>();
+                List<DeclarationSyntax> fields = new List<DeclarationSyntax>();
                 List<EnumSyntax> enums = new List<EnumSyntax>();
                 try
                 {
@@ -149,6 +150,10 @@ namespace SmallerLang.Parser
                                 _currentScope = FileScope.Public;
                                 break;
 
+                            case TokenType.Let:
+                                fields.Add(ParseDeclaration());
+                                break;
+
                             default:
                                 CompilerErrors.UnknownToken(Current.Type, t);
                                 Ignore(Current.Type);
@@ -164,7 +169,7 @@ namespace SmallerLang.Parser
                     return null;
                 }
 
-                return SyntaxFactory.Module(imports, methods, definitions, enums).SetSpan<ModuleSyntax>(t);
+                return SyntaxFactory.Module(imports, methods, definitions, enums, fields).SetSpan<ModuleSyntax>(t);
             }
         }
 
@@ -498,6 +503,9 @@ namespace SmallerLang.Parser
                         node = ParseBreak();
                         break;
 
+                    case TokenType.EndOfFile:
+                        return null;
+
                     case TokenType.Identifier:
                     case TokenType.It:
                     case TokenType.Self:
@@ -507,7 +515,7 @@ namespace SmallerLang.Parser
                         break;
 
                     default:
-                        throw ReportError($"Encountered unknown token {Current.Type}", _spans.Current);
+                        throw ReportError($"Encountered unknown token {Current.Type}", _spans.Current); //TODO better span
                 }
 
                 node.Deferred = deferred;
@@ -551,6 +559,8 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 Expect(TokenType.Let);
+                bool isConst = PeekAndExpect(TokenType.Const);
+
                 List<IdentifierSyntax> variables = new List<IdentifierSyntax>();
                 do
                 {
@@ -578,7 +588,7 @@ namespace SmallerLang.Parser
                     return null;
                 }
 
-                return SyntaxFactory.Declaration(variables, right).SetSpan<DeclarationSyntax>(t);
+                return SyntaxFactory.Declaration(isConst, variables, right).SetSpan<DeclarationSyntax>(t);
             }
         }
         
@@ -603,7 +613,7 @@ namespace SmallerLang.Parser
                         var size = ParseExpression();
                         Expect(TokenType.RightBracket);
                         type = SyntaxFactory.Type(type.Namespace, SmallTypeCache.GetArrayType(type.Value), type.GenericArguments);
-                        return SyntaxFactory.ArrayLiteral(type, size);
+                        return SyntaxFactory.ArrayLiteral(type, size).SetSpan<ArrayLiteralSyntax>(t);
                     }
 
                     List<SyntaxNode> arguments = new List<SyntaxNode>();
@@ -1185,9 +1195,7 @@ namespace SmallerLang.Parser
         {
             using (SpanTracker t = _spans.Create())
             {
-                IdentifierSyntax e;
-                if (PeekAndExpect(TokenType.String, out string str)) e = SyntaxFactory.StringLiteral(str);
-                else e = ParseMemberAccess();
+                IdentifierSyntax e = ParseMemberAccess();
 
                 if(PeekAndExpect(TokenType.LeftBracket))
                 {
@@ -1196,6 +1204,12 @@ namespace SmallerLang.Parser
 
                     Expect(TokenType.RightBracket);
                     e = SyntaxFactory.ArrayAccess(e, index);
+                }
+
+                if (PeekAndExpect(TokenType.Period))
+                {
+                    var iden = ParseMemberAccess();
+                    if (iden != null) e = SyntaxFactory.MemberAccess(e, iden);
                 }
 
                 return e?.SetSpan<IdentifierSyntax>(t);
@@ -1395,6 +1409,7 @@ namespace SmallerLang.Parser
                     case TokenType.For:
                     case TokenType.RightBrace:
                     case TokenType.Select:
+                    case TokenType.Const:
                         //Do nothing
                         return;
                 }

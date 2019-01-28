@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
-using SmallerLang.Lowering;
+using SmallerLang.Operations;
+using SmallerLang.Operations.Lowering;
+using SmallerLang.Operations.Validation;
+using SmallerLang.Operations.Typing;
 using SmallerLang.Utils;
-using SmallerLang.Validation;
 using LLVMSharp;
 
 namespace SmallerLang.Compiler
@@ -62,17 +64,24 @@ namespace SmallerLang.Compiler
             EmitReferencedNodes(pContext);
 
             pContext.Cache = Cache;
-            LLVMValueRef _main = Module.Emit(pContext);
+            pContext.Locals.AddScope();
 
             //Emit our function that the runtime will call. 
             //This will just call the method marked with "@run"
             //The reason we do this is so we have a static method name we can call
             var main = pContext.EmitMethodHeader("_main", LLVMTypeRef.Int32Type(), new LLVMTypeRef[] { });
             var mainB = main.AppendBasicBlock("");
+
+            //TODO emit readonlys here
+
+            LLVMValueRef _main = Module.Emit(pContext);
+
             LLVM.PositionBuilderAtEnd(pContext.Builder, mainB);
             LLVM.BuildCall(pContext.Builder, _main, new LLVMValueRef[] { }, "");
             LLVM.BuildRet(pContext.Builder, pContext.GetInt(0));
             pContext.ValidateMethod(main);
+
+            pContext.Locals.RemoveScope();
         }
 
         private void EmitReferencedNodes(Emitting.EmittingContext pContext)

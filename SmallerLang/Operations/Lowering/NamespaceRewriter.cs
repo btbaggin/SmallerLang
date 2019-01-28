@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Lowering
 {
     partial class PreTypeRewriter : SyntaxNodeRewriter
     {

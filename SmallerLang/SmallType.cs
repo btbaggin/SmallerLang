@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SmallerLang.Emitting;
 
 namespace SmallerLang
 {
@@ -149,22 +150,27 @@ namespace SmallerLang
         }
 
         #region Type constructor methods
-        Emitting.MethodDefinition _constructor;
+        MethodDefinition _constructor;
         bool _constructorSet;
-        public Emitting.MethodDefinition GetConstructor()
+        public MethodDefinition GetConstructor()
         {
             return _constructor;
         }
 
-        internal void SetConstructor(in Emitting.MethodDefinition pConstructor, bool pSet = true)
+        internal void SetConstructor(in MethodDefinition pConstructor, bool pSet = true)
         {
             _constructor = pConstructor;
             _constructorSet = pSet;
         }
 
+        internal void SetDefaultConstructor()
+        {
+            _constructor = new MethodDefinition(Utils.TypeHelper.GetDefaultConstructorName(this), new List<SmallType>());
+        }
+
         internal void SetDefaultConstructor(List<SmallType> pArguments)
         {
-            _constructor = new Emitting.MethodDefinition(Utils.TypeHelper.GetDefaultConstructorName(this), pArguments);
+            _constructor = new MethodDefinition(Utils.TypeHelper.GetDefaultConstructorName(this), pArguments);
         }
 
         internal bool HasDefinedConstructor()

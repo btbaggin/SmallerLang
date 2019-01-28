@@ -48,5 +48,11 @@ namespace SmallerLang.Syntax
         {
             _type = pType;
         }
+
+        public override T FromNode<T>(T pNode)
+        {
+            _type = pNode.Type;
+            return base.FromNode(pNode);
+        }
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
+using SmallerLang.Emitting;
 using LLVMSharp;
 
 namespace SmallerLang
@@ -37,7 +38,7 @@ namespace SmallerLang
             else if (_primitiveTypes.ContainsKey(pType)) return _primitiveTypes[pType].Type;
             else if (_cache.ContainsKey(pType)) return _cache[pType].Type;
 
-            if (t == null) return Undefined;
+            if (t == null || t == Undefined) return Undefined;
             return new SmallType(pType, t);
         }
 
@@ -135,12 +136,12 @@ namespace SmallerLang
                         argumentTypes.Add(argType);
                     }
 
-                    var ctor = new Emitting.MethodDefinition(FileScope.Public, existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
+                    var ctor = new MethodDefinition(FileScope.Public, existingCtor.Name, existingCtor.MangledName, false, argumentTypes, Undefined);
                     st.SetConstructor(ctor, pType.HasDefinedConstructor());
                 }
                 else
                 {
-                    st.SetDefaultConstructor(new List<SmallType>());
+                    st.SetDefaultConstructor();
                 }
                
 

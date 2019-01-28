@@ -7,11 +7,25 @@ using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations.Validation
 {
+    struct LocalReference
+    {
+        public bool IsReferenced { get; set; }
+        public TextSpan Span { get; private set; }
+        public string Name { get; private set; }
+
+        public LocalReference(TextSpan pSpan, string pName, bool pIsReferenced)
+        {
+            IsReferenced = pIsReferenced;
+            Span = pSpan;
+            Name = pName;
+        }
+    }
+
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
-        VariableCache _locals; //Used to find unused variables
+        ScopeCache<LocalReference> _locals; //Used to find unused variables
         ModuleSyntax _mainModule;
         Compiler.CompilationCache _unit;
 
@@ -22,17 +36,20 @@ namespace SmallerLang.Validation
 
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
-            foreach(var v in pNode.Variables)
+            if(!pNode.IsConst)
             {
-                Visit((dynamic)v);
-                _locals.DefineVariableInScope(v.Value, v.Type);
+                foreach (var v in pNode.Variables)
+                {
+                    Visit(v);
+                    _locals.DefineVariableInScope(v.Value, new LocalReference(v.Span, v.Value, false));
+                }
+                Visit(pNode.Value);
             }
-            Visit((dynamic)pNode.Value);
         }
 
         protected override void VisitIdentifierSyntax(IdentifierSyntax pNode)
         {
-            _locals.SetVariableReferenced(pNode.Value);
+            _locals.SetValue(pNode.Value, new LocalReference(pNode.Span, pNode.Value, true));
             var currentStruct = Struct;
             var currentType = CurrentType;
 
@@ -69,7 +86,8 @@ namespace SmallerLang.Validation
 
         protected override void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            _locals = new VariableCache();
+            _locals = new ScopeCache<LocalReference>();
+            _locals.AddScope();
             using (var v = Store.AddValue<string>("RunMethod", null))
             {
                 base.VisitModuleSyntax(pNode);
@@ -79,6 +97,7 @@ namespace SmallerLang.Validation
                     CompilerErrors.NoRunMethod(pNode.Span);
                 }
             }
+            _locals.RemoveScope();
         }
 
         protected override void VisitBlockSyntax(BlockSyntax pNode)
@@ -97,7 +116,7 @@ namespace SmallerLang.Validation
             {
                 if (!ld.IsReferenced)
                 {
-                    CompilerErrors.VariableNeverUsed(ld.Name);
+                    CompilerErrors.VariableNeverUsed(ld.Name, ld.Span);
                 }
             }
             _locals.RemoveScope();
@@ -206,7 +225,7 @@ namespace SmallerLang.Validation
             _locals.AddScope();
             foreach (var c in pNode.Conditions)
             {
-                Visit((dynamic)c);
+                Visit(c);
             }
 
             using (var iw = Store.AddValue("CanBreak", true))
@@ -223,19 +242,19 @@ namespace SmallerLang.Validation
             _locals.AddScope();
             if (pNode.Iterator != null)
             {
-                Visit((dynamic)pNode.Iterator);
+                Visit(pNode.Iterator);
             }
             else
             {
                 foreach (var d in pNode.Initializer)
                 {
-                    Visit((dynamic)d);
+                    Visit(d);
                 }
-                Visit((dynamic)pNode.Condition);
+                Visit(pNode.Condition);
 
                 foreach (var f in pNode.Finalizer)
                 {
-                    Visit((dynamic)f);
+                    Visit(f);
                 }
             }
 
@@ -251,7 +270,7 @@ namespace SmallerLang.Validation
         protected override void VisitWhileSyntax(WhileSyntax pNode)
         {
             _locals.AddScope();
-            Visit((dynamic)pNode.Condition);
+            Visit(pNode.Condition);
             using (var iw = Store.AddValue("CanBreak", true))
             {
                 _breakCount++;

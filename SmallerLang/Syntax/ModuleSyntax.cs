@@ -20,16 +20,23 @@ namespace SmallerLang.Syntax
 
         public List<EnumSyntax> Enums { get; private set; }
 
+        public List<DeclarationSyntax> Fields { get; private set; }
+
         public override SmallType Type => SmallTypeCache.Undefined;
 
         public override SyntaxType SyntaxType => SyntaxType.Module;
 
-        internal ModuleSyntax(Dictionary<string, ModuleSyntax> pImports, List<MethodSyntax> pMethods, List<TypeDefinitionSyntax> pDefinitions, List<EnumSyntax> pEnums)
+        internal ModuleSyntax(Dictionary<string, ModuleSyntax> pImports, 
+                              List<MethodSyntax> pMethods, 
+                              List<TypeDefinitionSyntax> pDefinitions, 
+                              List<EnumSyntax> pEnums,
+                              List<DeclarationSyntax> pFields)
         {
             Imports = pImports;
             Methods = pMethods;
             Structs = pDefinitions;
             Enums = pEnums;
+            Fields = pFields;
         }
 
         public override LLVMValueRef Emit(EmittingContext pContext)
@@ -39,6 +46,7 @@ namespace SmallerLang.Syntax
             {
                 i.Emit(pContext);
             }
+
 
             //Emit type methods headers
             for (int i = 0; i < Structs.Count; i++)

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SmallerLang.Syntax;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations
 {
     public abstract class SyntaxNodeVisitor
     {
@@ -186,30 +186,30 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {
-            Visit((dynamic)pNode.Identifier);
-            Visit((dynamic)pNode.Index);
+            Visit(pNode.Identifier);
+            Visit(pNode.Index);
         }
 
         protected virtual void VisitAssignmentSyntax(AssignmentSyntax pNode)
         {
             foreach(var v in pNode.Variables)
             {
-                Visit((dynamic)v);
+                Visit(v);
             }
-            Visit((dynamic)pNode.Value);
+            Visit(pNode.Value);
         }
 
         protected virtual void VisitBinaryExpressionSyntax(BinaryExpressionSyntax pNode)
         {
-            Visit((dynamic)pNode.Left);
-            Visit((dynamic)pNode.Right);
+            Visit(pNode.Left);
+            Visit(pNode.Right);
         }
 
         protected virtual void VisitBlockSyntax(BlockSyntax pNode)
         {
             foreach(var s in pNode.Statements)
             {
-                Visit((dynamic)s);
+                Visit(s);
             }
         }
 
@@ -221,7 +221,7 @@ namespace SmallerLang.Validation
         {
             foreach(var c in pNode.Conditions)
             {
-                Visit((dynamic)c);
+                Visit(c);
             }
             Visit(pNode.Body);
         }
@@ -236,7 +236,7 @@ namespace SmallerLang.Validation
         protected virtual void VisitCastSyntax(CastSyntax pNode)
         {
             Visit(pNode.TypeNode);
-            Visit((dynamic)pNode.Value);
+            Visit(pNode.Value);
         }
 
         protected virtual void VisitDiscardSyntax(DiscardSyntax pNode) { }
@@ -245,9 +245,9 @@ namespace SmallerLang.Validation
         {
             foreach (var v in pNode.Variables)
             {
-                Visit((dynamic)v);
+                Visit(v);
             }
-            Visit((dynamic)pNode.Value);
+            Visit(pNode.Value);
         }
 
         protected virtual void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
@@ -284,19 +284,19 @@ namespace SmallerLang.Validation
         {
             if(pNode.Iterator != null)
             {
-                Visit((dynamic)pNode.Iterator);
+                Visit(pNode.Iterator);
             }
             else
             {
                 foreach (var d in pNode.Initializer)
                 {
-                    Visit((dynamic)d);
+                    Visit(d);
                 }
-                Visit((dynamic)pNode.Condition);
+                Visit(pNode.Condition);
 
                 foreach (var f in pNode.Finalizer)
                 {
-                    Visit((dynamic)f);
+                    Visit(f);
                 }
             }
 
@@ -307,7 +307,7 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitIfSyntax(IfSyntax pNode)
         {
-            Visit((dynamic)pNode.Condition);
+            Visit(pNode.Condition);
             Visit(pNode.Body);
             Visit(pNode.Else);
         }
@@ -318,7 +318,7 @@ namespace SmallerLang.Validation
         {
             foreach(var p in pNode.Parameters)
             {
-                Visit((dynamic)p);
+                Visit(p);
             }
             foreach(var r in pNode.ReturnValues)
             {
@@ -336,7 +336,7 @@ namespace SmallerLang.Validation
             {
                 foreach (var a in pNode.Arguments)
                 {
-                    Visit((dynamic)a);
+                    Visit(a);
                 }
             }
 
@@ -345,10 +345,10 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitMemberAccessSyntax(MemberAccessSyntax pNode)
         {
-            Visit((dynamic)pNode.Identifier);
+            Visit(pNode.Identifier);
             using (var t = Store.AddValue("__Type", pNode.Identifier.Type))
             {
-                Visit((dynamic)pNode.Value);
+                Visit(pNode.Value);
             }
 
             Namespace = null;
@@ -368,6 +368,10 @@ namespace SmallerLang.Validation
             {
                 Visit(e);
             }
+            foreach(var f in pNode.Fields)
+            {
+                Visit(f);
+            }
         }
 
         protected virtual void VisitNamespaceSyntax(NamespaceSyntax pNode)
@@ -386,13 +390,13 @@ namespace SmallerLang.Validation
         {
             foreach(var v in pNode.Values)
             {
-                Visit((dynamic)v);
+                Visit(v);
             }
         }
 
         protected virtual void VisitSelectSyntax(SelectSyntax pNode)
         {
-            Visit((dynamic)pNode.Condition);
+            Visit(pNode.Condition);
             foreach(var c in pNode.Cases)
             {
                 Visit(c);
@@ -406,7 +410,7 @@ namespace SmallerLang.Validation
             Visit(pNode.Struct);
             foreach(var a in pNode.Arguments)
             {
-                Visit((dynamic)a);
+                Visit(a);
             }
         }
 
@@ -419,12 +423,12 @@ namespace SmallerLang.Validation
 
         protected virtual void VisitUnaryExpressionSyntax(UnaryExpressionSyntax pNode)
         {
-            Visit((dynamic)pNode.Value);
+            Visit(pNode.Value);
         }
 
         protected virtual void VisitWhileSyntax(WhileSyntax pNode)
         {
-            Visit((dynamic)pNode.Condition);
+            Visit(pNode.Condition);
             Visit(pNode.Body);
         }
 

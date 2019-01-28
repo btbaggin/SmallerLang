@@ -8,7 +8,7 @@ using SmallerLang.Emitting;
 using System.Diagnostics;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Lowering
 {
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
@@ -41,7 +41,7 @@ namespace SmallerLang.Lowering
                 //Declare our iterator outside the for loop
                 //This will help if our iterator is complex like a function call
                 var iterVar = SyntaxFactory.Identifier("!iter");
-                var iterDecl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { iterVar }, pNode.Iterator);
+                var iterDecl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { iterVar }, pNode.Iterator);
 
                 if (pNode.Iterator.Type.IsArray)
                 {
@@ -51,12 +51,12 @@ namespace SmallerLang.Lowering
                     if (pNode.Reverse)
                     {
                         var length = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
-                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
+                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
                     else
                     {
-                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
+                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
                         end = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
                     }
                     
@@ -71,12 +71,12 @@ namespace SmallerLang.Lowering
                     if (pNode.Reverse)
                     {
                         var count = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.Identifier("Count"));
-                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(count, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
+                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(count, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
                     else
                     {
-                        decl = SyntaxFactory.Declaration(new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
+                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
                         end = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.Identifier("Count"));
                     }
 

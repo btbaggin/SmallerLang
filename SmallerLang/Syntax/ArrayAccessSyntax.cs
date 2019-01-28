@@ -20,7 +20,7 @@ namespace SmallerLang.Syntax
 
         public SyntaxNode Index { get; private set; }
 
-        public ArrayAccessSyntax(IdentifierSyntax pVariable, SyntaxNode pIndex) : base(null)
+        public ArrayAccessSyntax(IdentifierSyntax pVariable, SyntaxNode pIndex) : base(pVariable.Value)
         {
             Identifier = pVariable;
             Index = pIndex;
@@ -40,6 +40,14 @@ namespace SmallerLang.Syntax
             var load = LLVM.BuildLoad(pContext.Builder, indexAccess, "");
 
             return LLVM.BuildInBoundsGEP(pContext.Builder, load, new LLVMValueRef[] { index }, "arrayaccess");
+        }
+
+        public override T FromNode<T>(T pNode)
+        {
+            var n = (IdentifierSyntax)(SyntaxNode)base.FromNode(pNode);
+            n.SetType(((ArrayAccessSyntax)(SyntaxNode)pNode).BaseType);
+            return (T)(SyntaxNode)n;
+            
         }
     }
 }

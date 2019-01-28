@@ -7,7 +7,7 @@ using SmallerLang.Syntax;
 using SmallerLang.Emitting;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Validation
+namespace SmallerLang.Operations.Validation
 {
     partial class PostTypeValidationVisitor : SyntaxNodeVisitor
     {
@@ -137,19 +137,21 @@ namespace SmallerLang.Validation
 
         protected override void VisitIfSyntax(IfSyntax pNode)
         {
-            Visit((dynamic)pNode.Condition);
+            Visit(pNode.Condition);
             Visit(pNode.Body);
+
+            //Reset found before looking through Else
+            var found = Store.GetValue<bool>("ReturnFound");
+            Store.SetValue("ReturnFound", false);
 
             if(pNode.Else != null)
             {
-                var found = Store.GetValue<bool>("ReturnFound");
-                Store.SetValue("ReturnFound", false);
-
                 Visit(pNode.Else);
 
                 //Returns must be found in ALL else blocks
                 Store.SetValue("ReturnFound", found && Store.GetValue<bool>("ReturnFound"));
             }
+            //Else found = false because we still need a return in the main method body
         }
 
         protected override void VisitReturnSyntax(ReturnSyntax pNode)

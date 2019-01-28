@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmallerLang.Syntax;
 using SmallerLang.Utils;
 
-namespace SmallerLang.Lowering
+namespace SmallerLang.Operations.Lowering
 {
     /*
      * This class will ensure that there are no statements after a return
@@ -28,7 +28,7 @@ namespace SmallerLang.Lowering
             bool returnFound = false;
             for (int i = 0; i < pNode.Statements.Count; i++)
             {
-                if (!returnFound) statements.Add(Visit((dynamic)pNode.Statements[i]));
+                if (!returnFound) statements.Add(Visit(pNode.Statements[i]));
                 else CompilerErrors.UnreachableCode(pNode.Statements[i].Span);
 
                 if (pNode.Statements[i].SyntaxType == SyntaxType.Return)
