@@ -176,6 +176,7 @@ namespace SmallerLang.Syntax
         private void EmitGenericConstructor(EmittingContext pContext, SmallType pType)
         {
             var func = pContext.GetMethod(TypeHelper.GetDefaultConstructorName(pType));
+            pContext.StartMethod(func);
 
             var body = LLVM.AppendBasicBlock(func, Name + "body");
             LLVM.PositionBuilderAtEnd(pContext.Builder, body);

@@ -207,11 +207,40 @@ namespace SmallerLang
             else if (pType == Long) return pContext.GetLong(0);
             else if (pType == Float) return pContext.GetFloat(0);
             else if (pType == Double) return pContext.GetDouble(0);
-            else if (pType == String) return pContext.GetString(null);
+            else if (pType == Char) return LLVM.ConstInt(LLVM.Int8Type(), 0, EmittingContext.False);
+            else if (pType == String)
+            {
+                //Allocate space for our string
+                LLVMValueRef variable;
+                LLVMValueRef data;
+                using (var b = new VariableDeclarationBuilder(pContext))
+                {
+                    variable = LLVM.BuildAlloca(b.Builder, GetLLVMType(String, pContext), "string_temp");
+                    data = LLVM.BuildAlloca(b.Builder, LLVM.PointerType(LLVMTypeRef.Int8Type(), 0), "");
+                }
+
+                //Save length
+                var length = pContext.GetArrayLength(variable);
+                LLVM.BuildStore(pContext.Builder, pContext.GetInt(0), length);
+
+                //Store the string constant in the allocated array
+                data = LLVM.BuildLoad(pContext.Builder, data, "");
+
+                //Store the allocated array in the string variable
+                var variableData = LLVM.BuildInBoundsGEP(pContext.Builder, variable, new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "");
+                LLVM.BuildStore(pContext.Builder, data, variableData);
+
+                variable = LLVM.BuildLoad(pContext.Builder, variable, "");
+                return variable;
+            }
             else if (pType.IsArray) return pContext.GetArray(pType.GetElementType(), 0, pContext);
             else if (pType.IsStruct)
             {
-                var var = LLVM.BuildAlloca(pContext.Builder, GetLLVMType(pType, pContext), "struct_temp");
+                LLVMValueRef var;
+                using (var b = new VariableDeclarationBuilder(pContext))
+                {
+                    var = LLVM.BuildAlloca(b.Builder, GetLLVMType(pType, pContext), "struct_temp");
+                }
 
                 var m = pType.GetConstructor();
                 LLVMValueRef[] arguments = new LLVMValueRef[m.ArgumentTypes.Count + 1];
@@ -223,7 +252,7 @@ namespace SmallerLang
                 LLVM.BuildCall(pContext.Builder, pContext.GetMethod(m.MangledName), arguments, "");
                 return LLVM.BuildLoad(pContext.Builder, var, "");
             }
-            else if(pType.IsGenericParameter)
+            else if (pType.IsGenericParameter)
             {
                 System.Diagnostics.Debug.Assert(pContext.TypeMappings.ContainsKey(pType.Name));
 

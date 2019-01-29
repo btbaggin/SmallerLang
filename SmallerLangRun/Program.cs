@@ -11,6 +11,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
+         * It's weird that I need to put trait fields inside the struct and not inside the impl
          * returning arrays not working
          * constructor overloads
          * Contracts???

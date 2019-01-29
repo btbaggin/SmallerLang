@@ -182,6 +182,11 @@ namespace SmallerLang.Emitting
             return func;
         }
 
+        internal void StartMethod(LLVMValueRef pFunc)
+        {
+            CurrentMethod = pFunc;
+        }
+
         public void FinishMethod(LLVMValueRef pFunction)
         {
             RemoveDebugScope();
