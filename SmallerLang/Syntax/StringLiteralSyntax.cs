@@ -31,7 +31,8 @@ namespace SmallerLang.Syntax
             LLVMValueRef dataArray;
             using (var b = new VariableDeclarationBuilder(pContext))
             {
-                dataArray = LLVM.BuildAlloca(b.Builder, LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(SmallTypeCache.Char, pContext), (uint)(literal.Length + 1)), ""); //Need to allocate 1 more space for the /0
+                var charArray = LLVMTypeRef.ArrayType(SmallTypeCache.GetLLVMType(SmallTypeCache.Char, pContext), (uint)(literal.Length + 1)); //Need to allocate 1 more space for the /0
+                dataArray = LLVM.BuildAlloca(b.Builder, charArray, ""); 
             }
 
             //Store the string constant in the allocated array

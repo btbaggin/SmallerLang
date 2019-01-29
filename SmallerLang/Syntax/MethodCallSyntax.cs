@@ -66,7 +66,7 @@ namespace SmallerLang.Syntax
                         arguments[start + i] = v;
                     }
                     arguments[start + i] = LLVM.BuildInBoundsGEP(pContext.Builder, arguments[start + i], new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "char_pointer");
-                    Utils.LlvmHelper.LoadIfPointer(ref arguments[0], pContext);
+                    Utils.LlvmHelper.LoadIfPointer(ref arguments[i], pContext);
                 }
 
                 //Implicitly cast any derived types

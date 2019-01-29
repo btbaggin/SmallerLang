@@ -34,6 +34,8 @@ namespace SmallerLang.Syntax
             if(pContext.AccessStack.Count > 0)
             {
                 var idx = pContext.AccessStack.Peek().Type.GetFieldIndex(Value);
+                System.Diagnostics.Debug.Assert(idx != -1, "Unable to find field");
+
                 return pContext.GetInt(idx);
             }
 

@@ -253,20 +253,18 @@ namespace SmallerLang.Operations.Typing
                 if (CurrentType != SmallTypeCache.Undefined)
                 {
                     //For methods and arrays we need to allow existing variables, but member access should only allow the struct's fields
-                    if (pNode.Value is MethodCallSyntax || pNode.Value is ArrayAccessSyntax) _locals = _locals.Copy();
-                    else
+                    if (NeedToCopyLocals(pNode.Value)) _locals = _locals.Copy();
+                    else _locals = new ScopeCache<LocalDefinition>();
+
+                    //Namespaces return a null type
+                    if(CurrentType != null)
                     {
-                        _locals = new ScopeCache<LocalDefinition>();
                         _locals.AddScope();
-                        //Namespaces return a null type
-                        if(CurrentType != null)
+                        foreach (var f in CurrentType.GetFields())
                         {
-                            foreach (var f in CurrentType.GetFields())
+                            if (!_locals.IsVariableDefinedInScope(f.Name))
                             {
-                                if (!_locals.IsVariableDefinedInScope(f.Name))
-                                {
-                                    _locals.DefineVariableInScope(f.Name, LocalDefinition.Create(false, f.Type));
-                                }
+                                _locals.DefineVariableInScope(f.Name, LocalDefinition.Create(false, f.Type));
                             }
                         }
                     }
@@ -576,6 +574,13 @@ namespace SmallerLang.Operations.Typing
 
             pType = _locals.GetVariable(pName).Type;
             return true;
+        }
+
+        private bool NeedToCopyLocals(SyntaxNode pNode)
+        {
+            if (pNode.SyntaxType == SyntaxType.MethodCall || pNode.SyntaxType == SyntaxType.ArrayAccess) return true;
+            else if (pNode.SyntaxType == SyntaxType.MemberAccess) return NeedToCopyLocals(((MemberAccessSyntax)pNode).Value);
+            return false;
         }
     }
 }

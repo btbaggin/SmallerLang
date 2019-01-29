@@ -44,9 +44,15 @@ namespace SmallerLang.Syntax
 
         public override T FromNode<T>(T pNode)
         {
-            var n = (IdentifierSyntax)(SyntaxNode)base.FromNode(pNode);
-            n.SetType(((ArrayAccessSyntax)(SyntaxNode)pNode).BaseType);
-            return (T)(SyntaxNode)n;
+            //TODO This is really weird and hacky
+            //It's like this to turn ItSyntax into ArrayAccessSyntax
+            if (pNode is ArrayAccessSyntax a)
+            {
+                var n = (IdentifierSyntax)(SyntaxNode)base.FromNode(pNode);
+                n.SetType(a.BaseType);
+            }
+
+            return (T)(SyntaxNode)this;
             
         }
     }

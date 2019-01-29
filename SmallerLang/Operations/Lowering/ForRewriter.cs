@@ -38,6 +38,7 @@ namespace SmallerLang.Operations.Lowering
             if (pNode.Iterator != null)
             {
                 var i = SyntaxFactory.Identifier("!i");
+                i.SetType(SmallTypeCache.Int);
 
                 var postOp = pNode.Reverse ? UnaryExpressionOperator.PostDecrement : UnaryExpressionOperator.PostIncrement;
                 UnaryExpressionSyntax finalizer = SyntaxFactory.UnaryExpression(i, postOp);
@@ -51,6 +52,7 @@ namespace SmallerLang.Operations.Lowering
                 //Declare our iterator outside the for loop
                 //This will help if our iterator is complex like a function call
                 var iterVar = SyntaxFactory.Identifier("!iter");
+                iterVar.SetType(pNode.Iterator.Type);
                 var iterDecl = SyntaxFactory.SingleDeclaration(iterVar, pNode.Iterator);
 
                 if (pNode.Iterator.Type.IsArray)
@@ -61,6 +63,7 @@ namespace SmallerLang.Operations.Lowering
                     if (pNode.Reverse)
                     {
                         var length = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
+                        length.SetType(SmallTypeCache.Int);
                         decl = SyntaxFactory.SingleDeclaration(i, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
@@ -68,9 +71,11 @@ namespace SmallerLang.Operations.Lowering
                     {
                         decl = SyntaxFactory.SingleDeclaration(i, SyntaxFactory.NumericLiteral(0));
                         end = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
+                        ((UnaryExpressionSyntax)end).SetType(SmallTypeCache.Int);
                     }
-                    
+
                     _itVar = SyntaxFactory.ArrayAccess(iterVar, i);
+                    ((ArrayAccessSyntax)_itVar).SetType(iterVar.Type);
 
                 }
                 else if (pNode.Iterator.Type.IsAssignableFrom(_enumerable))
@@ -100,6 +105,7 @@ namespace SmallerLang.Operations.Lowering
 
                 var op = pNode.Reverse ? BinaryExpressionOperator.GreaterThanOrEqual : BinaryExpressionOperator.LessThan;
                 var condition = SyntaxFactory.BinaryExpression(i, op, end);
+                condition.SetType(SmallTypeCache.Boolean);
 
                 var body = (BlockSyntax)Visit(pNode.Body);
                 var forStatement = SyntaxFactory.For(new List<DeclarationSyntax>() { decl }, condition, new List<SyntaxNode>() { finalizer }, body);
