@@ -12,7 +12,11 @@ namespace SmallerLang
     {
         static Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)> _primitiveTypes = new Dictionary<string, (SmallType Type, LLVMTypeRef LLVMType)>();
 
+        //Undefined is used when a type is not yet known or not defined within the source file
+        //NoValue is used to say a certain expression does not produce a value
         internal static SmallType Undefined { get; private set; } = AddType("undefined", LLVMTypeRef.VoidType());
+        internal static SmallType NoValue { get; private set; } = AddType("__novalue__", LLVMTypeRef.VoidType());
+
         internal static SmallType Short { get; private set; } = AddType("short", LLVMTypeRef.Int16Type());
         internal static SmallType Int { get; private set; } = AddType("int", LLVMTypeRef.Int32Type());
         internal static SmallType Long { get; private set; } = AddType("long", LLVMTypeRef.Int64Type());
@@ -114,7 +118,7 @@ namespace SmallerLang
             //No return values = void
             //1 Return value = normal type
             //> 1 return values is a tuple
-            if (pTypes.Length == 0) return Undefined;
+            if (pTypes.Length == 0) return NoValue;
             if (pTypes.Length == 1) return pTypes[0];
 
             StringBuilder sb = new StringBuilder("!!");

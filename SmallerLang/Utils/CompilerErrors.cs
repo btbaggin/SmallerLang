@@ -42,6 +42,11 @@ namespace SmallerLang.Utils
         {
             _error.WriteError($"Cannot iterate over type {pType} because it doesn't implement Enumerable", pSpan);
         }
+
+        public static void ExpressionNoValue(TextSpan pSpan)
+        {
+            _error.WriteError("Expression does not produce a value", pSpan);
+        }
         #endregion
 
         #region Type Definition Errors
@@ -198,6 +203,7 @@ namespace SmallerLang.Utils
                 }
                 else
                 {
+                    //Found a method, but the argument count is wrong
                     _error.WriteError($"No overload of method {pMethod} takes {pArguments.Count} arguments", pSpan);
                 }
             }

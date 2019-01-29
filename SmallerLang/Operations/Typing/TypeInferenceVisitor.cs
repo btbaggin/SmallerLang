@@ -57,8 +57,8 @@ namespace SmallerLang.Operations.Typing
         protected override void VisitDeclarationSyntax(DeclarationSyntax pNode)
         {
             Visit(pNode.Value);
-            var isTuple = pNode.Value.Type.IsTuple;
 
+            var isTuple = pNode.Value.Type.IsTuple;
             for (int i = 0; i < pNode.Variables.Count; i++)
             {
                 if(!SyntaxHelper.IsDiscard(pNode.Variables[i]))
@@ -80,6 +80,13 @@ namespace SmallerLang.Operations.Typing
                             //For tuple types we set the individual variables to the tuple field type... not the tuple itself
                             var t = isTuple ? pNode.Value.Type.GetFieldType(i) : pNode.Value.Type;
 
+                            //Report expression errors and change the type to Undefined so we don't get further no expression errors
+                            if (pNode.Value.Type == SmallTypeCache.NoValue)
+                            {
+                                CompilerErrors.ExpressionNoValue(pNode.Value.Span);
+                                t = SmallTypeCache.Undefined;
+                            }
+
                             pNode.Variables[i].SetType(t);
                             _locals.DefineVariableInScope(pNode.Variables[i].Value, LocalDefinition.Create(pNode.IsConst, pNode.Variables[i].Type));
                         }
@@ -97,6 +104,10 @@ namespace SmallerLang.Operations.Typing
         protected override void VisitAssignmentSyntax(AssignmentSyntax pNode)
         {
             base.VisitAssignmentSyntax(pNode);
+            if(pNode.Value.Type == SmallTypeCache.NoValue)
+            {
+                CompilerErrors.ExpressionNoValue(pNode.Value.Span);
+            }
 
             var isTuple = pNode.Value.Type.IsTuple;
             for (int i = 0; i < pNode.Variables.Count; i++)
@@ -388,7 +399,17 @@ namespace SmallerLang.Operations.Typing
         {
             base.VisitMethodCallSyntax(pNode);
 
-            SmallType[] types = SyntaxHelper.SelectNodeTypes(pNode.Arguments);
+            //TODO somehow report methods that do not return values
+            SmallType[] types = new SmallType[pNode.Arguments.Count];
+            for (int i = 0; i < types.Length; i++)
+            {
+                types[i] = pNode.Arguments[i].Type;
+                if(types[i] == SmallTypeCache.NoValue)
+                {
+                    CompilerErrors.ExpressionNoValue(pNode.Arguments[i].Span);
+                }
+            }
+
             if (SyntaxHelper.HasUndefinedCastAsArg(pNode))
             {
                 IList<MethodDefinition> matches = _unit.GetAllMatches(Namespace, pNode.Value, pNode.Arguments.Count);
@@ -411,6 +432,8 @@ namespace SmallerLang.Operations.Typing
                     }
                 }
             }
+
+
 
             //Check to ensure this method exists
             var result = SyntaxHelper.FindMethodOnType(out MethodDefinition m, _unit, Namespace, pNode.Value, CurrentType, types);

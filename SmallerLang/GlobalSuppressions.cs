@@ -12,4 +12,5 @@
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Major Bug", "S2583:Conditionally executed blocks should be reachable", Justification = "<Pending>", Scope = "member", Target = "~M:SmallerLang.Validation.PostTypeValidation.VisitCastDefinitionSyntax(SmallerLang.Syntax.CastDefinitionSyntax)")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Major Bug", "S2583:Conditionally executed blocks should be reachable", Justification = "<Pending>", Scope = "member", Target = "~M:SmallerLang.Validation.TreeRewriter.VisitSelectSyntax(SmallerLang.Syntax.SelectSyntax)~SmallerLang.Syntax.SyntaxNode")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3265:Non-flags enums should not be used in bitwise operations", Justification = "<Pending>", Scope = "member", Target = "~M:SmallerLang.SmallLangExecutionEngine.CreateDynamicDelegate(System.Reflection.MethodInfo)~System.Type")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S125:Sections of code should not be commented out", Justification = "<Pending>", Scope = "type", Target = "~T:SmallerLang.Operations.Lowering.PostTypeRewriter")]
 

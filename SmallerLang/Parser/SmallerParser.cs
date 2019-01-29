@@ -1206,6 +1206,8 @@ namespace SmallerLang.Parser
                     e = SyntaxFactory.ArrayAccess(e, index);
                 }
 
+                //After we parsed our array, check for another member access
+                //We cannot work this into ParseMemberAccess because it would cause an infinite loop
                 if (PeekAndExpect(TokenType.Period))
                 {
                     var iden = ParseMemberAccess();
@@ -1223,12 +1225,12 @@ namespace SmallerLang.Parser
                 IdentifierSyntax e = null;
                 if (PeekAndExpect(TokenType.Self))
                 {
-                    if (!_allowSelf)
-                        ReportError("Self only allowed within structs", t);
+                    if (!_allowSelf) ReportError("Self only allowed within structs", t);
                     e = SyntaxFactory.Self();
                 }
-                else if(_allowIt && PeekAndExpect(TokenType.It))
+                else if(PeekAndExpect(TokenType.It))
                 {
+                    if (!_allowIt) ReportError("It cannot be used in this context", t);
                     e = SyntaxFactory.It();
                 }
                 else if (_stream.Peek(1, out Token tok))

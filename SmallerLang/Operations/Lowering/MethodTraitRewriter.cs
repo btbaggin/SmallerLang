@@ -11,8 +11,8 @@ namespace SmallerLang.Operations.Lowering
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
         /*
-         *This class will rewrite all methods with one or more trait parameter
-         *It will inspect all calling sites of the method
+         * This class will rewrite all methods with one or more trait parameter
+         * It will inspect all calling sites of the method
          * and create copies of the method with the trait parameters replaced with their concrete types
          */
 
@@ -31,7 +31,10 @@ namespace SmallerLang.Operations.Lowering
         protected override SyntaxNode VisitModuleSyntax(ModuleSyntax pNode)
         {
             _locals.AddScope();
-            FindConstants(pNode);
+            foreach(var f in pNode.Fields)
+            {
+                Visit(f);
+            }
 
             //Find all methods we need to polymorph
             //A method needs to be polymorphed if any of it's parameters are traits

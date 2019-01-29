@@ -117,8 +117,12 @@ namespace SmallerLang.Emitting
             pNewName = pDefinition.MangledName;
 
             //Method header
-            var func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
-            LLVM.SetLinkage(func, LLVMLinkage.LLVMExternalLinkage);
+            var func = LLVM.GetNamedFunction(CurrentModule, pNewName);
+            if(func.Pointer == IntPtr.Zero)
+            {
+                func = LLVM.AddFunction(CurrentModule, pNewName, LLVM.FunctionType(ret, parmTypes, false));
+                LLVM.SetLinkage(func, LLVMLinkage.LLVMExternalLinkage);
+            }
 
             if(pMethod.External)
             {

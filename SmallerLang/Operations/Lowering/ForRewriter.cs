@@ -10,6 +10,16 @@ using SmallerLang.Utils;
 
 namespace SmallerLang.Operations.Lowering
 {
+    /*
+     * This will take all for blocks that contain interators
+     * and transform them into normal for blocks
+     * 
+     * for(array) stuff...
+     * for(let !i = 0: !i < lengthof array: !i++) stuff...
+     * 
+     * Arrays and enumerables will be generated slightly differently
+     * and using ++ or -- will control the loop direction
+     */
     partial class PostTypeRewriter : SyntaxNodeRewriter
     {
         SyntaxNode _itVar;
@@ -41,7 +51,7 @@ namespace SmallerLang.Operations.Lowering
                 //Declare our iterator outside the for loop
                 //This will help if our iterator is complex like a function call
                 var iterVar = SyntaxFactory.Identifier("!iter");
-                var iterDecl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { iterVar }, pNode.Iterator);
+                var iterDecl = SyntaxFactory.SingleDeclaration(iterVar, pNode.Iterator);
 
                 if (pNode.Iterator.Type.IsArray)
                 {
@@ -51,12 +61,12 @@ namespace SmallerLang.Operations.Lowering
                     if (pNode.Reverse)
                     {
                         var length = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
-                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
+                        decl = SyntaxFactory.SingleDeclaration(i, SyntaxFactory.BinaryExpression(length, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
                     else
                     {
-                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
+                        decl = SyntaxFactory.SingleDeclaration(i, SyntaxFactory.NumericLiteral(0));
                         end = SyntaxFactory.UnaryExpression(iterVar, UnaryExpressionOperator.Length);
                     }
                     
@@ -71,12 +81,12 @@ namespace SmallerLang.Operations.Lowering
                     if (pNode.Reverse)
                     {
                         var count = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.Identifier("Count"));
-                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.BinaryExpression(count, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
+                        decl = SyntaxFactory.SingleDeclaration(i, SyntaxFactory.BinaryExpression(count, BinaryExpressionOperator.Subtraction, SyntaxFactory.NumericLiteral(1)));
                         end = SyntaxFactory.NumericLiteral(0);
                     }
                     else
                     {
-                        decl = SyntaxFactory.Declaration(false, new List<IdentifierSyntax>() { i }, SyntaxFactory.NumericLiteral(0));
+                        decl = SyntaxFactory.SingleDeclaration(i, SyntaxFactory.NumericLiteral(0));
                         end = SyntaxFactory.MemberAccess(iterVar, SyntaxFactory.Identifier("Count"));
                     }
 

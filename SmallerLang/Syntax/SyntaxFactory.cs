@@ -147,6 +147,11 @@ namespace SmallerLang.Syntax
             return new DeclarationSyntax(pIsConst, pVariables, pRight);
         }
 
+        public static DeclarationSyntax SingleDeclaration(IdentifierSyntax pVariable, SyntaxNode pRight)
+        {
+            return new DeclarationSyntax(false, new List<IdentifierSyntax>() { pVariable }, pRight);
+        }
+
         public static AssignmentSyntax Assignment(List<IdentifierSyntax> pVariables, AssignmentOperator pOp, SyntaxNode pValue)
         {
             return new AssignmentSyntax(pVariables, pOp, pValue);

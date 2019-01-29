@@ -126,7 +126,6 @@ namespace SmallerLang.Operations.Lowering
             {
                 //Otherwise we are just in a normal generic method
                 //We need to discover all the generic types then poly them
-
             }
 
             return base.VisitMethodSyntax(pNode);
@@ -136,7 +135,7 @@ namespace SmallerLang.Operations.Lowering
         {
             if (_types.ContainsKey(pNode.TypeNode.Value))
             {
-                return SyntaxFactory.ArrayLiteral(_types[pNode.TypeNode.Value], pNode.Size);
+                return SyntaxFactory.ArrayLiteral(PolyType(pNode.TypeNode), pNode.Size);
             }
             return base.VisitArrayLiteralSyntax(pNode);
         }
