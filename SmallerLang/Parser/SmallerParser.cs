@@ -515,7 +515,8 @@ namespace SmallerLang.Parser
                         break;
 
                     default:
-                        throw ReportError($"Encountered unknown token {Current.Type}", _spans.Current); //TODO better span
+                        var currentTokenSpan = new TextSpan(_spans.Current.End, _spans.Current.End + Current.Length, _stream.SourceLine, _stream.SourceColumn, _stream.Source, _stream.SourcePath);
+                        throw ReportError($"Encountered unknown token {Current.Type}", currentTokenSpan);
                 }
 
                 node.Deferred = deferred;

@@ -47,6 +47,7 @@ namespace SmallerLang.Operations.Lowering
                 DeclarationSyntax decl = null;
 
                 //Save itvar in case we are looping in a case body
+                var rw = _rewrite;
                 var it = _itVar;
 
                 //Declare our iterator outside the for loop
@@ -112,17 +113,13 @@ namespace SmallerLang.Operations.Lowering
 
                 //Restore our it for any other nested loops
                 _itVar = it;
+                _rewrite = rw;
 
                 //Return our iterator declaration and for rewrite
                 return SyntaxFactory.Block(new List<SyntaxNode>() { iterDecl, forStatement });
             }
 
             return base.VisitForSyntax(pNode);
-        }
-
-        protected override SyntaxNode VisitItSyntax(ItSyntax pNode)
-        {
-            return _itVar ?? pNode;
         }
     }
 }

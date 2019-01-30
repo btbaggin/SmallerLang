@@ -8,16 +8,16 @@ using SmallerLang.Utils;
 
 namespace SmallerLang.Operations.Lowering
 {
-    partial class PreTypeRewriter : SyntaxNodeRewriter
+    partial class PostTypeRewriter : SyntaxNodeRewriter
     {
         IfSyntax _currentIf;
         ElseSyntax _currentElse;
-        SyntaxNode _itVar;
         bool _rewrite;
-        //TODO move me to PostTypeRewriter?
         protected override SyntaxNode VisitSelectSyntax(SelectSyntax pNode)
         {
+            var rw = _rewrite;
             _rewrite = false;
+
             //Save itVar in case we hit a nested for or select statement
             var it = _itVar;
             _itVar = pNode.Condition;
@@ -47,6 +47,7 @@ namespace SmallerLang.Operations.Lowering
                         {
                             //If it isn't make it one
                             baseExpression = SyntaxFactory.BinaryExpression(_itVar, BinaryExpressionOperator.Equals, baseExpression);
+                            ((BinaryExpressionSyntax)baseExpression).SetType(SmallTypeCache.Boolean);
                         }
 
                         for (int j = 0; j < currentCase.Conditions.Count - 1; j++)
@@ -56,9 +57,11 @@ namespace SmallerLang.Operations.Lowering
                             {
                                 //If it isn't make it one
                                 newExpression = SyntaxFactory.BinaryExpression(_itVar, BinaryExpressionOperator.Equals, newExpression);
+                                ((BinaryExpressionSyntax)newExpression).SetType(SmallTypeCache.Boolean);
                             }
 
                             baseExpression = SyntaxFactory.BinaryExpression(baseExpression, BinaryExpressionOperator.Or, newExpression);
+                            ((BinaryExpressionSyntax)baseExpression).SetType(SmallTypeCache.Boolean);
                         }
 
                         //Visit body so we can rewrite any "it"
@@ -77,14 +80,14 @@ namespace SmallerLang.Operations.Lowering
             }
 
             _itVar = it;
+            _rewrite = rw;
             return retval;
         }
 
         protected override SyntaxNode VisitItSyntax(ItSyntax pNode)
         {
             _rewrite = true;
-            if (_itVar == null) return pNode;
-            return _itVar;
+            return _itVar ?? pNode;
         }
 
         private bool IsComparison(SyntaxNode pNode)
