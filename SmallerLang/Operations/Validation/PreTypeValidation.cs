@@ -10,6 +10,12 @@ namespace SmallerLang.Operations.Validation
 {
     class PreTypeValidation : SyntaxNodeVisitor
     {
+        readonly Compiler.CompilationCache _cache;
+        public PreTypeValidation(Compiler.CompilationCache pCache)
+        {
+            _cache = pCache;
+        }
+
         protected override void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
             if(pNode.DefinitionType != DefinitionTypes.Implement && pNode.DeclaredType.Namespace != null)
@@ -30,9 +36,22 @@ namespace SmallerLang.Operations.Validation
 
         private bool IsConstant(SyntaxNode pNode)
         {
-            return pNode.SyntaxType == SyntaxType.BooleanLiteral ||
-                   pNode.SyntaxType == SyntaxType.NumericLiteral ||
-                   pNode.SyntaxType == SyntaxType.StringLiteral;
+            if(pNode.SyntaxType == SyntaxType.BooleanLiteral ||
+               pNode.SyntaxType == SyntaxType.NumericLiteral ||
+               pNode.SyntaxType == SyntaxType.StringLiteral)
+            {
+                return true;
+            }
+            else if(pNode.SyntaxType == SyntaxType.MemberAccess)
+            {
+                var ma = (MemberAccessSyntax)pNode;
+                if(_cache.IsTypeDefined(ma.Identifier.Value) && _cache.FromString(ma.Identifier.Value, out SmallType t) == Compiler.FindResult.Found)
+                {
+                    return t.IsEnum;
+                }
+            }
+
+            return false;
         }
     }
 }

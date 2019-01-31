@@ -63,9 +63,9 @@ namespace SmallerLang.Compiler
         #endregion
 
         #region Types
-        public void AddType(TypeDefinitionSyntax pType)
+        public void AddType(TypeDefinitionSyntax pType, List<TypeDefinitionSyntax> pImplements)
         {
-            _types.AddType(Namespace, pType);
+            _types.AddType(Namespace, pType, pImplements);
         }
 
         public void AddType(EnumSyntax pEnum)

@@ -168,7 +168,10 @@ namespace SmallerLang.Operations
             return node.FromNode(pNode);
         }
 
-        protected virtual SyntaxNode VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode) { return pNode; }
+        protected virtual SyntaxNode VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode)
+        {
+            return SyntaxFactory.ArrayLiteral((TypeSyntax)Visit(pNode.TypeNode), Visit(pNode.Size));
+        }
 
         protected virtual SyntaxNode VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
         {

@@ -17,6 +17,11 @@ namespace SmallerLang.Utils
         public static string Complete => "complete";
         public static string Hidden => "hidden";
 
+        public static Emitting.FieldVisibility GetVisibility(Syntax.TypedIdentifierSyntax pIden)
+        {
+            return pIden.Annotation.Value == Hidden ? Emitting.FieldVisibility.Hidden : Emitting.FieldVisibility.Public;
+        }
+
         public static void ValidateExternalAnnotation(Annotation pAnnotation, MethodSyntax pMethod)
         {
             //Check basic format

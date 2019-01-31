@@ -29,11 +29,11 @@ namespace SmallerLang.Compiler
             Module = new PreTypeRewriter(pCompilation).VisitModule(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            //Info gathering passes
-            new PreTypeValidation().Visit(Module);
+            new TypeDiscoveryVisitor(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
-            new TypeDiscoveryVisitor(pCompilation).Visit(Module);
+            //Info gathering passes
+            new PreTypeValidation(pCompilation).Visit(Module);
             if (CompilerErrors.ErrorOccurred) return false;
 
             //Type inference
@@ -71,8 +71,6 @@ namespace SmallerLang.Compiler
             //The reason we do this is so we have a static method name we can call
             var main = pContext.EmitMethodHeader("_main", LLVMTypeRef.Int32Type(), new LLVMTypeRef[] { });
             var mainB = main.AppendBasicBlock("");
-
-            //TODO emit readonlys here
 
             LLVMValueRef _main = Module.Emit(pContext);
 

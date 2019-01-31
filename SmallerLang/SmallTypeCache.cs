@@ -42,16 +42,40 @@ namespace SmallerLang
             return new SmallType(pType, t);
         }
 
-        internal SmallType AddType(string pNamespace, TypeDefinitionSyntax pType)
+        internal SmallType AddType(string pNamespace, TypeDefinitionSyntax pType, List<TypeDefinitionSyntax> pImplements)
         {
             var name = SyntaxHelper.GetFullTypeName(pType.DeclaredType);
 
-            FieldDefinition[] fields = new FieldDefinition[pType.Fields.Count];
-            for (int i = 0; i < pType.Fields.Count; i++)
+            List<FieldDefinition> fields = new List<FieldDefinition>(pType.Fields.Count);
+            HashSet<string> fieldNames = new HashSet<string>();
+            //Add fields from base struct
+            foreach(var f in pType.Fields)
             {
-                var f = pType.Fields[i];
-                FieldVisibility visibility = f.Annotation.Value == KeyAnnotations.Hidden ? FieldVisibility.Hidden : FieldVisibility.Public;
-                fields[i] = new FieldDefinition(f.Type, f.Value, visibility);
+                FieldVisibility visibility = KeyAnnotations.GetVisibility(f);
+                fields.Add(new FieldDefinition(f.Type, f.Value, visibility));
+
+                //Check for duplicate field names
+                if(!fieldNames.Add(f.Value))
+                {
+                    CompilerErrors.DuplicateField(f.Value, pType, f.Span);
+                }
+            }
+
+            if(pImplements != null)
+            {
+                //Add fields from all implements
+                foreach(var i in pImplements)
+                {
+                    foreach(var f in i.Fields)
+                    {
+                        //Implement fields only get added once to the base struct
+                        if(fieldNames.Add(f.Value))
+                        {
+                            FieldVisibility visibility = KeyAnnotations.GetVisibility(f);
+                            fields.Add(new FieldDefinition(f.Type, f.Value, visibility));
+                        }
+                    }
+                }
             }
 
             var isStruct = pType.DefinitionType == DefinitionTypes.Struct;

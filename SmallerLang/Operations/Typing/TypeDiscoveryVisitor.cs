@@ -87,7 +87,7 @@ namespace SmallerLang.Operations.Typing
 
                         applyType.AddTrait(traitType);
 
-                        var trait = _discoveryGraph.GetNode(applyName).Node;
+                        var trait = _discoveryGraph.GetNode(name).Node;
                         ValidateImplementation(trait, s);
                     }
                 }
@@ -124,7 +124,6 @@ namespace SmallerLang.Operations.Typing
             }
         }
 
-        //TODO need to change this over to TypeSyntax so I can reference an imported type in a struct
         private bool DiscoverTypes(string pType, TextSpan pSpan)
         {
             //If a node doesn't exist the type hasn't been declared
@@ -168,6 +167,7 @@ namespace SmallerLang.Operations.Typing
 
         private bool AddType(TypeDefinitionSyntax pDefinition)
         {
+            //Check for duplicate type definitions
             pDefinition.EmitOrder = _order++;
             var name = SyntaxHelper.GetFullTypeName(pDefinition.DeclaredType);
             if (_unit.IsTypeDefined(name))
@@ -176,9 +176,10 @@ namespace SmallerLang.Operations.Typing
                 return true;
             }
 
-            HashSet<string> fieldNames = new HashSet<string>();
+            //Ensure types on base struct
             for (int i = 0; i < pDefinition.Fields.Count; i++)
             {
+                //Ensure all types on the field have been found
                 var f = pDefinition.Fields[i];
                 var typeName = SyntaxHelper.GetFullTypeName(f.TypeNode);
                 if (!pDefinition.TypeParameters.Contains(typeName))
@@ -188,19 +189,41 @@ namespace SmallerLang.Operations.Typing
 
                     f.TypeNode.SetType(fieldType);
                 }
+            }
 
-                if (!fieldNames.Add(f.Value))
+            //Ensure types on any implements
+            List<TypeDefinitionSyntax> implements = null;
+            if (_implements.ContainsKey(pDefinition.Name))
+            {
+                implements = _implements[pDefinition.Name];
+                foreach (var impl in implements)
                 {
-                    CompilerErrors.DuplicateField(f.Value, pDefinition, f.Span);
+                    for (int i = 0; i < impl.Fields.Count; i++)
+                    {
+                        //Ensure all types on the field have been found
+                        var f = impl.Fields[i];
+                        var typeName = SyntaxHelper.GetFullTypeName(f.TypeNode);
+                        if (!pDefinition.TypeParameters.Contains(typeName))
+                        {
+                            var result = _unit.FromString(f.TypeNode, out SmallType fieldType);
+                            if (result != Compiler.FindResult.Found) return false;
+
+                            f.TypeNode.SetType(fieldType);
+                        }
+                    }
                 }
             }
 
-            _unit.AddType(pDefinition);
+            //Duplicate fields get checked in AddType
+            //Other validate like ensuring fields/methods are present is done later after all types have been found
+            //See ValidateImplementation
+            _unit.AddType(pDefinition, implements);
             return true;
         }
 
         private bool AddMethodToCache(SmallType pType, MethodSyntax pMethod, out MethodDefinition pDefinition)
         {
+            //Check for duplicate method definitions
             Compiler.FindResult found;
             if (pMethod.SyntaxType == SyntaxType.Method) found = _unit.MethodExists(pType, pMethod);
             else if (pMethod.SyntaxType == SyntaxType.CastDefinition) found = _unit.CastExists(pType, pMethod.Type, out MethodDefinition pDef);
@@ -216,11 +239,13 @@ namespace SmallerLang.Operations.Typing
             else
             {
                 //Create the tuple type if we are returning more than one value from a method
+                //This will cache it in our SmallTypeCache so it can be found later
                 if (pMethod.ReturnValues.Count > 1)
                 {
                     SmallTypeCache.GetOrCreateTuple(SyntaxHelper.SelectNodeTypes(pMethod.ReturnValues));
                 }
 
+                //Set method and return types
                 foreach (var p in pMethod.Parameters)
                 {
                     _unit.FromString(p.TypeNode, out SmallType t);
@@ -232,6 +257,7 @@ namespace SmallerLang.Operations.Typing
                     r.SetType(t);
                 }
 
+                //Add method
                 pDefinition = _unit.AddMethod(pType, pMethod);
                 return true;
             }
@@ -240,10 +266,10 @@ namespace SmallerLang.Operations.Typing
         private void ValidateImplementation(TypeDefinitionSyntax pTrait, TypeDefinitionSyntax pImplement)
         {
             //Ensure that all fields are in the implementation
-            foreach (var tf in pImplement.Fields)
+            foreach (var tf in pTrait.Fields)
             {
                 bool found = false;
-                foreach (var f in pTrait.Fields)
+                foreach (var f in pImplement.Fields)
                 {
                     if (tf.Value == f.Value)
                     {
@@ -258,10 +284,10 @@ namespace SmallerLang.Operations.Typing
             }
 
             //Ensure that all methods are in the implementation
-            foreach (var tm in pImplement.Methods)
+            foreach (var tm in pTrait.Methods)
             {
                 bool found = false;
-                foreach (var im in pTrait.Methods)
+                foreach (var im in pImplement.Methods)
                 {
                     if (im.Name == tm.Name)
                     {

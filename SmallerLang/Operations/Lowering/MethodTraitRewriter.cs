@@ -61,6 +61,12 @@ namespace SmallerLang.Operations.Lowering
                 }       
             }
 
+            List<TypeDefinitionSyntax> types = new List<TypeDefinitionSyntax>(pNode.Structs.Count);
+            foreach(var s in pNode.Structs)
+            {
+                types.Add((TypeDefinitionSyntax)Visit(s));
+            }
+
             foreach(var v in _polydMethods.Values)
             {
                 methods.AddRange(v);
@@ -68,7 +74,7 @@ namespace SmallerLang.Operations.Lowering
 
             _locals.RemoveScope();
 
-            return SyntaxFactory.Module(pNode.Imports, methods, pNode.Structs, pNode.Enums, pNode.Fields);
+            return SyntaxFactory.Module(pNode.Imports, methods, types, pNode.Enums, pNode.Fields);
         }
 
         protected override SyntaxNode VisitMethodCallSyntax(MethodCallSyntax pNode)

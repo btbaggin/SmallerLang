@@ -202,7 +202,7 @@ namespace SmallerLang
         public static LLVMValueRef GetLLVMDefault(SmallType pType, EmittingContext pContext)
         {
             if (pType == Boolean) return pContext.GetInt1(0);
-            else if (pType == Int) return pContext.GetInt(0);
+            else if (pType == Int || pType.IsEnum) return pContext.GetInt(0);
             else if (pType == Short) return pContext.GetShort(0);
             else if (pType == Long) return pContext.GetLong(0);
             else if (pType == Float) return pContext.GetFloat(0);

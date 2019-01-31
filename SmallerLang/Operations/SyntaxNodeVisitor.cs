@@ -182,6 +182,7 @@ namespace SmallerLang.Operations
         protected virtual void VisitArrayLiteralSyntax(ArrayLiteralSyntax pNode)
         {
             Visit(pNode.TypeNode);
+            Visit(pNode.Size);
         }
 
         protected virtual void VisitArrayAccessSyntax(ArrayAccessSyntax pNode)
