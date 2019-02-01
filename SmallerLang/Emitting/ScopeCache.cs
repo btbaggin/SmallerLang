@@ -47,7 +47,7 @@ namespace SmallerLang.Emitting
 
         public ScopeCache()
         {
-            _variables = new Dictionary<string, T>[128];
+            _variables = new Dictionary<string, T>[32];
             _scopeCount = -1;
         }
 

@@ -75,7 +75,7 @@ namespace SmallerLang.Parser
         }
     }
 
-    internal struct SpanTracker : IDisposable
+    internal readonly struct SpanTracker : IDisposable
     {
         public int Start { get; }
 

@@ -36,6 +36,11 @@ namespace SmallerLang.Compiler
 
         public bool Compile(CompilerOptions pOptions, out LLVMModuleRef? pModule)
         {
+            double totalTime = 0;
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
+            //Read source files
             pModule = null;
             string source = string.IsNullOrEmpty(pOptions.SourceFile) ? pOptions.Source : ReadSourceFile(pOptions.SourceFile);
             if (source == null) return false;
@@ -44,11 +49,17 @@ namespace SmallerLang.Compiler
             var stream = lexer.StartTokenStream(source, pOptions.SourceFile);
             var parser = new SmallerParser(stream);
 
+            //Create AST
             var tree = parser.Parse();
             if (CompilerErrors.ErrorOccurred) return false;
 
+            totalTime += RecordPerfData(sw, "Parsed in: ");
+
+            //Type inference, type checking, AST transformations
             var compilationModule = ModuleBuilder.Build(tree);
             if (compilationModule == null) return false;
+
+            totalTime += RecordPerfData(sw, "Type checked in: ");
 
             LLVMModuleRef module = LLVM.ModuleCreateWithName(tree.Name);
             LLVMPassManagerRef passManager = LLVM.CreateFunctionPassManagerForModule(module);
@@ -72,6 +83,7 @@ namespace SmallerLang.Compiler
             }
             LLVM.InitializeFunctionPassManager(passManager);
 
+            //Emitting LLVM bytecode
             using (var c = new EmittingContext(module, passManager, pOptions.Debug))
             {
                 compilationModule.Emit(c);
@@ -87,6 +99,11 @@ namespace SmallerLang.Compiler
                 
             pModule = module;
             LLVM.DisposePassManager(passManager);
+
+            totalTime += RecordPerfData(sw, "Emitted bytecode in: ");
+
+            Console.WriteLine("Total time: " + totalTime + "s");
+
             return true;
         }
 
@@ -107,6 +124,17 @@ namespace SmallerLang.Compiler
 
             CurrentDirectory = System.IO.Path.GetDirectoryName(pFile);
             return source;
+        }
+
+        private double RecordPerfData(System.Diagnostics.Stopwatch pWatch, string pText)
+        {
+            pWatch.Stop();
+            var time = pWatch.Elapsed.TotalSeconds;
+            Console.WriteLine(pText + time + "s");
+            pWatch.Reset();
+            pWatch.Start();
+
+            return time;
         }
     }
 }

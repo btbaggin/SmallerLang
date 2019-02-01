@@ -36,12 +36,10 @@ namespace SmallerLangRun
                 Debug = false
             };
 
-            var t = Environment.TickCount;
             if (c.Compile(o))
             {
-                Console.WriteLine(Environment.TickCount - t);
                 var e = new SmallLangExecutionEngine();
-                e.Run(output);
+                //e.Run(output);
             }
             Console.Read();
         }        

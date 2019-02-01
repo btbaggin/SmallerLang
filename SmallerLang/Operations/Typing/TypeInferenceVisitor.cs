@@ -397,7 +397,6 @@ namespace SmallerLang.Operations.Typing
         {
             base.VisitMethodCallSyntax(pNode);
 
-            //TODO somehow report methods that do not return values
             SmallType[] types = new SmallType[pNode.Arguments.Count];
             for (int i = 0; i < types.Length; i++)
             {

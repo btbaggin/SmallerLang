@@ -11,7 +11,7 @@ namespace SmallerLang.Lexer
         Tokenizer _tokenizer;
         int _length;
         bool _atEnd;
-        readonly Trie _keywords;
+        static readonly Trie _keywords = new Trie();
 
         #region Properties
         public string Source { get; private set; }
@@ -34,10 +34,8 @@ namespace SmallerLang.Lexer
         }
         #endregion
 
-        public SmallerLexer()
+        static SmallerLexer()
         {
-            _keywords = new Trie();
-
             //Keywords
             _keywords.Insert("let", TokenType.Let);
             _keywords.Insert("if", TokenType.If);

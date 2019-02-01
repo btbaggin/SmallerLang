@@ -80,7 +80,7 @@ namespace SmallerLang.Parser
                                 _source = source.AsMemory();
 
                                 if (imports.ContainsKey(alias)) CompilerErrors.DuplicateNamespaceAlias(alias, t);
-                                imports.Add(alias, ParseModule());
+                                else imports.Add(alias, ParseModule());
 
                                 //We have to restore the stream so that we are looking at the current file
                                 //Rather than the module we just parsed
@@ -320,17 +320,17 @@ namespace SmallerLang.Parser
                 Expect(TokenType.ColonColon);
 
                 Expect(TokenType.LeftParen);
-                var p = ParseTypedIdentifier();
+                var parameter = ParseTypedIdentifier();
                 Expect(TokenType.RightParen);
 
                 //Return type
                 Expect(TokenType.DashGreater);
-                var r = ParseType();
+                var returns = ParseType();
                 Ignore(TokenType.Newline);
 
                 //Method body
                 var body = ParseBlock(false);
-                return SyntaxFactory.CastDefinition(_currentScope, p, body, r).SetSpan<CastDefinitionSyntax>(t);
+                return SyntaxFactory.CastDefinition(_currentScope, parameter, body, returns).SetSpan<CastDefinitionSyntax>(t);
             }
         }
 
@@ -1305,7 +1305,7 @@ namespace SmallerLang.Parser
             else
             {
                 var error = pError ?? "Expecting " + pSymbol.ToString() + " but encountered " + Current.Type.ToString();
-                throw ReportError(error, _spans.Current);
+                ThrowReportError(error, _spans.Current); //Use a throw helper so this method can be inlined
             }
         }
 
@@ -1324,7 +1324,8 @@ namespace SmallerLang.Parser
             else
             {
                 var error = pError ?? "Expecting " + pSymbol.ToString() + " but encountered " + Current.Type.ToString();
-                throw ReportError(error, _spans.Current);
+                s = null;
+                ThrowReportError(error, _spans.Current); //Use a throw helper so this method can be inlined
             }
         }
 
@@ -1390,10 +1391,15 @@ namespace SmallerLang.Parser
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ParseException ReportError(string pError, TextSpan pSpan)
+        private static ParseException ReportError(string pError, TextSpan pSpan)
         {
             CompilerErrors.GenericError(pError, pSpan);
             return new ParseException(pError);
+        }
+
+        private static void ThrowReportError(string pError, TextSpan pSpan)
+        {
+            throw ReportError(pError, pSpan);
         }
 
         private void Synchronize()
