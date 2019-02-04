@@ -188,6 +188,12 @@ namespace SmallerLang.Operations.Typing
             TrySetImplicitCastType(pNode.Right, pNode.Left.Type);
         }
 
+        protected override void VisitTernaryExpression(TernaryExpressionSyntax pNode)
+        {
+            base.VisitTernaryExpression(pNode);
+            pNode.SetType(pNode.Left.Type);
+        }
+
         protected override void VisitUnaryExpressionSyntax(UnaryExpressionSyntax pNode)
         {
             base.VisitUnaryExpressionSyntax(pNode);

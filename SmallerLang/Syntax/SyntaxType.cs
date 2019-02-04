@@ -37,6 +37,7 @@ namespace SmallerLang.Syntax
         Self,
         StringLiteral,
         StructInitializer,
+        TernaryExpression,
         TypeDefinition,
         TypedIdentifier,
         Type,

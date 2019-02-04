@@ -241,5 +241,10 @@ namespace SmallerLang.Syntax
         {
             return new NamespaceSyntax(pAlias);
         }
+
+        public static TernaryExpressionSyntax TernaryExpression(SyntaxNode pCondition, SyntaxNode pTrue, SyntaxNode pFalse)
+        {
+            return new TernaryExpressionSyntax(pCondition, pTrue, pFalse);
+        }
     }
 }

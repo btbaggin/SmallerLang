@@ -11,7 +11,7 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * It's weird that I need to put trait fields inside the struct and not inside the impl
+         * Ternary validation
          * returning arrays not working
          * constructor overloads
          * Contracts???
@@ -39,7 +39,7 @@ namespace SmallerLangRun
             if (c.Compile(o))
             {
                 var e = new SmallLangExecutionEngine();
-                //e.Run(output);
+                e.Run(output);
             }
             Console.Read();
         }        

@@ -234,7 +234,7 @@ namespace SmallerLang.Parser
                 TypeSyntax implementOn = null;
                 if (type == DefinitionTypes.Implement)
                 {
-                    Expect(TokenType.On, pError:"Must specify a type on which to implement the trait");
+                    Expect(TokenType.On, pError: "Must specify a type on which to implement the trait");
                     implementOn = ParseType(true);
                 }
 
@@ -246,11 +246,11 @@ namespace SmallerLang.Parser
                 Expect(TokenType.LeftBrace);
                 IgnoreNewlines();
                 //Struct fields
-                while(!PeekAndExpect(TokenType.RightBrace))
+                while (!PeekAndExpect(TokenType.RightBrace))
                 {
-                    if(_stream.Peek(1, out Token tok))
+                    if (_stream.Peek(1, out Token tok))
                     {
-                        switch(tok.Type)
+                        switch (tok.Type)
                         {
                             case TokenType.ColonColon:
                                 _allowSelf = true;
@@ -346,7 +346,7 @@ namespace SmallerLang.Parser
 
                 //Method parameters
                 List<TypedIdentifierSyntax> parameters = new List<TypedIdentifierSyntax>();
-                if(!Peek(TokenType.RightParen))
+                if (!Peek(TokenType.RightParen))
                 {
                     do
                     {
@@ -370,13 +370,13 @@ namespace SmallerLang.Parser
                 }
 
                 BlockSyntax body = null;
-                if(pExpectBody)
+                if (pExpectBody)
                 {
                     //Method body
                     Ignore(TokenType.Newline);
                     body = ParseBlock(false);
                 }
-                
+
                 var m = SyntaxFactory.Method(_currentScope, name, returns, parameters, body).SetSpan<MethodSyntax>(t);
 
                 //Annotations!
@@ -411,7 +411,7 @@ namespace SmallerLang.Parser
                 else return null;
 
                 List<TypeSyntax> genericArgs = new List<TypeSyntax>();
-                if(PeekAndExpect(TokenType.LessThan))
+                if (PeekAndExpect(TokenType.LessThan))
                 {
                     do
                     {
@@ -537,11 +537,11 @@ namespace SmallerLang.Parser
             {
                 Expect(TokenType.Return);
                 List<SyntaxNode> values = new List<SyntaxNode>();
-                if(!Peek(TokenType.Newline) && !Peek(TokenType.RightBrace))
+                if (!Peek(TokenType.Newline) && !Peek(TokenType.RightBrace))
                 {
                     do
                     {
-                        if(Peek(TokenType.New))
+                        if (Peek(TokenType.New))
                         {
                             values.Add(ParseInitializer(new List<IdentifierSyntax>()));
                         }
@@ -580,9 +580,9 @@ namespace SmallerLang.Parser
                     var newStruct = ParseInitializer(variables);
                     if (newStruct != null) right = newStruct;
                 }
-                
 
-                if(right == null)
+
+                if (right == null)
                 {
                     //Missing or invalid expression being assigned
                     ReportError("Expecting expression", t);
@@ -592,7 +592,7 @@ namespace SmallerLang.Parser
                 return SyntaxFactory.Declaration(isConst, variables, right).SetSpan<DeclarationSyntax>(t);
             }
         }
-        
+
         private DiscardSyntax ParseDiscard()
         {
             using (SpanTracker t = _spans.Create())
@@ -608,8 +608,8 @@ namespace SmallerLang.Parser
             {
                 if (PeekAndExpect(TokenType.New))
                 {
-                    var type = ParseType(pAllowArray:false);
-                    if(PeekAndExpect(TokenType.LeftBracket))
+                    var type = ParseType(pAllowArray: false);
+                    if (PeekAndExpect(TokenType.LeftBracket))
                     {
                         var size = ParseExpression();
                         Expect(TokenType.RightBracket);
@@ -618,7 +618,7 @@ namespace SmallerLang.Parser
                     }
 
                     List<SyntaxNode> arguments = new List<SyntaxNode>();
-                    if(PeekAndExpect(TokenType.LeftParen))
+                    if (PeekAndExpect(TokenType.LeftParen))
                     {
                         if (!Peek(TokenType.RightParen))
                         {
@@ -745,7 +745,7 @@ namespace SmallerLang.Parser
                 else
                 {
                     iterator = ParseExpression();
-                    if(PeekAndExpectOneOf(out TokenType type, TokenType.MinusMinus, TokenType.PlusPlus))
+                    if (PeekAndExpectOneOf(out TokenType type, TokenType.MinusMinus, TokenType.PlusPlus))
                     {
                         backwards = (type == TokenType.MinusMinus);
                     }
@@ -760,7 +760,7 @@ namespace SmallerLang.Parser
                 BlockSyntax body = ParseBlock(true);
                 _allowIt = false;
 
-                if(!isIterator)
+                if (!isIterator)
                 {
                     return SyntaxFactory.For(initializer, cond, finalizer, body).SetSpan<ForSyntax>(t);
                 }
@@ -783,12 +783,12 @@ namespace SmallerLang.Parser
 
                 //Cases
                 List<CaseSyntax> cases = new List<CaseSyntax>();
-                while(!Peek(TokenType.RightBrace) && !Peek(TokenType.Else))
+                while (!Peek(TokenType.RightBrace) && !Peek(TokenType.Else))
                 {
                     cases.Add(ParseCase());
                 }
 
-                if(Peek(TokenType.Else))
+                if (Peek(TokenType.Else))
                 {
                     cases.Add(ParseDefaultCase());
                 }
@@ -808,7 +808,7 @@ namespace SmallerLang.Parser
                 Expect(TokenType.Break);
 
                 string count = "";
-                if(PeekAndExpect(TokenType.LeftParen))
+                if (PeekAndExpect(TokenType.LeftParen))
                 {
                     Expect(TokenType.Integer, out count);
                     Expect(TokenType.RightParen);
@@ -886,7 +886,7 @@ namespace SmallerLang.Parser
             {
                 //Full assignments allow for multiple variables on the left hand side and also use of the _ token
                 //Full assignments are only allowed as separate statements, not in other expressions
-                SyntaxNode e = ParseAndOr();
+                SyntaxNode e = ParseTernary();
                 List<IdentifierSyntax> variables = new List<IdentifierSyntax>();
                 if (e is IdentifierSyntax i) variables.Add(i);
 
@@ -909,7 +909,7 @@ namespace SmallerLang.Parser
 
                     //new only allowed in assignment and declaration statements
                     SyntaxNode right = ParseExpressionWithFullAssignment();
-                    if(Peek(TokenType.New))
+                    if (Peek(TokenType.New))
                     {
                         var newStruct = ParseInitializer(variables);
                         if (newStruct != null) right = newStruct;
@@ -932,7 +932,7 @@ namespace SmallerLang.Parser
             using (SpanTracker t = _spans.Create())
             {
                 //Normal assignment only allows one variable
-                SyntaxNode e = ParseAndOr();
+                SyntaxNode e = ParseTernary();
 
                 while (PeekAndExpectOneOf(out TokenType tt, TokenType.Equals, TokenType.PlusEquals,
                                                            TokenType.MinusEquals, TokenType.StarEquals,
@@ -957,6 +957,27 @@ namespace SmallerLang.Parser
                 }
 
                 return e?.SetSpan<SyntaxNode>(t);
+            }
+        }
+
+        private SyntaxNode ParseTernary()
+        {
+            using(SpanTracker t = _spans.Create())
+            {
+                var op = ParseAndOr();
+
+                if(PeekAndExpect(TokenType.QuestionMark))
+                {
+                    var trueOp = ParseAndOr();
+
+                    Expect(TokenType.Colon);
+
+                    var falseOp = ParseAndOr();
+
+                    return SyntaxFactory.TernaryExpression(op, trueOp, falseOp).SetSpan<SyntaxNode>(t);
+                }
+
+                return op;
             }
         }
 

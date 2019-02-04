@@ -9,7 +9,7 @@ namespace SmallerLang.Operations
 {
     public abstract class SyntaxNodeVisitor
     {
-        protected string Namespace { get; set;}
+        protected string Namespace { get; set; }
         protected SmallType CurrentType
         {
             get { return Store.GetValueOrDefault<SmallType>("__Type"); }
@@ -31,7 +31,7 @@ namespace SmallerLang.Operations
         {
             if (pNode == null) return;
 
-            switch(pNode.SyntaxType)
+            switch (pNode.SyntaxType)
             {
                 case SyntaxType.It:
                     VisitItSyntax((ItSyntax)pNode);
@@ -161,6 +161,10 @@ namespace SmallerLang.Operations
                     VisitTypeSyntax((TypeSyntax)pNode);
                     break;
 
+                case SyntaxType.TernaryExpression:
+                    VisitTernaryExpression((TernaryExpressionSyntax)pNode);
+                    break;
+
                 case SyntaxType.UnaryExpression:
                     VisitUnaryExpressionSyntax((UnaryExpressionSyntax)pNode);
                     break;
@@ -193,7 +197,7 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitAssignmentSyntax(AssignmentSyntax pNode)
         {
-            foreach(var v in pNode.Variables)
+            foreach (var v in pNode.Variables)
             {
                 Visit(v);
             }
@@ -208,7 +212,7 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitBlockSyntax(BlockSyntax pNode)
         {
-            foreach(var s in pNode.Statements)
+            foreach (var s in pNode.Statements)
             {
                 Visit(s);
             }
@@ -220,7 +224,7 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitCaseSyntax(CaseSyntax pNode)
         {
-            foreach(var c in pNode.Conditions)
+            foreach (var c in pNode.Conditions)
             {
                 Visit(c);
             }
@@ -275,7 +279,7 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitEnumSyntax(EnumSyntax pNode)
         {
-            foreach(var v in pNode.Names)
+            foreach (var v in pNode.Names)
             {
                 Visit(v);
             }
@@ -283,7 +287,7 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitForSyntax(ForSyntax pNode)
         {
-            if(pNode.Iterator != null)
+            if (pNode.Iterator != null)
             {
                 Visit(pNode.Iterator);
             }
@@ -317,11 +321,11 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitMethodSyntax(MethodSyntax pNode)
         {
-            foreach(var p in pNode.Parameters)
+            foreach (var p in pNode.Parameters)
             {
                 Visit(p);
             }
-            foreach(var r in pNode.ReturnValues)
+            foreach (var r in pNode.ReturnValues)
             {
                 Visit(r);
             }
@@ -357,19 +361,19 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitModuleSyntax(ModuleSyntax pNode)
         {
-            foreach(var m in pNode.Methods)
+            foreach (var m in pNode.Methods)
             {
                 Visit(m);
             }
-            foreach(var d in pNode.Structs)
+            foreach (var d in pNode.Structs)
             {
                 Visit(d);
             }
-            foreach(var e in pNode.Enums)
+            foreach (var e in pNode.Enums)
             {
                 Visit(e);
             }
-            foreach(var f in pNode.Fields)
+            foreach (var f in pNode.Fields)
             {
                 Visit(f);
             }
@@ -389,7 +393,7 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitReturnSyntax(ReturnSyntax pNode)
         {
-            foreach(var v in pNode.Values)
+            foreach (var v in pNode.Values)
             {
                 Visit(v);
             }
@@ -398,7 +402,7 @@ namespace SmallerLang.Operations
         protected virtual void VisitSelectSyntax(SelectSyntax pNode)
         {
             Visit(pNode.Condition);
-            foreach(var c in pNode.Cases)
+            foreach (var c in pNode.Cases)
             {
                 Visit(c);
             }
@@ -409,7 +413,7 @@ namespace SmallerLang.Operations
         protected virtual void VisitStructInitializerSyntax(StructInitializerSyntax pNode)
         {
             Visit(pNode.Struct);
-            foreach(var a in pNode.Arguments)
+            foreach (var a in pNode.Arguments)
             {
                 Visit(a);
             }
@@ -420,6 +424,13 @@ namespace SmallerLang.Operations
         protected virtual void VisitTypeSyntax(TypeSyntax pNode)
         {
             Visit(pNode.Namespace);
+        }
+
+        protected virtual void VisitTernaryExpression(TernaryExpressionSyntax pNode)
+        {
+            Visit(pNode.Condition);
+            Visit(pNode.Left);
+            Visit(pNode.Right);
         }
 
         protected virtual void VisitUnaryExpressionSyntax(UnaryExpressionSyntax pNode)

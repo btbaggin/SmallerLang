@@ -145,6 +145,10 @@ namespace SmallerLang.Operations
                     node = VisitStructInitializerSyntax((StructInitializerSyntax)pNode);
                     break;
 
+                case SyntaxType.TernaryExpression:
+                    node = VisitTernaryExpressionSyntax((TernaryExpressionSyntax)pNode);
+                    break;
+
                 case SyntaxType.Type:
                     node = VisitTypeSyntax((TypeSyntax)pNode);
                     break;
@@ -445,6 +449,11 @@ namespace SmallerLang.Operations
         protected virtual SyntaxNode VisitStringLiteralSyntax(StringLiteralSyntax pNode)
         {
             return pNode;
+        }
+
+        protected virtual SyntaxNode VisitTernaryExpressionSyntax(TernaryExpressionSyntax pNode)
+        {
+            return SyntaxFactory.TernaryExpression(Visit(pNode.Condition), Visit(pNode.Left), Visit(pNode.Right));
         }
 
         protected virtual SyntaxNode VisitTypeSyntax(TypeSyntax pNode)

@@ -102,6 +102,7 @@ namespace SmallerLang.Lexer
         ColonColon,
         DashGreater,
         Underscore,
+        QuestionMark,
 
         //Special tokens
         Annotation,

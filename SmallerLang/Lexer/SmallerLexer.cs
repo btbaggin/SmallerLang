@@ -87,6 +87,7 @@ namespace SmallerLang.Lexer
             _keywords.Insert("::", TokenType.ColonColon);
             _keywords.Insert(",", TokenType.Comma);
             _keywords.Insert(".", TokenType.Period);
+            _keywords.Insert("?", TokenType.QuestionMark);
 
             //Operators
             _keywords.Insert("*", TokenType.Star);

@@ -44,13 +44,18 @@ namespace SmallerLang.Syntax
         {
             pContext.EmitDebugLocation(this);
 
+            LLVMValueRef value;
             switch (Operator)
             {
                 case UnaryExpressionOperator.Not:
-                    return LLVM.BuildNot(pContext.Builder, Value.Emit(pContext), "");
+                    value = Value.Emit(pContext);
+                    Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
+                    return LLVM.BuildNot(pContext.Builder, value, "");
 
                 case UnaryExpressionOperator.Negative:
-                    return LLVM.BuildNeg(pContext.Builder, Value.Emit(pContext), "");
+                    value = Value.Emit(pContext);
+                    Utils.LlvmHelper.LoadIfPointer(ref value, pContext);
+                    return LLVM.BuildNeg(pContext.Builder, value, "");
 
                 case UnaryExpressionOperator.Length:
                     var arr = Value.Emit(pContext);
@@ -78,7 +83,7 @@ namespace SmallerLang.Syntax
                             break;
                     }
 
-                    LLVMValueRef value = BinaryExpressionSyntax.EmitOperator(v, op, pContext.GetInt(1), pContext);
+                    value = BinaryExpressionSyntax.EmitOperator(v, op, pContext.GetInt(1), pContext);
 
                     //Post unary we want to return the original variable value
                     if (Operator == UnaryExpressionOperator.PostIncrement || Operator == UnaryExpressionOperator.PostDecrement)

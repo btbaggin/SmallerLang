@@ -213,6 +213,7 @@
     <Compile Include="Syntax\GenericTypeSyntax.cs" />
     <Compile Include="Syntax\NamespaceSyntax.cs" />
     <Compile Include="Operations\Typing\TypeDiscoveryGraph.cs" />
+    <Compile Include="Syntax\TernaryExpressionSyntax.cs" />
     <Compile Include="Utils\CompilerErrors.cs" />
     <Compile Include="Utils\LLVMPInvokes.cs" />
     <Compile Include="Syntax\BreakSyntax.cs" />
