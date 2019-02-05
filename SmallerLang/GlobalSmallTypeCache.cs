@@ -233,7 +233,10 @@ namespace SmallerLang
                 variable = LLVM.BuildLoad(pContext.Builder, variable, "");
                 return variable;
             }
-            else if (pType.IsArray) return pContext.GetArray(pType.GetElementType(), 0, pContext);
+            else if (pType.IsArray)
+            {
+                return pContext.GetArray(pType.GetElementType(), 0, pContext);
+            }
             else if (pType.IsStruct)
             {
                 LLVMValueRef var;

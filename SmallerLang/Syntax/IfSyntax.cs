@@ -34,15 +34,15 @@ namespace SmallerLang.Syntax
             Utils.LlvmHelper.LoadIfPointer(ref cond, pContext);
             var then = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_then");
 
-            LLVMSharp.LLVMBasicBlockRef e = default;
+            LLVMSharp.LLVMBasicBlockRef elseB = default;
             if (Else != null)
             {
-               e = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_else");
+               elseB = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_else");
             }
-            var end = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_end");
+            var endB = LLVMSharp.LLVM.AppendBasicBlock(pContext.CurrentMethod, "if_end");
 
-            //Jump to if or else
-            LLVMSharp.LLVM.BuildCondBr(pContext.Builder, cond, then, Else != null ? e : end);
+            //Jump to if or else/end (depending on if we have an else block)
+            LLVMSharp.LLVM.BuildCondBr(pContext.Builder, cond, then, Else != null ? elseB : endB);
 
             //Emit then value
             LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, then);
@@ -51,24 +51,25 @@ namespace SmallerLang.Syntax
             if(!Utils.SyntaxHelper.LastStatementIsReturn(Body) && !Utils.SyntaxHelper.LastStatementIsBreak(Body))
             {
                 //Jump to end only if we didn't terminate in the body
-                LLVMSharp.LLVM.BuildBr(pContext.Builder, end);
+                LLVMSharp.LLVM.BuildBr(pContext.Builder, endB);
             }
 
             //Emit else value
             if(Else != null)
             {
-                LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, e);
+                LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, elseB);
                 Else.Emit(pContext);
 
                 if(!Utils.SyntaxHelper.LastStatementIsReturn(Else))
                 {
                     //Jump to end only if we didn't terminate in the body
-                    LLVMSharp.LLVM.BuildBr(pContext.Builder, end);
+                    LLVMSharp.LLVM.BuildBr(pContext.Builder, endB);
                 }
             }
 
-            LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, end);
-
+            //Position builder at the end of the if statement 
+            //before we continue on to emitting other statements
+            LLVMSharp.LLVM.PositionBuilderAtEnd(pContext.Builder, endB);
             return default;
         }
     }

@@ -257,6 +257,8 @@ namespace SmallerLang.Operations
 
         protected virtual void VisitTypeDefinitionSyntax(TypeDefinitionSyntax pNode)
         {
+            Visit(pNode.DeclaredType);
+            Visit(pNode.AppliesTo);
             using (var s = Store.AddValue("__Struct", pNode.GetApplicableType().Type))
             {
                 for (int i = 0; i < pNode.Fields.Count; i++)

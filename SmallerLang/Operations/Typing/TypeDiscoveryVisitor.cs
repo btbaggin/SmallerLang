@@ -87,8 +87,13 @@ namespace SmallerLang.Operations.Typing
 
                         applyType.AddTrait(traitType);
 
-                        var trait = _discoveryGraph.GetNode(name).Node;
-                        ValidateImplementation(trait, s);
+                        //TODO how do I validate methods of traits that come from a module?
+                        try
+                        {
+                            var trait = _discoveryGraph.GetNode(name).Node;
+                            ValidateImplementation(trait, s);
+                        }
+                        catch (Exception) { }
                     }
                 }
             }
@@ -108,7 +113,20 @@ namespace SmallerLang.Operations.Typing
             {
                 var result = _unit.FromString(s.GetApplicableType(), out SmallType type);
 
-                System.Diagnostics.Debug.Assert(result == Compiler.FindResult.Found, "We just added all our types, but a type doesn't exist?");
+                //This can occur if we are specifying an undeclared type
+                //or a type imported from another module
+                // - The namespace might not be specified
+                // - The type might not be exported
+                switch(result)
+                {
+                    case Compiler.FindResult.IncorrectScope:
+                        CompilerErrors.TypeNotInScope(s.GetApplicableType().ToString(), s.Span);
+                        break;
+
+                    case Compiler.FindResult.NotFound:
+                        CompilerErrors.UndeclaredType(s.GetApplicableType().ToString(), s.Span);
+                        break;
+                }
 
                 //Add each method to the cache and set type constructors if necessary
                 for (int j = 0; j < s.Methods.Count; j++)

@@ -48,6 +48,14 @@ namespace SmallerLang.Syntax
                 {
                     v.DoNotLoad = true;
                     var variable = v.Emit(pContext);
+                    if (v.Type != Type)
+                        {
+                            //Implicitly cast any derived types
+                            //This is the type itself so if you are doing Trait: t = new Concrete() where Concrete -> Trait
+                            var t = SmallTypeCache.GetLLVMType(Type, pContext);
+                            Utils.LlvmHelper.MakePointer(variable, ref t);
+                            variable = LLVM.BuildBitCast(pContext.Builder, variable, t, "");
+                    }
 
                     BuildCallToConstructor(m, variable, pContext);
                 }

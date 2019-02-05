@@ -11,14 +11,13 @@ namespace SmallerLangRun
     static class Program
     {
         /*TODO
-         * Ternary validation
          * returning arrays not working
          * constructor overloads
          * Contracts???
          * 
          * Range 1..10
          * Zero out array allocations
-         * Allow returning traits from methods? - No, this should be an error
+         * Allow returning traits from methods?
          * tree shaking of methods - kinda done
          * control flow analysis?
         */

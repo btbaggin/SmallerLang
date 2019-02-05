@@ -151,7 +151,7 @@ namespace SmallerLang.Operations
                 foreach(var t in mod.Module.Structs)
                 {
                     bool add = false;
-                    if (pNode.Type == t.DeclaredType.Type)
+                    if (pNode.Type == t.GetApplicableType().Type)
                     {
                         add = true;
                     }
@@ -170,6 +170,7 @@ namespace SmallerLang.Operations
                         {
                             TypeNodes.Add(rn);
 
+                            //TODO check existance before adding to typenodes?
                             //Get any type/methods that this method references
                             foreach (var m in t.Methods)
                             {

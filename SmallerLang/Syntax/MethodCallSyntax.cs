@@ -61,18 +61,17 @@ namespace SmallerLang.Syntax
                 {
                     if(!Utils.LlvmHelper.IsPointer(arguments[start + i]))
                     {
-                        var v = pContext.AllocateVariable(Value + "_temp", Arguments[i].Type);
-                        LLVM.BuildStore(pContext.Builder, arguments[start + i], v);
-                        arguments[start + i] = v;
+                        var tempVar = pContext.AllocateVariable(Value + "_temp", Arguments[i].Type);
+                        LLVM.BuildStore(pContext.Builder, arguments[start + i], tempVar);
+                        arguments[start + i] = tempVar;
                     }
                     arguments[start + i] = LLVM.BuildInBoundsGEP(pContext.Builder, arguments[start + i], new LLVMValueRef[] { pContext.GetInt(0), pContext.GetInt(1) }, "char_pointer");
-                    Utils.LlvmHelper.LoadIfPointer(ref arguments[i], pContext);
+                    Utils.LlvmHelper.LoadIfPointer(ref arguments[start + i], pContext);
                 }
 
                 //Implicitly cast any derived types
                 if (_definition.ArgumentTypes[i] != Arguments[i].Type)
                 {
-                    //TODO need to handle if _definition comes from a different reference
                     var type = SmallTypeCache.GetLLVMType(_definition.ArgumentTypes[i], pContext);
                     Utils.LlvmHelper.MakePointer(arguments[start + i], ref type);
                     arguments[start + i] = LLVM.BuildBitCast(pContext.Builder, arguments[start + i], type, "");

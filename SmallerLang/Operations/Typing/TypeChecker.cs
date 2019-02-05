@@ -58,6 +58,19 @@ namespace SmallerLang.Operations.Typing
             base.VisitAssignmentSyntax(pNode);
         }
 
+        protected override void VisitTernaryExpression(TernaryExpressionSyntax pNode)
+        {
+            if(!CanCast(pNode.Condition.Type, SmallTypeCache.Boolean))
+            {
+                CompilerErrors.TypeCastError(pNode.Condition.Type, SmallTypeCache.Boolean, pNode.Condition.Span);
+            }
+            if (pNode.Left.Type != pNode.Right.Type)
+            {
+                CompilerErrors.TypeCastError(pNode.Left.Type, pNode.Right.Type, pNode.Span);
+            }
+            base.VisitTernaryExpression(pNode);
+        }
+
         protected override void VisitBinaryExpressionSyntax(BinaryExpressionSyntax pNode)
         {
             switch(pNode.Operator)
@@ -292,7 +305,7 @@ namespace SmallerLang.Operations.Typing
         {
             //Undefined types are caused by non-existent types
             //These errors will be caught when the type is first encountered
-            return pFrom.IsAssignableFrom(pTo);
+            return pTo.IsAssignableFrom(pFrom);
         }
     }
 }

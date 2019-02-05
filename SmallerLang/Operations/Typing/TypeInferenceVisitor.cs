@@ -40,6 +40,7 @@ namespace SmallerLang.Operations.Typing
             foreach (var s in pNode.Structs)
             {
                 Visit(s.DeclaredType);
+                Visit(s.AppliesTo);
 
                 _unit.FromString(s.GetApplicableType(), out SmallType type);
                 using (var st = Store.AddValue("__Struct", type))

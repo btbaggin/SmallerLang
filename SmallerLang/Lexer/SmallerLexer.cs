@@ -156,8 +156,12 @@ namespace SmallerLang.Lexer
 
         private Token NextSymbol()
         {
+            //We have to watch for whitespace before and after comments
+            //Otherwise we could begin parsing a token starting with whitespace
             SkipWhitespace();
             SkipComments();
+            SkipWhitespace();
+
             if (_tokenizer.EOF) return new Token(TokenType.EndOfFile, 3);
 
             _length = 0;

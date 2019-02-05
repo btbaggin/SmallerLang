@@ -22,6 +22,7 @@ namespace SmallerLang.Utils
 
         public static void MakePointer(LLVMValueRef pValue, ref LLVMTypeRef pType)
         {
+            //We want to make pType match pValue, so we only make it a pointer if pValue is also a pointer
             if (IsPointer(pValue))
             {
                 pType = LLVMTypeRef.PointerType(pType, 0);
