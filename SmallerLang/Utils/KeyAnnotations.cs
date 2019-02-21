@@ -149,7 +149,7 @@ namespace SmallerLang.Utils
                     //Try loading from the reference assembly directory
                     try
                     {
-                        path = Microsoft.Build.Utilities.ToolLocationHelper.GetPathToDotNetFrameworkReferenceAssemblies(Microsoft.Build.Utilities.TargetDotNetFrameworkVersion.VersionLatest);// @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.1\";
+                        path = Microsoft.Build.Utilities.ToolLocationHelper.GetPathToDotNetFrameworkReferenceAssemblies(Microsoft.Build.Utilities.TargetDotNetFrameworkVersion.VersionLatest);
                         name = AssemblyName.GetAssemblyName(System.IO.Path.Combine(path, pAssembly));
                         assembly = Assembly.Load(name);
                     }
