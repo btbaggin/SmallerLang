@@ -66,6 +66,8 @@ namespace SmallerLang.Compiler
 
             if(pOptions.Optimizations)
             {
+                LLVM.AddConstantPropagationPass(passManager);
+
                 //Promote allocas to registers
                 LLVM.AddPromoteMemoryToRegisterPass(passManager);
 

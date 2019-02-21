@@ -179,13 +179,13 @@ namespace SmallerLang.Compiler
 
         public FindResult FindMethod(out MethodDefinition pDefinition, string pNamespace, SmallType pType, string pName, params SmallType[] pArguments)
         {
-            if(!string.IsNullOrEmpty(pNamespace))
+            if(!string.IsNullOrEmpty(pNamespace) && _references.ContainsKey(pNamespace))
             {
                 //If we are finding a method in a module we are not going to allow finding private methods
                 return _references[pNamespace].Cache._methods.FindMethod(out pDefinition, false, pType, pName, pArguments);
             }
 
-            //This is in the curret module, anything is fair game
+            //This is in the current module, anything is fair game
             return _methods.FindMethod(out pDefinition, true, pType, pName, pArguments);
         }
 
