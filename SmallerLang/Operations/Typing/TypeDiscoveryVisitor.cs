@@ -87,13 +87,17 @@ namespace SmallerLang.Operations.Typing
 
                         applyType.AddTrait(traitType);
 
-                        //TODO how do I validate methods of traits that come from a module?
-                        try
+                        TypeDefinitionSyntax trait;
+                        if(s.DeclaredType.Namespace == null)
                         {
-                            var trait = _discoveryGraph.GetNode(name).Node;
-                            ValidateImplementation(trait, s);
+                            trait = _discoveryGraph.GetNode(name).Node;
                         }
-                        catch (Exception) { }
+                        else
+                        {
+                            //TODO clean this up
+                            trait = _unit.GetReference(s.DeclaredType.Namespace.Value).Module.Structs.SingleOrDefault((pt) => pt.DeclaredType.Value == s.DeclaredType.Value);
+                        }
+                        ValidateImplementation(trait, s);
                     }
                 }
             }
@@ -307,7 +311,7 @@ namespace SmallerLang.Operations.Typing
                 bool found = false;
                 foreach (var im in pImplement.Methods)
                 {
-                    if (im.Name == tm.Name)
+                    if (im.Name == tm.Name && im.Parameters.Count == tm.Parameters.Count)
                     {
                         found = true;
                         break;
